@@ -1,0 +1,26 @@
+{
+  "name": "pickthebrick",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PickTheBrick - office fitout aggregator (Dubai). Root scripts drive Supabase; the app itself lives in web/.",
+  "scripts": {
+    "dev": "npm run dev --prefix web",
+    "build": "npm run build --prefix web",
+    "supabase:link": "supabase link",
+    "supabase:push": "supabase db push",
+    "supabase:types": "supabase gen types typescript --linked > web/lib/database.types.ts",
+    "seed": "tsx scripts/seed-catalog.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "@types/node": "^26.1.2",
+    "dotenv": "^17.4.2",
+    "supabase": "^2.111.0",
+    "tsx": "^4.23.4",
+    "typescript": "^7.0.2"
+  }
+}
