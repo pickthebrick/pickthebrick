@@ -1,0 +1,679 @@
+/* Shared styling for public marketing pages (home, design) - same retro
+   palette (cream, dark greys, orange accent, small radius, hard shadow on
+   primary actions) as the rest of the app. */
+.ptb-marketing {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  display: flex;
+  flex-direction: column;
+}
+.ptb-marketing header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 32px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.ptb-marketing .brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.ptb-marketing .brand-mark img {
+  height: 48px;
+  width: auto;
+  display: block;
+}
+.ptb-marketing nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.ptb-marketing nav a {
+  color: var(--muted);
+}
+.ptb-marketing nav a:hover {
+  color: var(--fg);
+}
+
+.ptb-marketing main {
+  flex: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 60px 32px 80px;
+  width: 100%;
+}
+
+.ptb-marketing .hero {
+  position: relative;
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 56px;
+}
+.ptb-marketing .hero::before {
+  content: "";
+  position: absolute;
+  top: -90px;
+  left: 50%;
+  width: 520px;
+  height: 320px;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(239, 123, 87, 0.16), rgba(242, 162, 84, 0.08) 60%, transparent 80%);
+  z-index: -1;
+  pointer-events: none;
+}
+.ptb-marketing .hero-eyebrow {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-deep);
+  background: rgba(239, 123, 87, 0.12);
+  padding: 5px 14px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+.ptb-marketing .hero h1 {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 14px;
+}
+.ptb-marketing .hero p {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.ptb-marketing .choice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.ptb-marketing .choice-card {
+  display: block;
+  background: var(--surface);
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  text-decoration: none;
+  color: var(--fg);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+}
+.ptb-marketing .choice-card:hover {
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--accent);
+  border-color: var(--accent);
+}
+.ptb-marketing .choice-card .icon {
+  font-size: 28px;
+  margin-bottom: 14px;
+}
+.ptb-marketing .choice-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.ptb-marketing .choice-card p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.ptb-marketing .choice-card .cta {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+
+.ptb-marketing .sqft-input-card {
+  max-width: 380px;
+  margin: 0 auto 48px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px 26px;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+}
+.ptb-marketing .sqft-input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ptb-marketing .sqft-input-row label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-align: center;
+}
+.ptb-marketing .sqft-icon {
+  font-size: 14px;
+}
+.ptb-marketing .sqft-input-row input {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  padding: 12px 14px;
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+}
+.ptb-marketing .sqft-input-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(239, 123, 87, 0.18);
+}
+.ptb-marketing .sqft-hint {
+  font-size: 12px;
+  color: var(--accent-deep);
+  text-align: center;
+}
+
+.ptb-marketing .package-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  align-items: start;
+  padding-top: 14px;
+}
+.ptb-marketing .package-card {
+  position: relative;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-top: 4px solid var(--line);
+  border-radius: var(--radius);
+  padding: 30px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+}
+.ptb-marketing .package-card:hover {
+  transform: translateY(-4px);
+}
+.ptb-marketing .package-card.tier-essential {
+  border-top-color: var(--muted);
+}
+.ptb-marketing .package-card.tier-advanced {
+  border-top-color: var(--accent);
+}
+.ptb-marketing .package-card.tier-premium {
+  border-top-color: var(--gold);
+}
+.ptb-marketing .package-card.featured {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--accent);
+  transform: scale(1.045);
+  z-index: 2;
+}
+.ptb-marketing .package-card.featured:hover {
+  transform: scale(1.045) translateY(-4px);
+}
+.ptb-marketing .package-card.selected {
+  border-color: var(--fg);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--fg);
+}
+.ptb-marketing .package-card.featured.selected {
+  border-color: var(--fg);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--fg);
+}
+.ptb-marketing .package-badge {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 5px 14px;
+  border-radius: 999px;
+  box-shadow: 0 2px 0 var(--accent-deep);
+}
+.ptb-marketing .package-icon {
+  font-size: 30px;
+  line-height: 1;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border-radius: 50%;
+  margin-bottom: 16px;
+}
+.ptb-marketing .package-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.ptb-marketing .package-card .package-tagline {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 20px;
+  line-height: 1.5;
+  min-height: 40px;
+}
+.ptb-marketing .package-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 22px;
+  flex: 1;
+}
+.ptb-marketing .package-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12.5px;
+  padding: 6px 0;
+  color: var(--fg);
+  line-height: 1.4;
+}
+.ptb-marketing .package-features li .check {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: rgba(239, 123, 87, 0.15);
+  color: var(--accent-deep);
+  font-size: 9.5px;
+  font-weight: 700;
+}
+.ptb-marketing .package-price-slot {
+  margin-bottom: 16px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+.ptb-marketing .package-price {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+.ptb-marketing .package-price span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 4px;
+}
+.ptb-marketing .package-price-hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.ptb-marketing .package-cta {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font: inherit;
+  border-radius: var(--radius);
+  text-decoration: none;
+  border: 1.5px solid var(--fg);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.ptb-marketing .package-cta:hover {
+  background: var(--fg);
+  color: #fff;
+}
+.ptb-marketing .package-cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: var(--line);
+  color: var(--muted);
+}
+.ptb-marketing .package-cta:disabled:hover {
+  background: var(--surface);
+  color: var(--muted);
+}
+.ptb-marketing .package-card.featured .package-cta {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.ptb-marketing .package-card.featured .package-cta:hover {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+}
+.ptb-marketing .package-cta.selected {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: #fff;
+}
+
+.ptb-marketing .design-upsell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 720px;
+  margin: 20px auto 0;
+  padding: 12px 20px;
+  font-size: 13px;
+  color: var(--fg);
+  background: rgba(242, 162, 84, 0.14);
+  border: 1.5px dashed var(--gold);
+  border-radius: var(--radius);
+}
+.ptb-marketing .design-upsell-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: #fff;
+  cursor: pointer;
+}
+.ptb-marketing .design-upsell-btn:hover {
+  background: var(--accent-deep);
+}
+
+.ptb-marketing .design-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 720px;
+  margin: 36px auto 0;
+  padding: 20px 26px;
+  background: var(--surface);
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--accent);
+}
+.ptb-marketing .design-summary-label {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.ptb-marketing .design-summary-price {
+  font-size: 26px;
+  font-weight: 700;
+}
+.ptb-marketing .design-start-btn {
+  flex-shrink: 0;
+  padding: 14px 26px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* ---------- step wizard (services survey, etc.) ---------- */
+.ptb-marketing .design-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 760px;
+  margin: 0 auto 44px;
+}
+.ptb-marketing .design-stepper-group {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+.ptb-marketing .design-stepper-group:last-child {
+  flex: 0;
+}
+.ptb-marketing .design-stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ptb-marketing .design-stepper-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: var(--line);
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.ptb-marketing .design-stepper-step.active .design-stepper-circle {
+  background: var(--accent);
+  color: #fff;
+}
+.ptb-marketing .design-stepper-step.done .design-stepper-circle {
+  background: var(--fg);
+  color: #fff;
+}
+.ptb-marketing .design-stepper-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ptb-marketing .design-stepper-step.active .design-stepper-label {
+  color: var(--fg);
+}
+.ptb-marketing .design-stepper-line {
+  flex: 1;
+  height: 2px;
+  background: var(--line);
+  margin: 0 12px;
+  min-width: 24px;
+}
+.ptb-marketing .design-stepper-line.done {
+  background: var(--fg);
+}
+
+.ptb-marketing .survey-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 900px;
+  margin: 0 auto 24px;
+}
+.ptb-marketing .survey-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.ptb-marketing .survey-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 14px;
+}
+.ptb-marketing .survey-count-num {
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+.ptb-marketing .space-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto 40px;
+}
+.ptb-marketing .space-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s, background 0.15s;
+}
+.ptb-marketing .space-card:hover {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--accent);
+}
+.ptb-marketing .space-card.selected {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(239, 123, 87, 0.1), rgba(242, 162, 84, 0.04));
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--accent);
+  transform: translateY(-2px);
+}
+.ptb-marketing .space-check {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 0 var(--accent-deep);
+}
+.ptb-marketing .space-icon {
+  width: 64px;
+  height: 64px;
+  display: block;
+}
+.ptb-marketing .space-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.ptb-marketing .survey-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.ptb-marketing .survey-btn-secondary {
+  padding: 12px 22px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.ptb-marketing .survey-btn-secondary:hover {
+  background: var(--fg);
+  color: #fff;
+}
+.ptb-marketing .survey-btn-primary {
+  padding: 12px 26px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+.ptb-marketing .survey-btn-primary:hover {
+  background: var(--accent-deep);
+}
+.ptb-marketing .survey-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: var(--line);
+  color: var(--muted);
+}
+
+.ptb-marketing .placeholder-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 40px;
+}
+
+@media (max-width: 780px) {
+  .ptb-marketing .choice-row {
+    grid-template-columns: 1fr;
+  }
+  .ptb-marketing .package-grid {
+    grid-template-columns: 1fr;
+  }
+  .ptb-marketing main {
+    padding: 40px 20px 60px;
+  }
+  .ptb-marketing .hero h1 {
+    font-size: 26px;
+  }
+  .ptb-marketing .design-summary {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  .ptb-marketing .design-start-btn {
+    width: 100%;
+  }
+  .ptb-marketing .package-card.featured {
+    transform: none;
+  }
+  .ptb-marketing .package-card.featured:hover {
+    transform: translateY(-4px);
+  }
+  .ptb-marketing .package-badge {
+    top: -12px;
+  }
+  .ptb-marketing .space-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ptb-marketing .design-stepper-label {
+    display: none;
+  }
+  .ptb-marketing .design-stepper-line {
+    margin: 0 6px;
+  }
+  .ptb-marketing .survey-back {
+    font-size: 14px;
+  }
+}

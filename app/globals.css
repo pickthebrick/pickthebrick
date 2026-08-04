@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* Slightly-retro, warm-neutral design tokens: cream paper background, dark
+   greys (never black), the logo's orange as the one accent color, a touch
+   of rounding + a hard offset shadow on primary actions for a retro feel -
+   kept subtle, not a full retro pastiche. */
+:root {
+  --bg: #f3ede1;
+  --surface: #fffcf5;
+  --fg: #3a3632;
+  --muted: #756e63;
+  --line: #ddd3bf;
+  --accent: #ef7b57;
+  --accent-deep: #d9633f;
+  --gold: #f2a254;
+  --radius: 5px;
+  --shadow-offset: 3px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-raleway), Arial, Helvetica, sans-serif;
+}

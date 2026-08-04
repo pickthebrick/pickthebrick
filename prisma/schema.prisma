@@ -1,0 +1,258 @@
+// PickTheBrick data model: users/roles, catalog (category -> type -> subtype -> product),
+// and the quote/approval workflow (draft -> submitted -> captain_confirmed -> admin_approved -> paid).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  client
+  captain
+  contractor
+  admin
+  designer
+}
+
+enum DesignRequestStatus {
+  draft
+  submitted
+  in_progress
+  delivered
+}
+
+enum Unit {
+  sqm
+  lm
+  count
+}
+
+enum QuoteStatus {
+  draft
+  submitted
+  captain_confirmed
+  admin_approved
+  paid
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String?
+  company      String?
+  phone        String?
+  role         Role     @default(client)
+  createdAt    DateTime @default(now())
+
+  sessions           Session[]
+  quotesAsClient     Quote[]              @relation("ClientQuotes")
+  quotesAsCaptain    Quote[]              @relation("CaptainQuotes")
+  quotesAsContractor Quote[]              @relation("ContractorQuotes")
+  statusChanges      QuoteStatusHistory[]
+
+  designRequestsAsClient   DesignRequest[] @relation("ClientDesignRequests")
+  designRequestsAsDesigner DesignRequest[] @relation("DesignerAssignments")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String  @id @default(cuid())
+  key       String  @unique
+  label     String
+  subtitle  String?
+  unit      Unit
+  highlight String?
+  enabled   Boolean @default(true)
+  sortOrder Int     @default(0)
+  types     Type[]
+}
+
+model Type {
+  id         String    @id @default(cuid())
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  key        String
+  label      String
+  sortOrder  Int       @default(0)
+  subtypes   Subtype[]
+
+  @@unique([categoryId, key])
+}
+
+model Subtype {
+  id        String    @id @default(cuid())
+  typeId    String
+  type      Type      @relation(fields: [typeId], references: [id], onDelete: Cascade)
+  key       String
+  label     String
+  sortOrder Int       @default(0)
+  products  Product[]
+
+  @@unique([typeId, key])
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  subtypeId   String
+  subtype     Subtype @relation(fields: [subtypeId], references: [id], onDelete: Cascade)
+  name        String
+  rate        Float
+  // Kept for schema/history compatibility only - pricing is a single
+  // all-inclusive rate now, so this is always 0 for every product going
+  // forward and is no longer read anywhere in the app.
+  installRate Float   @default(0)
+  description String?
+  unit        Unit?
+  featured    Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  quoteItems   QuoteItem[]
+  images       ProductImage[]
+  colorOptions ProductColorOption[]
+  specs        ProductSpec[]
+  downloads    ProductDownload[]
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  path      String
+  sortOrder Int     @default(0)
+}
+
+model ProductColorOption {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  hex       String
+  sortOrder Int     @default(0)
+}
+
+model ProductSpec {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label     String
+  value     String
+  sortOrder Int     @default(0)
+}
+
+model ProductDownload {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label     String
+  kind      String
+  filePath  String
+  sortOrder Int     @default(0)
+}
+
+model Quote {
+  id             String      @id @default(cuid())
+  clientId       String
+  client         User        @relation("ClientQuotes", fields: [clientId], references: [id])
+  status         QuoteStatus @default(draft)
+  location       String?
+  officeSize     String?
+  captainId      String?
+  captain        User?       @relation("CaptainQuotes", fields: [captainId], references: [id])
+  contractorId   String?
+  contractor     User?       @relation("ContractorQuotes", fields: [contractorId], references: [id])
+  materialsTotal Float       @default(0)
+  installTotal   Float       @default(0)
+  grandTotal     Float       @default(0)
+  createdAt      DateTime    @default(now())
+  submittedAt    DateTime?
+  confirmedAt    DateTime?
+  approvedAt     DateTime?
+  paidAt         DateTime?
+
+  items         QuoteItem[]
+  statusHistory QuoteStatusHistory[]
+}
+
+model QuoteItem {
+  id            String   @id @default(cuid())
+  quoteId       String
+  quote         Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productId     String?
+  product       Product? @relation(fields: [productId], references: [id])
+  name          String
+  categoryLabel String
+  typeLabel     String
+  subtypeLabel  String
+  rate          Float
+  installRate   Float    @default(0)
+  unit          Unit
+  qty           Float
+  amount        Float
+
+  @@unique([quoteId, productId])
+}
+
+model QuoteStatusHistory {
+  id          String   @id @default(cuid())
+  quoteId     String
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  fromStatus  String?
+  toStatus    String
+  changedById String?
+  changedBy   User?    @relation(fields: [changedById], references: [id])
+  changedAt   DateTime @default(now())
+}
+
+// A client's design-package survey (package + sqft + spaces), tracked from
+// the moment they start the flow through the designer delivering files back.
+model DesignRequest {
+  id           String              @id @default(cuid())
+  clientId     String
+  client       User                @relation("ClientDesignRequests", fields: [clientId], references: [id])
+  packageKey   String
+  sqft         Float
+  spaces       String              @default("")
+  status       DesignRequestStatus @default(draft)
+  designerId   String?
+  designer     User?               @relation("DesignerAssignments", fields: [designerId], references: [id])
+  designerNote String?
+  createdAt    DateTime            @default(now())
+  submittedAt  DateTime?
+  assignedAt   DateTime?
+  deliveredAt  DateTime?
+
+  files DesignRequestFile[]
+}
+
+model DesignRequestFile {
+  id              String        @id @default(cuid())
+  designRequestId String
+  designRequest   DesignRequest @relation(fields: [designRequestId], references: [id], onDelete: Cascade)
+  label           String
+  filePath        String
+  sortOrder       Int           @default(0)
+}
+
+// Marketing banners, managed by Admin, shown on the Client build page.
+model Banner {
+  id        String   @id @default(cuid())
+  imagePath String
+  linkUrl   String?
+  title     String?
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
