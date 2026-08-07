@@ -2,8 +2,14 @@
 // and the quote/approval workflow (draft -> submitted -> captain_confirmed -> admin_approved -> paid).
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider   = "prisma-client"
+  output     = "../app/generated/prisma"
+  // Rust-free client - no binary Query Engine at all, queries compile via a
+  // TypeScript query compiler instead. Required for the Neon driver adapter
+  // (lib/prisma.ts) to actually take effect - without this, Prisma still
+  // generates a client that expects the binary engine even when an adapter
+  // is passed, which is what caused "Query Engine not found" on Vercel.
+  engineType = "client"
 }
 
 datasource db {
