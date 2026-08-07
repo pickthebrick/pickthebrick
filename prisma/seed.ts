@@ -12,7 +12,7 @@ import path from "node:path";
 import vm from "node:vm";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../app/generated/prisma/client";
-import { Role } from "../app/generated/prisma/enums";
+import { Role, ContractorApplicationStatus } from "../app/generated/prisma/enums";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
@@ -351,13 +351,47 @@ async function ensureTestUser(email: string, role: Role, fullName: string) {
   const password = "PickTheBrick123!";
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: { email },
     create: { email, passwordHash, fullName, role },
     update: { role, fullName },
   });
 
   console.log(`  ${role}: ${email} / ${password}`);
+  return user;
+}
+
+// proxy.ts bounces a contractor to /contractor/apply until they have an
+// approved ContractorApplication - without this, the seeded test contractor
+// login authenticates fine but never reaches the dashboard. Approves them
+// for every category/type so Open Jobs and assignment work too.
+async function ensureApprovedContractorApplication(contractorId: string) {
+  const categories = await prisma.category.findMany({ select: { id: true } });
+  const types = await prisma.type.findMany({ select: { id: true } });
+
+  const application = await prisma.contractorApplication.upsert({
+    where: { contractorId },
+    create: {
+      contractorId,
+      licenseFilePath: "/trade-licenses/test-contractor-license.pdf",
+      companyName: "Test Contractor LLC",
+      contactPhone: "+971500000000",
+      officeLocation: "Dubai, UAE",
+      status: ContractorApplicationStatus.approved,
+      reviewedAt: new Date(),
+      agreedTermsAt: new Date(),
+    },
+    update: { status: ContractorApplicationStatus.approved, reviewedAt: new Date() },
+  });
+
+  await prisma.contractorApplicationCategory.deleteMany({ where: { applicationId: application.id } });
+  await prisma.contractorApplicationType.deleteMany({ where: { applicationId: application.id } });
+  await prisma.contractorApplicationCategory.createMany({
+    data: categories.map((c) => ({ applicationId: application.id, categoryId: c.id })),
+  });
+  await prisma.contractorApplicationType.createMany({
+    data: types.map((t) => ({ applicationId: application.id, typeId: t.id })),
+  });
 }
 
 async function main() {
@@ -371,7 +405,8 @@ async function main() {
   console.log("Seeding test staff logins (local/dev only)...");
   await ensureTestUser("captain@pickthebrick.test", Role.captain, "Test Captain");
   await ensureTestUser("captain2@pickthebrick.test", Role.captain, "Test Captain Two");
-  await ensureTestUser("contractor@pickthebrick.test", Role.contractor, "Test Contractor");
+  const testContractor = await ensureTestUser("contractor@pickthebrick.test", Role.contractor, "Test Contractor");
+  await ensureApprovedContractorApplication(testContractor.id);
   await ensureTestUser("admin@pickthebrick.test", Role.admin, "Test Admin");
   await ensureTestUser("superadmin@pickthebrick.test", Role.super_admin, "Test Super Admin");
   await ensureTestUser("designer@pickthebrick.test", Role.designer, "Test Designer");
