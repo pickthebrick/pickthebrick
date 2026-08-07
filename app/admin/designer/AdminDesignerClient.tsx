@@ -152,7 +152,7 @@ export default function AdminDesignerClient({ requests, designers }: { requests:
               </td>
               <td style={isOverdue(r) ? { color: "#b91c1c", fontWeight: 700 } : undefined}>
                 {r.claimDeadline ? new Date(r.claimDeadline).toLocaleString() : "-"}
-                {isOverdue(r) && " (overdue)"}
+                {isOverdue(r) && <span title="Overdue - not delivered within 48h"> 🚩 Overdue</span>}
               </td>
               <td>
                 <span className={`status-badge ${r.status}`}>{STATUS_LABEL[r.status]}</span>

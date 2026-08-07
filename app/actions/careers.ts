@@ -120,3 +120,11 @@ export async function submitJobApplication(formData: FormData) {
 
   revalidatePath("/admin/applicants");
 }
+
+export async function toggleJobApplicationArchived(id: string) {
+  await requireAdmin();
+  const application = await prisma.jobApplication.findUnique({ where: { id } });
+  if (!application) return;
+  await prisma.jobApplication.update({ where: { id }, data: { archived: !application.archived } });
+  revalidatePath("/admin/applicants");
+}

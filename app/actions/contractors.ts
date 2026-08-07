@@ -31,7 +31,7 @@ async function requireAdmin() {
 
 function revalidateContractors() {
   revalidatePath("/contractor/apply");
-  revalidatePath("/admin/contractors");
+  revalidatePath("/admin/applications");
 }
 
 // Submits (or resubmits, if previously rejected) a contractor's application:

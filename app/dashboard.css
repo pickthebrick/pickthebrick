@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 32px;
+  padding: 14px 32px;
   /* Reserves room for the fixed account bar (see app/components/AccountBar.tsx)
      so it never overlaps this header's own content. */
   padding-right: 100px;
@@ -25,7 +25,7 @@
   flex-shrink: 0;
 }
 .ptb-dash .brand-mark img {
-  height: 42px;
+  height: 50px;
   width: auto;
   display: block;
   flex-shrink: 0;
@@ -254,6 +254,15 @@
   color: var(--accent-deep);
   border-left-color: var(--accent);
   background: var(--bg);
+}
+.nav-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b91c1c;
 }
 /* Project-list items that select in-place (e.g. captain dashboard) rather
    than navigate - same look as the admin nav links above, on a <button>. */
@@ -1376,7 +1385,7 @@
     padding: 10px 16px;
   }
   .ptb-dash .brand-mark img {
-    height: 34px;
+    height: 40px;
   }
   .ptb-dash main {
     padding: 20px 14px;

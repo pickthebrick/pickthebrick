@@ -17,7 +17,7 @@ const LAYOUT_EXTENSIONS = new Set(["pdf", "dwg", "dxf", "jpg", "jpeg", "png"]);
 // used client-side in app/designer/DesignerClient.tsx and DesignRequestModal.tsx.
 const CLIENT_UPLOAD_LABEL_PREFIX = "Client layout upload:";
 // Informational only - shown/highlighted once passed, nothing auto-reassigns.
-const DESIGNER_CLAIM_WINDOW_MS = 24 * 60 * 60 * 1000;
+const DESIGNER_CLAIM_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 const DOWNLOAD_EXTENSIONS = new Set(["pdf", "doc", "docx", "glb", "gltf", "zip", "jpg", "jpeg", "png"]);
 
@@ -251,7 +251,7 @@ export async function claimDesignRequest(id: string) {
 
 // Admin assigns a designer to a submitted request (instead of the designer
 // self-claiming), and can reassign it to someone else later - a designer
-// terminated or unavailable mid-job. Either way the 24h submission clock
+// terminated or unavailable mid-job. Either way the 48h submission clock
 // restarts for whoever takes over.
 export async function assignDesigner(id: string, designerId: string) {
   const session = await requireSession();

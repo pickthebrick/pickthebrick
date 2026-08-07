@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createAdmin, deleteAdmin } from "@/app/actions/team";
 
-type Admin = { id: string; email: string; fullName: string | null; role: string; createdAt: Date };
+type Admin = { id: string; email: string; fullName: string | null; phone: string | null; role: string; createdAt: Date };
 type TeamRole = "admin" | "super_admin" | "marketing" | "captain";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -19,6 +19,7 @@ export default function TeamClient({ admins, currentUserId }: { admins: Admin[];
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState<TeamRole>("admin");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,10 +29,11 @@ export default function TeamClient({ admins, currentUserId }: { admins: Admin[];
     setBusy(true);
     setError(null);
     try {
-      await createAdmin({ email, password, fullName, role });
+      await createAdmin({ email, password, fullName, phone, role });
       setEmail("");
       setPassword("");
       setFullName("");
+      setPhone("");
       setRole("admin");
       router.refresh();
     } catch (err) {
@@ -60,6 +62,7 @@ export default function TeamClient({ admins, currentUserId }: { admins: Admin[];
       <form className="edit-inline-form" onSubmit={handleCreate} style={{ marginBottom: 20 }}>
         <input type="text" placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
         <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input type="tel" placeholder="Mobile number" value={phone} onChange={(e) => setPhone(e.target.value)} required />
         <input
           type="password"
           placeholder="Password (min 8 chars)"
@@ -85,6 +88,7 @@ export default function TeamClient({ admins, currentUserId }: { admins: Admin[];
           <tr>
             <th>Name</th>
             <th>Email</th>
+            <th>Mobile</th>
             <th>Role</th>
             <th>Added</th>
             <th></th>
@@ -95,6 +99,7 @@ export default function TeamClient({ admins, currentUserId }: { admins: Admin[];
             <tr key={a.id}>
               <td>{a.fullName ?? "-"}</td>
               <td>{a.email}</td>
+              <td>{a.phone ?? "-"}</td>
               <td>{ROLE_LABEL[a.role as TeamRole] ?? a.role}</td>
               <td>{new Date(a.createdAt).toLocaleDateString()}</td>
               <td>

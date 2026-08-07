@@ -362,7 +362,7 @@ model DesignRequest {
   createdAt    DateTime            @default(now())
   submittedAt  DateTime?
   assignedAt   DateTime?
-  // 24 hours after assignedAt, whether from a designer self-claim or an
+  // 48 hours after assignedAt, whether from a designer self-claim or an
   // admin assignment - informational only (see AdminDesignerClient.tsx /
   // DesignerClient.tsx overdue highlighting), nothing auto-reassigns.
   claimDeadline DateTime?
@@ -685,6 +685,7 @@ model JobApplication {
   phone        String?
   coverNote    String?
   cvPath       String
+  archived     Boolean     @default(false)
   createdAt    DateTime    @default(now())
 }
 

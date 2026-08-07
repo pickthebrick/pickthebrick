@@ -31,7 +31,7 @@ async function requireAdmin() {
 
 function revalidateDesigners() {
   revalidatePath("/designer/apply");
-  revalidatePath("/admin/designer-applications");
+  revalidatePath("/admin/applications");
 }
 
 // Submits (or resubmits, if previously rejected) a designer's application -

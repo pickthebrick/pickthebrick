@@ -17,13 +17,16 @@ export async function createAdmin(data: {
   email: string;
   password: string;
   fullName: string;
+  phone: string;
   role: "admin" | "super_admin" | "marketing" | "captain";
 }) {
   await requireSuperAdmin();
   const email = data.email.trim().toLowerCase();
   const fullName = data.fullName.trim();
+  const phone = data.phone.trim();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Please enter a valid email");
   if (!fullName) throw new Error("Please enter a name");
+  if (!phone) throw new Error("Please enter a mobile number");
   if (data.password.length < 8) throw new Error("Password must be at least 8 characters");
 
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -31,7 +34,7 @@ export async function createAdmin(data: {
 
   const role = TEAM_ROLES.includes(data.role as Role) ? (data.role as Role) : Role.admin;
   const passwordHash = await hashPassword(data.password);
-  await prisma.user.create({ data: { email, fullName, passwordHash, role } });
+  await prisma.user.create({ data: { email, fullName, phone, passwordHash, role } });
   revalidatePath("/admin/team");
 }
 

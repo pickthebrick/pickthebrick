@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import BrandMark from "@/app/components/BrandMark";
+import { prisma } from "@/lib/prisma";
+import { DesignRequestStatus } from "@/app/generated/prisma/enums";
 
 export type AdminSection =
   | "approvals"
@@ -8,8 +10,7 @@ export type AdminSection =
   | "products"
   | "marketing"
   | "designer"
-  | "designerApplications"
-  | "contractors"
+  | "applications"
   | "contractorPricing"
   | "projects"
   | "database"
@@ -24,8 +25,7 @@ const NAV_ITEMS: { key: AdminSection; label: string; href: string; superAdminOnl
   { key: "products", label: "Products", href: "/admin/products" },
   { key: "marketing", label: "Marketing", href: "/admin/marketing" },
   { key: "designer", label: "Designer", href: "/admin/designer" },
-  { key: "designerApplications", label: "Designer Apps", href: "/admin/designer-applications" },
-  { key: "contractors", label: "Contractors", href: "/admin/contractors" },
+  { key: "applications", label: "Applications", href: "/admin/applications" },
   { key: "contractorPricing", label: "Contractor Pricing", href: "/admin/contractor-pricing", superAdminOnly: true },
   { key: "projects", label: "Projects", href: "/admin/projects" },
   { key: "database", label: "Database", href: "/admin/database" },
@@ -35,7 +35,7 @@ const NAV_ITEMS: { key: AdminSection; label: string; href: string; superAdminOnl
   { key: "applicants", label: "Applicants", href: "/admin/applicants", superAdminOnly: true },
 ];
 
-export default function AdminShell({
+export default async function AdminShell({
   active,
   children,
   role = "Admin",
@@ -55,6 +55,17 @@ export default function AdminShell({
     role === "Marketing"
       ? NAV_ITEMS.filter((item) => item.key === "marketing")
       : NAV_ITEMS.filter((item) => !item.superAdminOnly || isSuperAdmin);
+
+  // Red-flag count for design requests a designer hasn't delivered within
+  // their 48h window - shown on the nav item itself so it's visible from
+  // any admin/super-admin page, not just when already on the Designer tab.
+  const overdueDesignCount =
+    role === "Marketing"
+      ? 0
+      : await prisma.designRequest.count({
+          where: { status: DesignRequestStatus.in_progress, claimDeadline: { lt: new Date() } },
+        });
+
   return (
     <div className="ptb-dash">
       <header>
@@ -66,6 +77,11 @@ export default function AdminShell({
             {navItems.map((item) => (
               <Link key={item.key} href={item.href} className={active === item.key ? "active" : ""}>
                 {item.label}
+                {item.key === "designer" && overdueDesignCount > 0 && (
+                  <span className="nav-flag" title={`${overdueDesignCount} design request(s) overdue`}>
+                    🚩 {overdueDesignCount}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>
