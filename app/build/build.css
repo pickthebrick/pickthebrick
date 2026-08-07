@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 32px;
+  padding: 14px 32px;
   /* Reserves room for the fixed account bar (see app/components/AccountBar.tsx)
      so it never overlaps this header's own right-aligned links. */
   padding-right: 100px;
@@ -33,7 +33,7 @@
   cursor: pointer;
 }
 .ptb-build .brand-mark img {
-  height: 48px;
+  height: 56px;
   width: auto;
   display: block;
 }
@@ -717,6 +717,71 @@
   box-shadow: none;
   cursor: not-allowed;
 }
+.ptb-build .qty-unit-input {
+  display: flex;
+  gap: 8px;
+}
+.ptb-build .qty-unit-input input[type="number"] {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+}
+.ptb-build .qty-unit-toggle {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.ptb-build .qty-unit-toggle button {
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: none;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+.ptb-build .qty-unit-toggle button.selected {
+  background: var(--accent);
+  color: #fff;
+}
+.ptb-build .icon-btn {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.ptb-build .icon-btn:hover {
+  background: var(--fg);
+  color: #fff;
+}
+.ptb-build .confirm-callout {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--fg);
+  background: #fff3c4;
+  border: 1.5px solid #e3b400;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.ptb-build .confirm-callout a {
+  color: var(--accent-deep);
+  text-decoration: underline;
+}
 .ptb-build .success-state {
   text-align: center;
   padding: 20px 0;
@@ -971,7 +1036,7 @@
     row-gap: 8px;
   }
   .ptb-build .brand-mark img {
-    height: 32px;
+    height: 38px;
   }
   .ptb-build .layout {
     display: block;

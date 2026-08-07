@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { isAdminRole } from "@/lib/roles";
+import { isAdminRole, ADMIN_ROLES } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { Role, QuoteStatus, type Unit } from "@/app/generated/prisma/enums";
 import {
   sendQuoteSubmittedEmail,
+  sendQuoteSubmittedAdminAlertEmail,
   sendCaptainAssignedEmail,
   sendCaptainReassignedEmail,
   sendCaptainRemovedEmail,
@@ -213,6 +214,52 @@ export async function startOverDraftQuote(quoteId: string) {
   revalidatePath("/build");
 }
 
+// Lets a client add forgotten items to an already-submitted quote without
+// touching the original record - copies its items/location/office-size onto
+// a fresh draft (reusing the client's existing draft row if they happen to
+// have one, exactly like getOrCreateDraftQuote, so there's never more than
+// one draft for /build's own getOrCreateDraftQuote() to pick up next).
+// Resubmitting the duplicate later gets its own new reference number.
+export async function duplicateQuote(quoteId: string) {
+  const session = await requireSession();
+  if (session.role !== Role.client) throw new Error("Only clients can build quotes");
+
+  const source = await prisma.quote.findUnique({ where: { id: quoteId }, include: { items: true } });
+  if (!source || source.clientId !== session.id) throw new Error("Quote not found");
+  if (source.status === QuoteStatus.draft) throw new Error("This quote hasn't been submitted yet");
+
+  let draft = await prisma.quote.findFirst({ where: { clientId: session.id, status: QuoteStatus.draft } });
+  if (draft) {
+    await prisma.quoteItem.deleteMany({ where: { quoteId: draft.id } });
+  } else {
+    draft = await prisma.quote.create({ data: { clientId: session.id, status: QuoteStatus.draft } });
+  }
+
+  await prisma.quote.update({
+    where: { id: draft.id },
+    data: { location: source.location, officeSize: source.officeSize },
+  });
+  await prisma.quoteItem.createMany({
+    data: source.items.map((item) => ({
+      quoteId: draft.id,
+      productId: item.productId,
+      categoryId: item.categoryId,
+      name: item.name,
+      categoryLabel: item.categoryLabel,
+      typeLabel: item.typeLabel,
+      subtypeLabel: item.subtypeLabel,
+      rate: item.rate,
+      unit: item.unit,
+      qty: item.qty,
+      amount: item.amount,
+    })),
+  });
+  await recalcTotals(draft.id);
+  revalidatePath("/build");
+  revalidatePath("/my-quotes");
+  return draft.id;
+}
+
 // Allowed while draft or just-submitted - once a captain has confirmed it,
 // real staff/contractor work may already be underway, so deletion stops
 // being safe and the client would need to contact support instead.
@@ -262,6 +309,16 @@ export async function submitQuote(quoteId: string) {
   await recordHistory(quoteId, quote.status, QuoteStatus.submitted, session.id);
   await sendQuoteSubmittedEmail(quote.client.email);
   await sendTemplatedWhatsApp("quote_submitted", quote.client.whatsappNumber);
+
+  const admins = await prisma.user.findMany({ where: { role: { in: ADMIN_ROLES } } });
+  for (const admin of admins) {
+    await sendQuoteSubmittedAdminAlertEmail(admin.email, quote.client.email, referenceNumber);
+    await sendTemplatedWhatsApp("quote_submitted_admin_alert", admin.whatsappNumber, {
+      clientEmail: quote.client.email,
+      referenceNumber,
+    });
+  }
+
   revalidatePath("/captain");
   revalidatePath("/my-quotes");
   revalidatePath("/admin/quotes");

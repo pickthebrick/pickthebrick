@@ -17,7 +17,15 @@ export default function PdfDownloadButton({
   officeSize,
   referenceNumber,
 }: {
-  items: { name: string; categoryLabel: string; rate: number; qty: number; unit: Unit }[];
+  items: {
+    name: string;
+    categoryLabel: string;
+    rate: number;
+    qty: number;
+    unit: Unit;
+    productId?: string | null;
+    product?: { images: { path: string }[] } | null;
+  }[];
   grandTotal: number;
   location: string | null;
   officeSize: string | null;
@@ -35,6 +43,8 @@ export default function PdfDownloadButton({
           rate: i.rate,
           qty: i.qty,
           unitLabel: baseUnitLabel(i.unit),
+          imageUrl: i.product?.images[0]?.path,
+          productId: i.productId,
         })),
         grandTotal,
         location,

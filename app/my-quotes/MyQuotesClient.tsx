@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { QuoteStatus, DesignRequestStatus, Unit } from "@/app/generated/prisma/enums";
-import { deleteQuote } from "@/app/actions/quotes";
+import { deleteQuote, duplicateQuote } from "@/app/actions/quotes";
 import { deleteDesignRequest, addDesignRequestRevisionComment } from "@/app/actions/design";
 import { PACKAGE_LABELS, groupSpaceEntries } from "@/lib/spaces";
 import PdfDownloadButton from "./PdfDownloadButton";
@@ -31,7 +31,16 @@ const PAYMENT_METHOD_LABEL: Record<string, string> = {
   pay_later: "Pay later",
 };
 
-type QuoteItem = { id: string; name: string; categoryLabel: string; rate: number; qty: number; unit: Unit };
+type QuoteItem = {
+  id: string;
+  name: string;
+  categoryLabel: string;
+  rate: number;
+  qty: number;
+  unit: Unit;
+  productId: string | null;
+  product: { images: { path: string }[] } | null;
+};
 type ProjectContractorProgress = { deliveryApproved: number; siteApproved: number };
 type Inspection = {
   id: string;
@@ -160,6 +169,18 @@ export default function MyQuotesClient({ quotes, designRequests }: { quotes: Quo
     }
   }
 
+  const [duplicating, setDuplicating] = useState<string | null>(null);
+  async function handleDuplicateQuote(id: string) {
+    setDuplicating(id);
+    try {
+      await duplicateQuote(id);
+      router.push("/build");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not duplicate quote");
+      setDuplicating(null);
+    }
+  }
+
   async function handleDeleteDesignRequest(id: string) {
     try {
       await deleteDesignRequest(id);
@@ -213,7 +234,7 @@ export default function MyQuotesClient({ quotes, designRequests }: { quotes: Quo
                       <span className={`status-badge ${q.status}`}>{STATUS_LABEL[q.status]}</span>
                     </td>
                     <td style={{ textAlign: "right" }}>AED {q.grandTotal.toLocaleString()}</td>
-                    <td style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                    <td style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
                       <PdfDownloadButton
                         items={q.items}
                         grandTotal={q.grandTotal}
@@ -221,6 +242,15 @@ export default function MyQuotesClient({ quotes, designRequests }: { quotes: Quo
                         officeSize={q.officeSize}
                         referenceNumber={q.referenceNumber}
                       />
+                      <button
+                        type="button"
+                        className="action"
+                        disabled={duplicating === q.id}
+                        onClick={() => handleDuplicateQuote(q.id)}
+                        title="Duplicate this quote as a new draft so you can add items you forgot"
+                      >
+                        {duplicating === q.id ? "..." : "Forgot to add something?"}
+                      </button>
                       {q.status === "submitted" && <DeleteButton label="Delete" onConfirm={() => handleDeleteQuote(q.id)} />}
                     </td>
                   </tr>

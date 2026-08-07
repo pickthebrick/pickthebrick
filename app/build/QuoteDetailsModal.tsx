@@ -2,6 +2,19 @@
 
 import { useState } from "react";
 
+const SQM_TO_SQFT = 10.7639;
+
+// Best-effort parse of a previously-saved "2,500 sqft" / "500 sqm" string
+// back into a number + unit, so re-opening the modal starts from where the
+// client left off instead of a blank field. Falls back to sqft (the
+// original placeholder's implicit default) if the unit can't be determined.
+function parseOfficeSize(value: string): { size: string; unit: "sqft" | "sqm" } {
+  const match = value.trim().match(/^([\d,]+(?:\.\d+)?)\s*(sqm|sqft)?/i);
+  if (!match) return { size: "", unit: "sqft" };
+  const unit = match[2]?.toLowerCase() === "sqm" ? "sqm" : "sqft";
+  return { size: match[1].replace(/,/g, ""), unit };
+}
+
 export default function QuoteDetailsModal({
   initialLocation,
   initialOfficeSize,
@@ -16,20 +29,33 @@ export default function QuoteDetailsModal({
   dismissable: boolean;
 }) {
   const [location, setLocation] = useState(initialLocation);
-  const [officeSize, setOfficeSize] = useState(initialOfficeSize);
+  const parsedSize = parseOfficeSize(initialOfficeSize);
+  const [sizeValue, setSizeValue] = useState(parsedSize.size);
+  const [unit, setUnit] = useState<"sqft" | "sqm">(parsedSize.unit);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  function handleUnitChange(next: "sqft" | "sqm") {
+    if (next === unit) return;
+    const current = parseFloat(sizeValue);
+    if (Number.isFinite(current) && current > 0) {
+      const converted = next === "sqm" ? current / SQM_TO_SQFT : current * SQM_TO_SQFT;
+      setSizeValue(String(Math.round(converted * 100) / 100));
+    }
+    setUnit(next);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!location.trim() || !officeSize.trim()) {
+    const size = parseFloat(sizeValue);
+    if (!location.trim() || !Number.isFinite(size) || size <= 0) {
       setError("Please fill in both fields.");
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      await onSave(location.trim(), officeSize.trim());
+      await onSave(location.trim(), `${size.toLocaleString()} ${unit}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save details");
     } finally {
@@ -80,22 +106,25 @@ export default function QuoteDetailsModal({
               <div className="modal-section-label" style={{ margin: "0 0 6px" }}>
                 Office size
               </div>
-              <input
-                type="text"
-                required
-                placeholder="e.g. 2,500 sqft"
-                value={officeSize}
-                onChange={(e) => setOfficeSize(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  fontSize: 13,
-                  border: "1px solid var(--line)",
-                  borderRadius: "var(--radius)",
-                  background: "var(--bg)",
-                  color: "var(--fg)",
-                }}
-              />
+              <div className="qty-unit-input">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  required
+                  min={1}
+                  placeholder={unit === "sqft" ? "e.g. 2500" : "e.g. 230"}
+                  value={sizeValue}
+                  onChange={(e) => setSizeValue(e.target.value)}
+                />
+                <div className="qty-unit-toggle">
+                  {(["sqft", "sqm"] as const).map((u) => (
+                    <button key={u} type="button" className={unit === u ? "selected" : ""} onClick={() => handleUnitChange(u)}>
+                      {u}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             {error && <p style={{ color: "#b91c1c", fontSize: 13 }}>{error}</p>}
             <button type="submit" className="modal-addbtn" style={{ marginTop: 6 }} disabled={saving}>

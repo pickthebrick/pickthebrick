@@ -16,7 +16,18 @@ export default async function MyQuotesPage() {
     prisma.quote.findMany({
       where: { clientId: session.id },
       include: {
-        items: { select: { id: true, name: true, categoryLabel: true, rate: true, qty: true, unit: true } },
+        items: {
+          select: {
+            id: true,
+            name: true,
+            categoryLabel: true,
+            rate: true,
+            qty: true,
+            unit: true,
+            productId: true,
+            product: { select: { images: { take: 1, orderBy: { sortOrder: "asc" }, select: { path: true } } } },
+          },
+        },
         captain: { select: { fullName: true, email: true, phone: true } },
         timelineItems: {
           where: { status: TimelineItemStatus.assigned },

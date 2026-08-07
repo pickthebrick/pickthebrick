@@ -41,6 +41,10 @@ export async function sendQuoteSubmittedEmail(to: string) {
   await sendTemplatedEmail("quote_submitted", to);
 }
 
+export async function sendQuoteSubmittedAdminAlertEmail(to: string, clientEmail: string, referenceNumber: string) {
+  await sendTemplatedEmail("quote_submitted_admin_alert", to, { clientEmail, referenceNumber });
+}
+
 export async function sendCaptainAssignedEmail(to: string, quoteId: string) {
   await sendTemplatedEmail("captain_assigned", to, { quoteId });
 }

@@ -50,6 +50,13 @@ async function reseedCatalog(htmlPath: string) {
   const { categoryMeta, enabledCategories, catalog } = extractCatalogFromHtml(htmlPath);
 
   console.log("Clearing existing catalog rows (cascades to types/subtypes/products)...");
+  // These join rows RESTRICT (not CASCADE) category deletion - the seeded
+  // test contractor's approved application links every category/type (see
+  // ensureApprovedContractorApplication below, which recreates them fresh
+  // right after this function runs), so a second seed run would otherwise
+  // fail trying to delete a category still referenced from the first run.
+  await prisma.contractorApplicationCategory.deleteMany();
+  await prisma.contractorApplicationType.deleteMany();
   await prisma.category.deleteMany();
 
   let categorySort = 0;
@@ -109,6 +116,13 @@ const NOTIFICATION_TEMPLATES: { key: string; label: string; emailSubject: string
     emailSubject: "Your quote has been submitted",
     emailBody: "We've received your fitout quote and it's now with our team for review.",
     whatsappBody: "Your PickTheBrick quote has been submitted and is now with our team for review.",
+  },
+  {
+    key: "quote_submitted_admin_alert",
+    label: "New quote submitted (to admin)",
+    emailSubject: "New quote submitted - {{referenceNumber}}",
+    emailBody: "{{clientEmail}} has just submitted quote {{referenceNumber}}. Review it in the admin dashboard.",
+    whatsappBody: "{{clientEmail}} has just submitted quote {{referenceNumber}}. Review it in the admin dashboard.",
   },
   {
     key: "captain_assigned",

@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 32px;
+  padding: 14px 32px;
   /* Reserves room for the fixed account bar (see app/components/AccountBar.tsx)
      so it never overlaps this header's own nav links. */
   padding-right: 100px;
@@ -30,7 +30,7 @@
   flex-shrink: 0;
 }
 .ptb-marketing .brand-mark img {
-  height: 48px;
+  height: 56px;
   width: auto;
   display: block;
   flex-shrink: 0;
@@ -1772,7 +1772,7 @@
     padding-right: 16px;
   }
   .ptb-marketing .brand-mark img {
-    height: 36px;
+    height: 42px;
   }
   .ptb-marketing nav {
     width: 100%;
