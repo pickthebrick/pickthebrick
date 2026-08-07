@@ -10,16 +10,17 @@ export default async function DesignSpacesPage({ searchParams }: { searchParams:
   if (!session) redirect("/login");
   if (!id) redirect("/design");
 
-  const request = await prisma.designRequest.findUnique({ where: { id } });
+  const request = await prisma.designRequest.findUnique({
+    where: { id },
+    include: { spaceEntries: { select: { spaceKey: true } } },
+  });
   if (!request || request.clientId !== session.id) redirect("/design");
-  if (request.status !== DesignRequestStatus.draft) redirect(`/design/measurements?id=${id}`);
+  if (request.status !== DesignRequestStatus.draft) redirect(`/design/features?id=${id}`);
 
-  return (
-    <SpacesSurvey
-      id={id}
-      packageKey={request.packageKey}
-      sqft={request.sqft}
-      initialSpaces={request.spaces ? request.spaces.split(",").filter(Boolean) : []}
-    />
-  );
+  const initialQuantities: Record<string, number> = {};
+  for (const entry of request.spaceEntries) {
+    initialQuantities[entry.spaceKey] = (initialQuantities[entry.spaceKey] ?? 0) + 1;
+  }
+
+  return <SpacesSurvey id={id} packageKey={request.packageKey} sqft={request.sqft} initialQuantities={initialQuantities} />;
 }

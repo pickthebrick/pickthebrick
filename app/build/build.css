@@ -17,6 +17,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 32px;
+  /* Reserves room for the fixed account bar (see app/components/AccountBar.tsx)
+     so it never overlaps this header's own right-aligned links. */
+  padding-right: 100px;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
@@ -39,28 +42,6 @@
   font-size: 18px;
   letter-spacing: -0.01em;
 }
-.ptb-build .cart-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1.5px solid var(--fg);
-  border-radius: var(--radius);
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-}
-.ptb-build .cart-pill .badge {
-  background: var(--accent);
-  color: #fff;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-}
-
 .ptb-build .layout {
   display: grid;
   grid-template-columns: 210px 1fr 370px;
@@ -449,6 +430,67 @@
   box-shadow: none;
 }
 
+.ptb-build .start-over-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 11px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.ptb-build .start-over-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+.ptb-build .start-over-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ptb-build .start-over-confirm {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.ptb-build .start-over-confirm p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--fg);
+}
+.ptb-build .start-over-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+.ptb-build .start-over-confirm-cancel,
+.ptb-build .start-over-confirm-yes {
+  flex: 1;
+  padding: 8px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ptb-build .start-over-confirm-cancel {
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+}
+.ptb-build .start-over-confirm-yes {
+  border: none;
+  background: #b91c1c;
+  color: #fff;
+}
+.ptb-build .start-over-confirm-cancel:disabled,
+.ptb-build .start-over-confirm-yes:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .ptb-build .banner-slot {
   margin-top: 20px;
   display: flex;
@@ -751,10 +793,12 @@
 }
 .ptb-build .modal-gallery .main-img {
   width: 100%;
-  height: 220px;
+  aspect-ratio: 1 / 1;
   border-radius: var(--radius);
   border: 1px solid var(--line);
   overflow: hidden;
+  cursor: zoom-in;
+  position: relative;
 }
 .ptb-build .modal-gallery .main-img svg,
 .ptb-build .modal-gallery .main-img img {
@@ -767,10 +811,13 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 440px;
+  overflow-y: auto;
 }
 .ptb-build .thumb-col .thumb {
   width: 100%;
-  height: 68px;
+  aspect-ratio: 1 / 1;
+  height: auto;
   border-radius: 4px;
   border: 2px solid var(--line);
   overflow: hidden;
@@ -821,11 +868,20 @@
   flex-wrap: wrap;
 }
 .ptb-build .swatch {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid var(--line);
   cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+}
+.ptb-build .swatch img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
 }
 .ptb-build .swatch.selected {
   border-color: var(--accent);

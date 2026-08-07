@@ -2,8 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { isAdminRole } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { Role, QuoteStatus, type Unit } from "@/app/generated/prisma/enums";
+import {
+  sendQuoteSubmittedEmail,
+  sendCaptainAssignedEmail,
+  sendCaptainReassignedEmail,
+  sendCaptainRemovedEmail,
+  sendQuoteConfirmedEmail,
+  sendQuoteApprovedEmail,
+  sendQuotePaidEmail,
+  sendContractorPaymentRecordedEmail,
+} from "@/lib/email";
+import { sendTemplatedWhatsApp } from "@/lib/whatsapp";
 
 async function requireSession() {
   const session = await getSession();
@@ -76,11 +88,19 @@ export async function upsertCartItem(quoteId: string, line: CartLineInput) {
   const session = await requireSession();
   await assertOwnDraft(quoteId, session.id);
 
+  // Resolves the live Category by label so items can later be grouped by
+  // categoryId for per-timeline-item contractor assignment (see
+  // app/actions/timeline.ts) - the string categoryLabel is still stored
+  // separately as a point-in-time snapshot, independent of the catalog
+  // category ever being renamed.
+  const category = await prisma.category.findFirst({ where: { label: line.categoryLabel } });
+
   await prisma.quoteItem.upsert({
     where: { quoteId_productId: { quoteId, productId: line.productId } },
     create: {
       quoteId,
       productId: line.productId,
+      categoryId: category?.id,
       name: line.name,
       categoryLabel: line.categoryLabel,
       typeLabel: line.typeLabel,
@@ -106,53 +126,226 @@ export async function removeCartItem(quoteId: string, productId: string) {
   await recalcTotals(quoteId);
 }
 
+// A client's own "Complete quote" pass is often a layman's best guess - the
+// Captain who actually confirmed the project is expected to clean up the
+// line items on their behalf (see CaptainClient.tsx's "Edit client's quote"
+// link, which opens /build?editQuote=<id> in a new tab). Scoped to
+// captain_confirmed rather than draft: assignment work (timeline items,
+// contractor picks) is already keyed off this quote, so editing line items
+// here never touches status/submission, just the cart contents/totals.
+async function assertCaptainOwnsQuote(quoteId: string, captainId: string) {
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  if (!quote || quote.captainId !== captainId || quote.status !== QuoteStatus.captain_confirmed) {
+    throw new Error("Quote is not one you can edit");
+  }
+  return quote;
+}
+
+export async function captainUpsertCartItem(quoteId: string, line: CartLineInput) {
+  const session = await requireSession();
+  if (session.role !== Role.captain) throw new Error("Captain only");
+  await assertCaptainOwnsQuote(quoteId, session.id);
+
+  const category = await prisma.category.findFirst({ where: { label: line.categoryLabel } });
+
+  await prisma.quoteItem.upsert({
+    where: { quoteId_productId: { quoteId, productId: line.productId } },
+    create: {
+      quoteId,
+      productId: line.productId,
+      categoryId: category?.id,
+      name: line.name,
+      categoryLabel: line.categoryLabel,
+      typeLabel: line.typeLabel,
+      subtypeLabel: line.subtypeLabel,
+      rate: line.rate,
+      unit: line.unit,
+      qty: line.qty,
+      amount: line.rate * line.qty,
+    },
+    update: {
+      qty: line.qty,
+      amount: line.rate * line.qty,
+    },
+  });
+  await recalcTotals(quoteId);
+  revalidatePath("/my-quotes");
+}
+
+export async function captainRemoveCartItem(quoteId: string, productId: string) {
+  const session = await requireSession();
+  if (session.role !== Role.captain) throw new Error("Captain only");
+  await assertCaptainOwnsQuote(quoteId, session.id);
+
+  await prisma.quoteItem.delete({ where: { quoteId_productId: { quoteId, productId } } }).catch(() => {});
+  await recalcTotals(quoteId);
+  revalidatePath("/my-quotes");
+}
+
+export async function captainSetQuoteDetails(quoteId: string, location: string, officeSize: string) {
+  const session = await requireSession();
+  if (session.role !== Role.captain) throw new Error("Captain only");
+  await assertCaptainOwnsQuote(quoteId, session.id);
+
+  if (!location.trim() || !officeSize.trim()) {
+    throw new Error("Please fill in both the location and the office size");
+  }
+
+  await prisma.quote.update({
+    where: { id: quoteId },
+    data: { location: location.trim(), officeSize: officeSize.trim() },
+  });
+  revalidatePath("/my-quotes");
+}
+
+// Clears every line item plus the saved location/office-size off the
+// caller's draft quote, leaving the same draft row so a fresh cart can be
+// rebuilt against it - used by the build page's "Start over" button.
+export async function startOverDraftQuote(quoteId: string) {
+  const session = await requireSession();
+  await assertOwnDraft(quoteId, session.id);
+
+  await prisma.quoteItem.deleteMany({ where: { quoteId } });
+  await prisma.quote.update({
+    where: { id: quoteId },
+    data: { location: null, officeSize: null, materialsTotal: 0, installTotal: 0, grandTotal: 0 },
+  });
+  revalidatePath("/build");
+}
+
+// Allowed while draft or just-submitted - once a captain has confirmed it,
+// real staff/contractor work may already be underway, so deletion stops
+// being safe and the client would need to contact support instead.
+export async function deleteQuote(quoteId: string) {
+  const session = await requireSession();
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  if (!quote || quote.clientId !== session.id) throw new Error("Quote not found");
+  if (quote.status !== QuoteStatus.draft && quote.status !== QuoteStatus.submitted) {
+    throw new Error("This quote is already being worked on and can no longer be deleted");
+  }
+
+  await prisma.quote.delete({ where: { id: quoteId } });
+  revalidatePath("/my-quotes");
+}
+
+// DD/MM/YY/NN - counts quotes already submitted today to pick the sequence number.
+async function generateReferenceNumber(): Promise<string> {
+  const now = new Date();
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+  const countToday = await prisma.quote.count({
+    where: { submittedAt: { gte: dayStart, lt: dayEnd } },
+  });
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yy = String(now.getFullYear() % 100).padStart(2, "0");
+  const nn = String(countToday + 1).padStart(2, "0");
+  return `${dd}/${mm}/${yy}/${nn}`;
+}
+
 export async function submitQuote(quoteId: string) {
   const session = await requireSession();
-  const quote = await prisma.quote.findUnique({ where: { id: quoteId }, include: { items: true } });
+  const quote = await prisma.quote.findUnique({
+    where: { id: quoteId },
+    include: { items: true, client: true },
+  });
   if (!quote || quote.clientId !== session.id) throw new Error("Quote not found");
   if (quote.status !== QuoteStatus.draft) throw new Error("Quote is not in draft status");
   if (quote.items.length === 0) throw new Error("Cannot submit an empty quote");
 
   await recalcTotals(quoteId);
+  const referenceNumber = await generateReferenceNumber();
   await prisma.quote.update({
     where: { id: quoteId },
-    data: { status: QuoteStatus.submitted, submittedAt: new Date() },
+    data: { status: QuoteStatus.submitted, submittedAt: new Date(), referenceNumber },
   });
   await recordHistory(quoteId, quote.status, QuoteStatus.submitted, session.id);
+  await sendQuoteSubmittedEmail(quote.client.email);
+  await sendTemplatedWhatsApp("quote_submitted", quote.client.whatsappNumber);
   revalidatePath("/captain");
   revalidatePath("/my-quotes");
+  revalidatePath("/admin/quotes");
 }
 
-export async function confirmQuote(quoteId: string, contractorId: string) {
+// Admin assigns a captain to a project - captains no longer self-claim, and
+// no longer separately "confirm" a quote either: assigning a captain to a
+// still-submitted quote immediately confirms it (contractor assignment now
+// happens per timeline item in the Projects tab, see app/actions/timeline.ts,
+// rather than gating confirmation). Reassignable at any later stage too
+// (captain terminated / left on an emergency) - since SiteInspectionRequest/
+// PaymentClaim/ProjectTimelineItem are all keyed by quoteId rather than
+// captainId, simply swapping captainId here already "transfers" every bit
+// of the project's data to whoever takes over.
+export async function assignCaptain(quoteId: string, captainId: string) {
   const session = await requireSession();
-  if (session.role !== Role.captain) throw new Error("Only a captain can confirm a quote");
+  if (!isAdminRole(session.role)) throw new Error("Only an admin can assign a captain");
 
-  const contractor = await prisma.user.findUnique({ where: { id: contractorId } });
-  if (!contractor || contractor.role !== Role.contractor) throw new Error("contractorId must reference a contractor");
+  const captain = await prisma.user.findUnique({ where: { id: captainId } });
+  if (!captain || captain.role !== Role.captain) throw new Error("captainId must reference a captain");
 
-  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId }, include: { captain: true, client: true } });
   if (!quote) throw new Error("Quote not found");
-  if (quote.status !== QuoteStatus.submitted) throw new Error("Quote must be submitted before it can be confirmed");
+  if (quote.status === QuoteStatus.draft) throw new Error("Quote must be submitted before a captain can be assigned");
+  if (quote.captainId === captainId) return;
 
-  await prisma.quote.update({
-    where: { id: quoteId },
-    data: {
-      status: QuoteStatus.captain_confirmed,
-      captainId: session.id,
-      contractorId,
-      confirmedAt: new Date(),
-    },
-  });
-  await recordHistory(quoteId, quote.status, QuoteStatus.captain_confirmed, session.id);
+  const previousCaptain = quote.captain;
+
+  if (quote.status === QuoteStatus.submitted) {
+    await prisma.quote.update({
+      where: { id: quoteId },
+      data: { captainId, status: QuoteStatus.captain_confirmed, confirmedAt: new Date() },
+    });
+    await recordHistory(quoteId, quote.status, QuoteStatus.captain_confirmed, session.id);
+    await sendCaptainAssignedEmail(captain.email, quoteId);
+    await sendTemplatedWhatsApp("captain_assigned", captain.whatsappNumber, { quoteId });
+    await sendQuoteConfirmedEmail(quote.client.email);
+    await sendTemplatedWhatsApp("quote_confirmed", quote.client.whatsappNumber);
+  } else {
+    await prisma.quote.update({ where: { id: quoteId }, data: { captainId } });
+    // Mid-project swap - notify both sides since a whole active project is changing hands.
+    await sendCaptainReassignedEmail(captain.email, quoteId);
+    await sendTemplatedWhatsApp("captain_reassigned", captain.whatsappNumber, { quoteId });
+    if (previousCaptain) {
+      await sendCaptainRemovedEmail(previousCaptain.email, quoteId);
+      await sendTemplatedWhatsApp("captain_removed", previousCaptain.whatsappNumber, { quoteId });
+    }
+  }
   revalidatePath("/captain");
+  revalidatePath("/admin/quotes");
+  revalidatePath("/admin/projects");
+  revalidatePath("/admin");
+}
+
+// Clears the captain off a project - the project simply disappears from
+// that captain's dashboard (app/captain/page.tsx filters by captainId), no
+// status change. Doesn't touch draft quotes since there's nothing to unassign yet.
+export async function unassignCaptain(quoteId: string) {
+  const session = await requireSession();
+  if (!isAdminRole(session.role)) throw new Error("Only an admin can unassign a captain");
+
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId }, include: { captain: true } });
+  if (!quote) throw new Error("Quote not found");
+  if (quote.status === QuoteStatus.draft) throw new Error("This quote has no captain to unassign yet");
+  if (!quote.captainId) return;
+
+  const previousCaptain = quote.captain;
+  await prisma.quote.update({ where: { id: quoteId }, data: { captainId: null } });
+
+  if (previousCaptain) {
+    await sendCaptainRemovedEmail(previousCaptain.email, quoteId);
+    await sendTemplatedWhatsApp("captain_removed", previousCaptain.whatsappNumber, { quoteId });
+  }
+  revalidatePath("/captain");
+  revalidatePath("/admin/quotes");
+  revalidatePath("/admin/projects");
   revalidatePath("/admin");
 }
 
 export async function approveQuote(quoteId: string) {
   const session = await requireSession();
-  if (session.role !== Role.admin) throw new Error("Only an admin can approve a quote");
+  if (!isAdminRole(session.role)) throw new Error("Only an admin can approve a quote");
 
-  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId }, include: { client: true } });
   if (!quote) throw new Error("Quote not found");
   if (quote.status !== QuoteStatus.captain_confirmed) throw new Error("Quote must be captain-confirmed before approval");
 
@@ -161,14 +354,16 @@ export async function approveQuote(quoteId: string) {
     data: { status: QuoteStatus.admin_approved, approvedAt: new Date() },
   });
   await recordHistory(quoteId, quote.status, QuoteStatus.admin_approved, session.id);
+  await sendQuoteApprovedEmail(quote.client.email);
+  await sendTemplatedWhatsApp("quote_approved", quote.client.whatsappNumber);
   revalidatePath("/admin");
 }
 
 export async function markQuotePaid(quoteId: string) {
   const session = await requireSession();
-  if (session.role !== Role.admin) throw new Error("Only an admin can mark a quote as paid");
+  if (!isAdminRole(session.role)) throw new Error("Only an admin can mark a quote as paid");
 
-  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId }, include: { client: true, contractor: true } });
   if (!quote) throw new Error("Quote not found");
   if (quote.status !== QuoteStatus.admin_approved) throw new Error("Quote must be admin-approved before it can be marked paid");
 
@@ -177,6 +372,12 @@ export async function markQuotePaid(quoteId: string) {
     data: { status: QuoteStatus.paid, paidAt: new Date() },
   });
   await recordHistory(quoteId, quote.status, QuoteStatus.paid, session.id);
+  await sendQuotePaidEmail(quote.client.email);
+  await sendTemplatedWhatsApp("quote_paid", quote.client.whatsappNumber);
+  if (quote.contractor) {
+    await sendContractorPaymentRecordedEmail(quote.contractor.email, quoteId);
+    await sendTemplatedWhatsApp("contractor_payment_recorded", quote.contractor.whatsappNumber, { quoteId });
+  }
   revalidatePath("/admin");
   revalidatePath("/contractor");
 }

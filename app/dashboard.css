@@ -11,6 +11,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 32px;
+  /* Reserves room for the fixed account bar (see app/components/AccountBar.tsx)
+     so it never overlaps this header's own content. */
+  padding-right: 100px;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
@@ -111,6 +114,29 @@
   background: #4c7a4f;
   color: #fff;
 }
+.ptb-dash .status-badge.pending,
+.ptb-dash .status-badge.requested {
+  background: var(--gold);
+  color: #fff;
+}
+.ptb-dash .status-badge.approved,
+.ptb-dash .status-badge.scheduled {
+  background: var(--accent);
+  color: #fff;
+}
+.ptb-dash .status-badge.rejected,
+.ptb-dash .status-badge.cancelled {
+  background: #b91c1c;
+  color: #fff;
+}
+.ptb-dash .status-badge.blocked {
+  background: var(--fg);
+  color: #fff;
+}
+.ptb-dash .status-badge.completed {
+  background: #4c7a4f;
+  color: #fff;
+}
 .ptb-dash button.action {
   font-size: 12px;
   font-weight: 700;
@@ -153,6 +179,47 @@
   box-shadow: none;
 }
 
+.ptb-dash .dash-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 22px;
+  border-bottom: 1.5px solid var(--line);
+  flex-wrap: wrap;
+}
+.ptb-dash .dash-tab {
+  padding: 9px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1.5px;
+}
+.ptb-dash .dash-tab.active {
+  color: var(--accent-deep);
+  border-bottom-color: var(--accent);
+}
+.ptb-dash .pdf-download-btn {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.ptb-dash .pdf-download-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+.ptb-dash .pdf-download-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .admin-shell {
   display: flex;
   align-items: flex-start;
@@ -186,9 +253,90 @@
   border-left-color: var(--accent);
   background: var(--bg);
 }
+/* Project-list items that select in-place (e.g. captain dashboard) rather
+   than navigate - same look as the admin nav links above, on a <button>. */
+.admin-sidebar button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+.admin-sidebar button.active {
+  color: var(--accent-deep);
+  border-left-color: var(--accent);
+  background: var(--bg);
+}
 .admin-main {
   flex: 1;
   min-width: 0;
+}
+/* Admin pages get more breathing room than the 1000px cap used by
+   client-facing pages (.ptb-dash main) - two classes + tag beats the
+   global rule's one class + tag, so this only affects admin routes. */
+.ptb-dash main.admin-main {
+  max-width: 1400px;
+}
+
+/* ---------- admin section card (collapsible) ---------- */
+.admin-panel {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.admin-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+}
+.admin-panel-header:hover {
+  background: var(--bg);
+}
+.admin-panel-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-panel-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.admin-panel-count {
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--line);
+  color: var(--fg);
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+.admin-panel-chevron {
+  font-size: 12px;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+.admin-panel-chevron.open {
+  transform: rotate(90deg);
+}
+.admin-panel-body {
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.admin-panel table {
+  margin-bottom: 0;
 }
 
 .banner-upload-card {
@@ -547,6 +695,71 @@
   font-size: 15px;
   cursor: pointer;
 }
+
+.ptb-dash .revision-comment-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.ptb-dash .revision-comment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+.ptb-dash .revision-comment p {
+  flex-basis: 100%;
+}
+.ptb-dash .edit-inline-form textarea {
+  font-size: 12.5px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.ptb-dash .designer-package-summary {
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.ptb-dash .designer-space-answers {
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+}
+.ptb-dash .designer-space-answers-title {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.ptb-dash .designer-space-answer-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  padding: 3px 0;
+  color: var(--muted);
+}
+.ptb-dash .designer-space-answer-row b {
+  color: var(--fg);
+}
+.ptb-dash .designer-space-notes {
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--muted);
+}
 .ptb-dash .swatch {
   width: 18px;
   height: 18px;
@@ -692,8 +905,471 @@
   border-left: 3px solid var(--accent);
 }
 
+/* ---------- contractor application ---------- */
+.ptb-dash .apply-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 26px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--gold) 100%);
+  color: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--fg);
+}
+.ptb-dash .apply-hero-icon {
+  font-size: 34px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.ptb-dash .apply-hero h1 {
+  font-size: 21px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.ptb-dash .apply-hero p {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0;
+}
+.ptb-dash .apply-card {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+.ptb-dash .apply-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.ptb-dash .apply-card-hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.ptb-dash .application-status-card {
+  padding: 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+}
+.ptb-dash .contractor-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.ptb-dash .contractor-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.ptb-dash .contractor-category-block {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.ptb-dash .contractor-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px 10px;
+  margin: 8px 0 2px 24px;
+}
+
+/* ---------- contractor/captain project cards ---------- */
+.ptb-dash .contractor-project-card {
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+.ptb-dash .contractor-project-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.ptb-dash .progress-track {
+  margin-bottom: 16px;
+}
+.ptb-dash .progress-track-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.ptb-dash .progress-track-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+.ptb-dash .progress-track-values {
+  font-size: 12px;
+  color: var(--muted);
+}
+.ptb-dash .progress-bar-rail {
+  position: relative;
+  height: 10px;
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.ptb-dash .progress-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.2s;
+}
+.ptb-dash .progress-bar-fill.reported {
+  background: rgba(239, 123, 87, 0.35);
+}
+.ptb-dash .progress-bar-fill.approved {
+  background: var(--accent);
+}
+.ptb-dash .progress-preset-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ptb-dash .progress-preset-btn {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ptb-dash .progress-preset-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.ptb-dash .progress-preset-btn.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.ptb-dash .progress-preset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ptb-dash .contractor-eligibility-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+/* ---------- terms & conditions accordion (mirrors app/build/build.css's
+   .ptb-build .terms-* block for the client quote T&Cs - duplicated here
+   under .ptb-dash rather than imported, so dashboard pages like the
+   contractor apply page don't pull in the rest of build.css) ---------- */
+.ptb-dash .terms-section {
+  margin: 18px 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.ptb-dash .terms-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.ptb-dash .terms-body {
+  margin-top: 14px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px 14px 4px 0;
+}
+.ptb-dash .terms-clause {
+  margin-bottom: 12px;
+}
+.ptb-dash .terms-clause-heading {
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.ptb-dash .terms-clause p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.ptb-dash .terms-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.ptb-dash .terms-checkbox-row input {
+  margin-top: 2px;
+}
+
+/* ---------- site inspections (boxed like .gantt-chart so it reads as its
+   own distinct record, not blended into the surrounding project detail) ---------- */
+.ptb-dash .site-inspection-box {
+  margin-bottom: 16px;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+/* ---------- payment bar (green, distinct from orange progress bars) ---------- */
+.ptb-dash .payment-bar-rail {
+  position: relative;
+  height: 10px;
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.ptb-dash .payment-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: #4c7a4f;
+  transition: width 0.2s;
+}
+
+/* ---------- detailed quote item preview (mirrors the client's own
+   "Review your quote" table in app/build/build.css, scoped under .ptb-dash
+   instead of .ptb-build so admin pages can use it without pulling in the
+   rest of the build page's styling) ---------- */
+.ptb-dash .preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+.ptb-dash .preview-table th {
+  text-align: left;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 8px 6px;
+  border-bottom: 1.5px solid var(--fg);
+}
+.ptb-dash .preview-table td {
+  font-size: 13px;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.ptb-dash .preview-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ptb-dash .preview-table .item-cell {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.ptb-dash .item-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.ptb-dash .item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.ptb-dash .preview-totals {
+  margin-left: auto;
+  max-width: 260px;
+}
+.ptb-dash .trow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 5px 0;
+  color: var(--muted);
+}
+.ptb-dash .trow.grand {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg);
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+  padding-top: 10px;
+}
+.ptb-dash .trow.grand .amt {
+  color: var(--accent-deep);
+}
+
+/* ---------- project timeline (Gantt-style, form-driven) ---------- */
+/* Boxed off with its own background/border so it reads as a distinct
+   section rather than blending into whatever it's embedded in (the admin
+   Projects panel's surface, the captain dashboard's page background, ...). */
+.ptb-dash .gantt-chart {
+  margin-bottom: 10px;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+/* Body wraps the gridline ruler (absolutely positioned, sitting behind the
+   rows) and the rows themselves - padding-top leaves room for the tick
+   date labels, which sit above the gridlines' top edge. */
+.ptb-dash .gantt-body {
+  position: relative;
+  padding-top: 18px;
+}
+.ptb-dash .gantt-gridlines {
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  left: 140px;
+  right: 0;
+  pointer-events: none;
+}
+.ptb-dash .gantt-gridline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+.ptb-dash .gantt-gridline-label {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ptb-dash .gantt-rows {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.ptb-dash .gantt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ptb-dash .gantt-row-label {
+  width: 140px;
+  flex-shrink: 0;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ptb-dash .gantt-row-track {
+  position: relative;
+  flex: 1;
+  height: 18px;
+  background: var(--bg);
+  border-radius: 4px;
+}
+.ptb-dash .gantt-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  min-width: 4px;
+  background: var(--accent);
+  border-radius: 4px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.ptb-dash .gantt-bar:active {
+  cursor: grabbing;
+}
+/* Wider invisible hit area than the 1-2px visual edge so the handle is
+   actually easy to grab. */
+.ptb-dash .gantt-bar-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.ptb-dash .gantt-bar-handle.left {
+  left: -5px;
+}
+.ptb-dash .gantt-bar-handle.right {
+  right: -5px;
+}
+.ptb-dash .gantt-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.ptb-dash .gantt-frozen-assignment {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+}
+.ptb-dash .gantt-contractor-footer {
+  margin-top: 8px;
+  font-size: 12px;
+}
+.ptb-dash .gantt-contractor-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent-deep);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ptb-dash .gantt-contractor-details {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 320px;
+}
+
 /* ---------- mobile ---------- */
 @media (max-width: 700px) {
+  .ptb-dash .gantt-row-label {
+    width: 90px;
+  }
+  .ptb-dash .gantt-gridlines {
+    left: 90px;
+  }
   .ptb-dash header {
     padding: 10px 16px;
   }
@@ -731,16 +1407,37 @@
     position: static;
     padding: 0 10px;
   }
-  .admin-sidebar a {
+  .admin-sidebar a,
+  .admin-sidebar button {
     padding: 8px 12px;
     border-left: none;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
+    width: auto;
   }
-  .admin-sidebar a.active {
+  .admin-sidebar a.active,
+  .admin-sidebar button.active {
     border-left-color: transparent;
     border-bottom-color: var(--accent);
     background: none;
+  }
+  /* Contractor dashboard is the one most likely used one-handed on a
+     phone on-site - bigger touch targets, everything stacked. */
+  .contractor-project-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ptb-dash .progress-preset-btn {
+    padding: 8px 13px;
+    font-size: 13px;
+  }
+  .ptb-dash .edit-inline-form input,
+  .ptb-dash .edit-inline-form select {
+    flex: 1 1 100%;
+  }
+  .ptb-dash button.action {
+    padding: 10px 14px;
+    font-size: 13px;
   }
   .banner-form {
     flex-direction: column;

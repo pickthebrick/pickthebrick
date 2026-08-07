@@ -2,7 +2,8 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { Unit } from "@/app/generated/prisma/enums";
 
-export type CatalogColorOption = { id: string; name: string; hex: string };
+export type CatalogColorOption = { id: string; name: string; hex: string; imagePath: string | null };
+export type CatalogSize = { id: string; label: string };
 export type CatalogSpec = { id: string; label: string; value: string };
 export type CatalogDownload = { id: string; label: string; kind: string; filePath: string };
 
@@ -18,6 +19,11 @@ export type CatalogProduct = {
   featured: boolean;
   images: { id: string; path: string }[];
   colorOptions: CatalogColorOption[];
+  sizes: CatalogSize[];
+  // Admin overrides - the Size/Color sections are only shown on the client
+  // when both this is true AND the corresponding array is non-empty.
+  sizeVariantsEnabled: boolean;
+  colorVariantsEnabled: boolean;
   specs: CatalogSpec[];
   downloads: CatalogDownload[];
 };
@@ -54,6 +60,7 @@ export async function fetchCatalog(): Promise<Catalog> {
                 include: {
                   images: { orderBy: { sortOrder: "asc" } },
                   colorOptions: { orderBy: { sortOrder: "asc" } },
+                  sizes: { orderBy: { sortOrder: "asc" } },
                   specs: { orderBy: { sortOrder: "asc" } },
                   downloads: { orderBy: { sortOrder: "asc" } },
                 },
@@ -94,7 +101,10 @@ export async function fetchCatalog(): Promise<Catalog> {
           rawUnit: p.unit,
           featured: p.featured,
           images: p.images.map((img) => ({ id: img.id, path: img.path })),
-          colorOptions: p.colorOptions.map((co) => ({ id: co.id, name: co.name, hex: co.hex })),
+          colorOptions: p.colorOptions.map((co) => ({ id: co.id, name: co.name, hex: co.hex, imagePath: co.imagePath })),
+          sizes: p.sizes.map((sz) => ({ id: sz.id, label: sz.label })),
+          sizeVariantsEnabled: p.sizeVariantsEnabled,
+          colorVariantsEnabled: p.colorVariantsEnabled,
           specs: p.specs.map((sp) => ({ id: sp.id, label: sp.label, value: sp.value })),
           downloads: p.downloads.map((d) => ({ id: d.id, label: d.label, kind: d.kind, filePath: d.filePath })),
         }));

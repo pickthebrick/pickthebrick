@@ -1,4 +1,4 @@
-const STEPS = ["Package", "Spaces", "Measurements", "Checkout"];
+const STEPS = ["Package", "Spaces", "Features", "Checkout"];
 
 export default function DesignStepper({ current }: { current: number }) {
   return (

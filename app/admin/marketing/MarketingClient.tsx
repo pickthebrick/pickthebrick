@@ -2,7 +2,8 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createBanner, toggleBannerActive, deleteBanner } from "@/app/actions/banners";
+import { createBanner, toggleBannerActive, deleteBanner, updateAiDesignerBanner } from "@/app/actions/banners";
+import AdminPanel from "../AdminPanel";
 
 type Banner = {
   id: string;
@@ -12,12 +13,35 @@ type Banner = {
   active: boolean;
 };
 
-export default function MarketingClient({ banners }: { banners: Banner[] }) {
+type AiDesignerBanner = { headline: string; subText: string; popupMessage: string; enabled: boolean };
+
+export default function MarketingClient({ banners, aiDesignerBanner }: { banners: Banner[]; aiDesignerBanner: AiDesignerBanner }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  const [aiHeadline, setAiHeadline] = useState(aiDesignerBanner.headline);
+  const [aiSubText, setAiSubText] = useState(aiDesignerBanner.subText);
+  const [aiPopup, setAiPopup] = useState(aiDesignerBanner.popupMessage);
+  const [aiEnabled, setAiEnabled] = useState(aiDesignerBanner.enabled);
+  const [aiSaving, setAiSaving] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  async function handleAiSave(e: React.FormEvent) {
+    e.preventDefault();
+    setAiSaving(true);
+    setAiError(null);
+    try {
+      await updateAiDesignerBanner({ headline: aiHeadline, subText: aiSubText, popupMessage: aiPopup, enabled: aiEnabled });
+      router.refresh();
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Could not save banner");
+    } finally {
+      setAiSaving(false);
+    }
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -64,6 +88,7 @@ export default function MarketingClient({ banners }: { banners: Banner[] }) {
         </form>
       </div>
 
+      <AdminPanel title="Banners" count={banners.length}>
       {banners.length === 0 ? (
         <div className="empty">No banners yet.</div>
       ) : (
@@ -91,6 +116,23 @@ export default function MarketingClient({ banners }: { banners: Banner[] }) {
           ))}
         </div>
       )}
+      </AdminPanel>
+
+      <AdminPanel title="AI Designer banner (/design page)" defaultOpen={false}>
+        <form className="edit-inline-form" onSubmit={handleAiSave} style={{ flexWrap: "wrap" }}>
+          <input type="text" placeholder="Headline" value={aiHeadline} onChange={(e) => setAiHeadline(e.target.value)} />
+          <input type="text" placeholder="Sub-line" value={aiSubText} onChange={(e) => setAiSubText(e.target.value)} style={{ minWidth: 320 }} />
+          <input type="text" placeholder="Popup message on click" value={aiPopup} onChange={(e) => setAiPopup(e.target.value)} style={{ minWidth: 320 }} />
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+            <input type="checkbox" checked={aiEnabled} onChange={(e) => setAiEnabled(e.target.checked)} />
+            Show on /design
+          </label>
+          {aiError && <p style={{ color: "#b91c1c", fontSize: 13 }}>{aiError}</p>}
+          <button type="submit" className="action" disabled={aiSaving}>
+            {aiSaving ? "Saving..." : "Save"}
+          </button>
+        </form>
+      </AdminPanel>
     </>
   );
 }

@@ -6,37 +6,46 @@ import Link from "next/link";
 import DesignStepper from "../DesignStepper";
 import SpaceIcon from "../SpaceIcon";
 import { SPACES } from "@/lib/spaces";
-import { updateDesignRequestSpaces } from "@/app/actions/design";
+import { setDesignRequestSpaces } from "@/app/actions/design";
 import "../../marketing.css";
+
+const MAX_QTY = 6;
 
 export default function SpacesSurvey({
   id,
-  initialSpaces,
+  initialQuantities,
 }: {
   id: string;
   packageKey: string;
   sqft: number;
-  initialSpaces: string[];
+  initialQuantities: Record<string, number>;
 }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<Set<string>>(new Set(initialSpaces));
+  const [quantities, setQuantities] = useState<Record<string, number>>(initialQuantities);
   const [continuing, setContinuing] = useState(false);
 
-  function toggle(key: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
+  const selectedCount = Object.values(quantities).filter((q) => q > 0).length;
+  const totalInstances = Object.values(quantities).reduce((sum, q) => sum + q, 0);
+
+  function select(key: string) {
+    setQuantities((prev) => ({ ...prev, [key]: 1 }));
+  }
+  function adjust(key: string, delta: number) {
+    setQuantities((prev) => {
+      const next = Math.max(0, Math.min(MAX_QTY, (prev[key] ?? 0) + delta));
+      return { ...prev, [key]: next };
     });
   }
 
   async function handleContinue() {
-    if (selected.size === 0 || continuing) return;
+    if (selectedCount === 0 || continuing) return;
     setContinuing(true);
     try {
-      await updateDesignRequestSpaces(id, Array.from(selected));
-      router.push(`/design/measurements?id=${id}`);
+      const entries = Object.entries(quantities)
+        .filter(([, qty]) => qty > 0)
+        .map(([spaceKey, quantity]) => ({ spaceKey, quantity }));
+      await setDesignRequestSpaces(id, entries);
+      router.push(`/design/features?id=${id}`);
     } catch {
       setContinuing(false);
     }
@@ -62,18 +71,39 @@ export default function SpacesSurvey({
             &larr; Select the spaces required
           </button>
           <span className="survey-count">
-            <span className="survey-count-num">{selected.size}</span> of {SPACES.length} selected
+            <span className="survey-count-num">{totalInstances}</span> space{totalInstances === 1 ? "" : "s"} added
           </span>
         </div>
 
         <div className="space-grid">
           {SPACES.map((s) => {
-            const isSelected = selected.has(s.key);
+            const qty = quantities[s.key] ?? 0;
+            const isSelected = qty > 0;
             return (
-              <div key={s.key} className={`space-card ${isSelected ? "selected" : ""}`} onClick={() => toggle(s.key)}>
+              <div
+                key={s.key}
+                className={`space-card ${isSelected ? "selected" : ""}`}
+                onClick={!isSelected ? () => select(s.key) : undefined}
+              >
                 {isSelected && <span className="space-check">✓</span>}
                 <SpaceIcon spaceKey={s.key} className="space-icon" />
                 <span className="space-label">{s.label}</span>
+                {isSelected && (
+                  <div className="space-qty-stepper" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" onClick={() => adjust(s.key, -1)} aria-label={`Remove one ${s.label}`}>
+                      −
+                    </button>
+                    <span className="space-qty-num">{qty}</span>
+                    <button
+                      type="button"
+                      onClick={() => adjust(s.key, 1)}
+                      disabled={qty >= MAX_QTY}
+                      aria-label={`Add another ${s.label}`}
+                    >
+                      +
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -86,8 +116,8 @@ export default function SpacesSurvey({
           <button
             type="button"
             className="survey-btn-primary"
-            disabled={selected.size === 0 || continuing}
-            title={selected.size === 0 ? "Select at least one space first" : undefined}
+            disabled={selectedCount === 0 || continuing}
+            title={selectedCount === 0 ? "Select at least one space first" : undefined}
             onClick={handleContinue}
           >
             {continuing ? "Saving…" : "Continue →"}

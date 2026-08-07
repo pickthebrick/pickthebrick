@@ -2,11 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { upsertCartItem, removeCartItem, submitQuote, setQuoteDetails } from "@/app/actions/quotes";
-import { signOutAction } from "@/app/actions/auth";
+import {
+  upsertCartItem,
+  removeCartItem,
+  submitQuote,
+  setQuoteDetails,
+  startOverDraftQuote,
+  captainUpsertCartItem,
+  captainRemoveCartItem,
+  captainSetQuoteDetails,
+} from "@/app/actions/quotes";
 import type { Catalog, CatalogProduct } from "@/lib/catalog";
 import type { CartLine } from "@/lib/quotes";
 import type { Unit } from "@/app/generated/prisma/enums";
+import { buildQuotePdf } from "@/lib/quotePdf";
 import { ProductThumb } from "./ProductThumb";
 import ProductModal from "./ProductModal";
 import QuoteDetailsModal from "./QuoteDetailsModal";
@@ -55,6 +64,8 @@ export default function BuildClient({
   banners,
   initialLocation,
   initialOfficeSize,
+  editAsCaptain = false,
+  clientLabel,
 }: {
   catalog: Catalog;
   quoteId: string;
@@ -62,13 +73,23 @@ export default function BuildClient({
   banners: BannerData[];
   initialLocation: string | null;
   initialOfficeSize: string | null;
+  editAsCaptain?: boolean;
+  clientLabel?: string;
 }) {
   const [cart, setCart] = useState<CartLine[]>(initialCart);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState(initialLocation ?? "");
   const [officeSize, setOfficeSize] = useState(initialOfficeSize ?? "");
-  const [showDetailsModal, setShowDetailsModal] = useState(!initialLocation || !initialOfficeSize);
+  const [showDetailsModal, setShowDetailsModal] = useState(!editAsCaptain && (!initialLocation || !initialOfficeSize));
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  // A Captain editing a client's already-confirmed quote uses a parallel set
+  // of scoped actions (see assertCaptainOwnsQuote in app/actions/quotes.ts)
+  // instead of the client's own draft-only ones - same request shapes, so
+  // the rest of this component never needs to branch on editAsCaptain again.
+  const doUpsertCartItem = editAsCaptain ? captainUpsertCartItem : upsertCartItem;
+  const doRemoveCartItem = editAsCaptain ? captainRemoveCartItem : removeCartItem;
+  const doSetQuoteDetails = editAsCaptain ? captainSetQuoteDetails : setQuoteDetails;
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(catalog.enabledCategories[0] ?? null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -128,13 +149,9 @@ export default function BuildClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleSignOut() {
-    await signOutAction();
-    window.location.href = "/login";
-  }
 
   async function handleSaveDetails(loc: string, size: string) {
-    await setQuoteDetails(quoteId, loc, size);
+    await doSetQuoteDetails(quoteId, loc, size);
     setLocation(loc);
     setOfficeSize(size);
     setShowDetailsModal(false);
@@ -176,7 +193,7 @@ export default function BuildClient({
     if (!categoryMeta || !activeType || !activeSubtype) return;
     if (cartMap.has(product.id)) {
       setCart((prev) => prev.filter((l) => l.productId !== product.id));
-      removeCartItem(quoteId, product.id).catch((e) => setError(e.message));
+      doRemoveCartItem(quoteId, product.id).catch((e) => setError(e.message));
       return;
     }
     const qty = baseQtyOverride ?? qtyDraft[product.id] ?? (product.unit === "count" ? 1 : 10);
@@ -191,7 +208,7 @@ export default function BuildClient({
       qty,
     };
     setCart((prev) => [...prev, line]);
-    upsertCartItem(quoteId, line).catch((e) => setError(e.message));
+    doUpsertCartItem(quoteId, line).catch((e) => setError(e.message));
   }
 
   function changeLineQty(productId: string, deltaDisplay: number) {
@@ -200,7 +217,7 @@ export default function BuildClient({
         if (l.productId !== productId) return l;
         const currentDisplay = toDisplayQty(l.qty, l.unit, displayUnit);
         const updated = { ...l, qty: fromDisplayQty(currentDisplay + deltaDisplay, l.unit, displayUnit) };
-        upsertCartItem(quoteId, updated).catch((e) => setError(e.message));
+        doUpsertCartItem(quoteId, updated).catch((e) => setError(e.message));
         return updated;
       })
     );
@@ -213,7 +230,7 @@ export default function BuildClient({
       prev.map((l) => {
         if (l.productId !== productId) return l;
         const updated = { ...l, qty: fromDisplayQty(parsed, l.unit, displayUnit) };
-        upsertCartItem(quoteId, updated).catch((e) => setError(e.message));
+        doUpsertCartItem(quoteId, updated).catch((e) => setError(e.message));
         return updated;
       })
     );
@@ -221,7 +238,7 @@ export default function BuildClient({
 
   function removeLine(productId: string) {
     setCart((prev) => prev.filter((l) => l.productId !== productId));
-    removeCartItem(quoteId, productId).catch((e) => setError(e.message));
+    doRemoveCartItem(quoteId, productId).catch((e) => setError(e.message));
   }
 
   async function handleSubmit() {
@@ -259,158 +276,29 @@ export default function BuildClient({
     window.location.assign(`mailto:?subject=${subject}&body=${body}`);
   }
 
-  async function loadImageAsDataUrl(url: string): Promise<{ dataUrl: string; ratio: number } | null> {
-    try {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      const bitmap = await createImageBitmap(blob);
-      const ratio = bitmap.width / bitmap.height;
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      return { dataUrl, ratio };
-    } catch {
-      return null;
-    }
+  async function downloadPdf() {
+    const doc = await buildQuotePdf({
+      items: cart.map((l) => ({ name: l.name, categoryLabel: l.categoryLabel, rate: l.rate, qty: l.qty, unitLabel: baseUnitLabel(l.unit) })),
+      grandTotal: grand,
+      location,
+      officeSize,
+    });
+    doc.save("PickTheBrick-Quotation.pdf");
   }
 
-  async function downloadPdf() {
-    const { jsPDF } = await import("jspdf");
-    const { TERMS_AND_CONDITIONS } = await import("@/lib/terms");
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+  const [confirmingStartOver, setConfirmingStartOver] = useState(false);
+  const [startingOver, setStartingOver] = useState(false);
 
-    const ACCENT: [number, number, number] = [239, 123, 87];
-    const INK: [number, number, number] = [58, 54, 50];
-    const MUTED: [number, number, number] = [117, 110, 99];
-    const LINE: [number, number, number] = [221, 211, 191];
-
-    let y = 44;
-
-    const logo = await loadImageAsDataUrl("/logo.png");
-    if (logo) {
-      const logoWidth = 90;
-      doc.addImage(logo.dataUrl, "PNG", 40, y - 22, logoWidth, logoWidth / logo.ratio);
-    } else {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(20);
-      doc.setTextColor(...INK);
-      doc.text("PickTheBrick", 40, y);
+  async function handleStartOver() {
+    setStartingOver(true);
+    try {
+      await startOverDraftQuote(quoteId);
+      window.location.reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start over");
+      setStartingOver(false);
+      setConfirmingStartOver(false);
     }
-
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...MUTED);
-    doc.setFontSize(9);
-    doc.text("Quotation Date: " + new Date().toLocaleDateString(), pageWidth - 40, y - 10, { align: "right" });
-    doc.text("Items: " + cart.length, pageWidth - 40, y + 4, { align: "right" });
-
-    y += 34;
-    doc.setDrawColor(...ACCENT);
-    doc.setLineWidth(1.5);
-    doc.line(40, y, pageWidth - 40, y);
-    y += 20;
-
-    if (location || officeSize) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9.5);
-      doc.setTextColor(...INK);
-      doc.text("Location:", 40, y);
-      doc.text("Office size:", 220, y);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...MUTED);
-      doc.text(location || "-", 95, y);
-      doc.text(officeSize || "-", 285, y);
-      y += 22;
-      doc.setDrawColor(...LINE);
-      doc.setLineWidth(1);
-      doc.line(40, y - 8, pageWidth - 40, y - 8);
-    }
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...INK);
-    doc.text("Item", 40, y);
-    doc.text("Category", 200, y);
-    doc.text("Qty", 340, y);
-    doc.text("Rate", 410, y);
-    doc.text("Amount", 480, y);
-    y += 8;
-    doc.setDrawColor(...INK);
-    doc.setLineWidth(1);
-    doc.line(40, y, pageWidth - 40, y);
-    y += 16;
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9.5);
-    cart.forEach((l) => {
-      const amt = l.rate * l.qty;
-      const nameLines = doc.splitTextToSize(l.name, 145);
-      doc.setTextColor(...INK);
-      doc.text(nameLines, 40, y);
-      doc.setTextColor(...MUTED);
-      doc.text(l.categoryLabel, 200, y);
-      doc.text(String(l.qty) + " " + baseUnitLabel(l.unit), 340, y);
-      doc.text("AED " + l.rate, 410, y);
-      doc.setTextColor(...INK);
-      doc.text("AED " + amt.toLocaleString(), 480, y);
-      y += Math.max(16, nameLines.length * 12 + 4);
-      doc.setDrawColor(...LINE);
-      doc.line(40, y - 6, pageWidth - 40, y - 6);
-    });
-
-    y += 10;
-    doc.setDrawColor(...INK);
-    doc.line(320, y, pageWidth - 40, y);
-    y += 18;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Total", 320, y);
-    doc.setTextColor(...ACCENT);
-    doc.text("AED " + grand.toLocaleString(), 480, y);
-
-    y += 40;
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...MUTED);
-    doc.text("Placeholder pricing - prototype only. Full terms & conditions on the final page.", 40, y);
-
-    // ---- terms & conditions page ----
-    doc.addPage();
-    let ty = 50;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.setTextColor(...INK);
-    doc.text("Terms & Conditions", 40, ty);
-    doc.setDrawColor(...ACCENT);
-    doc.setLineWidth(1.5);
-    ty += 12;
-    doc.line(40, ty, pageWidth - 40, ty);
-    ty += 26;
-
-    TERMS_AND_CONDITIONS.forEach((clause) => {
-      const bodyLines = doc.splitTextToSize(clause.body, pageWidth - 80);
-      const blockHeight = 16 + bodyLines.length * 12 + 10;
-      if (ty + blockHeight > pageHeight - 50) {
-        doc.addPage();
-        ty = 50;
-      }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.5);
-      doc.setTextColor(...INK);
-      doc.text(clause.heading, 40, ty);
-      ty += 14;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9.5);
-      doc.setTextColor(...MUTED);
-      doc.text(bodyLines, 40, ty);
-      ty += bodyLines.length * 12 + 14;
-    });
-
-    doc.save("PickTheBrick-Quotation.pdf");
   }
 
   return (
@@ -421,20 +309,24 @@ export default function BuildClient({
           <img src="/logo.png" alt="PickTheBrick" />
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div className="cart-pill">
-            <span>
-              {cart.length} item{cart.length !== 1 ? "s" : ""}
+          {editAsCaptain ? (
+            <span style={{ fontSize: 13, fontWeight: 600 }}>
+              Editing {clientLabel ?? "client"}&apos;s quote
             </span>
-            <span className="badge">{cart.length}</span>
-          </div>
-          <a href="/my-quotes" style={{ fontSize: 13, fontWeight: 600 }}>
-            My quotes
-          </a>
-          <button onClick={handleSignOut} style={{ fontSize: 13, fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}>
-            Sign out
-          </button>
+          ) : (
+            <a href="/my-quotes" style={{ fontSize: 13, fontWeight: 600 }}>
+              My quotes
+            </a>
+          )}
         </div>
       </header>
+
+      {editAsCaptain && (
+        <div style={{ padding: "8px 34px", background: "var(--accent-soft, #fff4e5)", fontSize: 12.5 }}>
+          You&apos;re editing this quote on the client&apos;s behalf. Changes save immediately and are reflected on
+          their dashboard right away.
+        </div>
+      )}
 
       {error && <div style={{ padding: "8px 34px", color: "#b91c1c", fontSize: 13 }}>{error}</div>}
 
@@ -458,7 +350,7 @@ export default function BuildClient({
           initialOfficeSize={officeSize}
           onSave={handleSaveDetails}
           onClose={() => setShowDetailsModal(false)}
-          dismissable={!!(location && officeSize)}
+          dismissable={editAsCaptain || !!(location && officeSize)}
         />
       )}
 
@@ -643,6 +535,29 @@ export default function BuildClient({
               Review my quote &rarr;
             </button>
 
+            {!editAsCaptain &&
+              (!confirmingStartOver ? (
+                <button
+                  className="start-over-btn"
+                  disabled={cart.length === 0 && !location && !officeSize}
+                  onClick={() => setConfirmingStartOver(true)}
+                >
+                  Start over
+                </button>
+              ) : (
+                <div className="start-over-confirm">
+                  <p>This will delete your current selections. Are you sure?</p>
+                  <div className="start-over-confirm-actions">
+                    <button className="start-over-confirm-cancel" disabled={startingOver} onClick={() => setConfirmingStartOver(false)}>
+                      Cancel
+                    </button>
+                    <button className="start-over-confirm-yes" disabled={startingOver} onClick={handleStartOver}>
+                      {startingOver ? "Clearing..." : "Yes, start over"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+
             {banners.length > 0 && (
               <div className="banner-slot">
                 {banners.map((b) => (
@@ -744,35 +659,65 @@ export default function BuildClient({
               </div>
             </div>
 
-            <TermsSection agreed={agreedToTerms} onAgreedChange={setAgreedToTerms} />
-
-            {!confirmingComplete ? (
+            {editAsCaptain ? (
               <div className="action-row">
                 <button className="action-btn secondary" onClick={downloadPdf}>
                   Download PDF
                 </button>
+                <button className="action-btn secondary" onClick={() => setView("build")}>
+                  &larr; Back to editing
+                </button>
                 <button
                   className="action-btn primary"
-                  disabled={!agreedToTerms}
-                  title={!agreedToTerms ? "Please agree to the Terms & Conditions first" : undefined}
-                  onClick={() => setConfirmingComplete(true)}
+                  onClick={() => {
+                    // This is a captain's own new tab opened from their dashboard
+                    // (see the "Edit client's quote" link in CaptainClient.tsx) -
+                    // closing it returns them straight to the already-open
+                    // dashboard tab instead of leaving a second, stale one
+                    // behind. Falls back to navigating in place for browsers
+                    // that refuse the script-close (e.g. no window.opener).
+                    window.close();
+                    setTimeout(() => {
+                      if (!window.closed) window.location.href = "/captain";
+                    }, 300);
+                  }}
                 >
-                  Complete quote
+                  Done — back to project
                 </button>
               </div>
             ) : (
-              <div className="action-row">
-                <p style={{ flexBasis: "100%", fontSize: 13, color: "var(--muted)" }}>
-                  Confirming saves this quote as final. A PickTheBrick Captain will reach out shortly to get your office
-                  moving.
-                </p>
-                <button className="action-btn secondary" onClick={() => setConfirmingComplete(false)}>
-                  Cancel
-                </button>
-                <button className="action-btn primary" disabled={submitting} onClick={handleSubmit}>
-                  {submitting ? "Submitting..." : "Yes, submit quote"}
-                </button>
-              </div>
+              <>
+                <TermsSection agreed={agreedToTerms} onAgreedChange={setAgreedToTerms} />
+
+                {!confirmingComplete ? (
+                  <div className="action-row">
+                    <button className="action-btn secondary" onClick={downloadPdf}>
+                      Download PDF
+                    </button>
+                    <button
+                      className="action-btn primary"
+                      disabled={!agreedToTerms}
+                      title={!agreedToTerms ? "Please agree to the Terms & Conditions first" : undefined}
+                      onClick={() => setConfirmingComplete(true)}
+                    >
+                      Complete quote
+                    </button>
+                  </div>
+                ) : (
+                  <div className="action-row">
+                    <p style={{ flexBasis: "100%", fontSize: 13, color: "var(--muted)" }}>
+                      Confirming saves this quote as final. A PickTheBrick Captain will reach out shortly to get your
+                      office moving.
+                    </p>
+                    <button className="action-btn secondary" onClick={() => setConfirmingComplete(false)}>
+                      Cancel
+                    </button>
+                    <button className="action-btn primary" disabled={submitting} onClick={handleSubmit}>
+                      {submitting ? "Submitting..." : "Yes, submit quote"}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -815,6 +760,9 @@ export default function BuildClient({
                 unit: p.unit,
                 images: p.images.map((i) => i.path),
                 colorOptions: p.colorOptions,
+                sizes: p.sizes,
+                sizeVariantsEnabled: p.sizeVariantsEnabled,
+                colorVariantsEnabled: p.colorVariantsEnabled,
                 specs: p.specs,
                 downloads: p.downloads,
               }}

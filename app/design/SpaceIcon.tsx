@@ -1,11 +1,16 @@
 import type { ReactElement } from "react";
 
-// Small isometric "room corner" illustrations for the space-picker cards -
-// a shared floor+walls shell (drawn once per icon) plus a couple of simple
-// isometric boxes standing in for each space's signature furniture, so every
-// icon reads as a distinct little room rather than a generic glyph.
+// Small isometric "room corner" illustrations for the space-picker cards and
+// the Features wizard - a shared floor+walls shell (drawn once per icon) plus
+// a couple of simple isometric boxes standing in for each space's furniture.
+// When `features` is omitted (the space-picker grid) every optional piece
+// renders, giving a full preview icon. When `features` is passed (the
+// Features wizard) each optional piece only renders if its matching
+// boolean question answer is true, so the icon grows live as the client
+// answers questions.
 
 type Point = { x: number; y: number };
+type Features = Record<string, boolean>;
 
 const CENTER: Point = { x: 50, y: 62 };
 // One "floor unit" step along each of the two horizontal room axes.
@@ -17,6 +22,10 @@ function add(p: Point, v: { dx: number; dy: number }, n = 1): Point {
 }
 function pts(points: Point[]): string {
   return points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+}
+
+function show(features: Features | undefined, key: string): boolean {
+  return features ? !!features[key] : true;
 }
 
 // A box floating on the floor, anchored at `origin` (in right/left step
@@ -83,16 +92,43 @@ const INK_LIGHT = "#756e63";
 const GOLD = "#f2a254";
 const GOLD_TOP = "#f6bd80";
 const GOLD_DEEP = "#c97e37";
+const BLUE = "#a9cfdb";
+const BLUE_TOP = "#cfe6ee";
+const BLUE_DEEP = "#8fb8c6";
+const PALE = "#cfc9bc";
+const PALE_TOP = "#e7e2d8";
+const PALE_DEEP = "#b6afa0";
+const WHITEBOARD = "#eef0ea";
+const WHITEBOARD_TOP = "#f6f7f2";
+const WHITEBOARD_DEEP = "#c2c7b3";
 
-function ReceptionIcon() {
+function ReceptionIcon({ features }: { features?: Features }) {
   return (
     <>
-      <IsoBox originR={-1.3} originL={-0.3} w={1.6} d={0.7} h={9} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
-      <IsoBox originR={-0.4} originL={-0.5} w={0.35} d={0.35} h={13} top={INK_TOP} right={INK} left={INK} />
+      {show(features, "receptionDesk") && (
+        <>
+          <IsoBox originR={-1.3} originL={-0.3} w={1.6} d={0.7} h={9} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
+          <IsoBox originR={-0.4} originL={-0.5} w={0.35} d={0.35} h={13} top={INK_TOP} right={INK} left={INK} />
+        </>
+      )}
+      {show(features, "logoWall") && (
+        <IsoBox originR={1.1} originL={-1.7} w={0.15} d={1.3} h={9} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
+      )}
+      {show(features, "waitingArea") && (
+        <>
+          <IsoBox originR={-1.7} originL={0.6} w={0.4} d={0.4} h={3} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
+          <IsoBox originR={-2.1} originL={0.9} w={0.4} d={0.4} h={3} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
+        </>
+      )}
+      {show(features, "displayWall") && (
+        <IsoBox originR={-1.9} originL={-0.3} w={0.15} d={1.0} h={6} top="#8b8478" right={INK_LIGHT} left="#645d53" />
+      )}
+      {show(features, "displayScreen") && <IsoBox originR={0.3} originL={-1.9} w={0.15} d={0.5} h={5} top={INK_TOP} right={INK} left={INK} />}
     </>
   );
 }
-function MeetingRoomIcon() {
+
+function MeetingRoomIcon({ features }: { features?: Features }) {
   return (
     <>
       <IsoBox originR={-0.9} originL={-0.9} w={1.8} d={1.8} h={5} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
@@ -104,80 +140,170 @@ function MeetingRoomIcon() {
       ].map(([r, l], i) => (
         <IsoBox key={i} originR={r} originL={l} w={0.3} d={0.3} h={4} top={INK_TOP} right={INK} left={INK} />
       ))}
+      {show(features, "videoScreen") && (
+        <IsoBox originR={1.3} originL={-1.3} w={0.15} d={0.8} h={6} top={INK_TOP} right={INK} left={INK} />
+      )}
+      {show(features, "whiteboard") && (
+        <IsoBox originR={-1.9} originL={-0.5} w={0.15} d={1.0} h={5} top={WHITEBOARD_TOP} right={WHITEBOARD} left={WHITEBOARD_DEEP} />
+      )}
+      {show(features, "credenza") && (
+        <IsoBox originR={-0.6} originL={1.3} w={1.2} d={0.4} h={3} top={PALE_TOP} right={PALE} left={PALE_DEEP} />
+      )}
     </>
   );
 }
-function OpenWorkstationIcon() {
+
+function OpenWorkstationIcon({ features }: { features?: Features }) {
   return (
     <>
       {[-1.4, -0.1, 1.2].map((r, i) => (
         <IsoBox key={i} originR={r} originL={-0.9} w={1} d={0.55} h={4.5} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
       ))}
+      {show(features, "acousticPanels") && (
+        <>
+          <IsoBox originR={-1.4} originL={0.3} w={0.15} d={0.3} h={5} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
+          <IsoBox originR={1.2} originL={0.3} w={0.15} d={0.3} h={5} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
+        </>
+      )}
+      {show(features, "breakoutSeating") && (
+        <>
+          <IsoBox originR={1.6} originL={-1.6} w={0.4} d={0.4} h={3} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
+          <IsoBox originR={1.9} originL={-1.3} w={0.4} d={0.4} h={3} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
+        </>
+      )}
     </>
   );
 }
-function ClosedWorkstationIcon() {
+
+function ClosedWorkstationIcon({ features }: { features?: Features }) {
   return (
     <>
       <IsoBox originR={-1} originL={-0.4} w={1.6} d={0.6} h={4.5} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
       <IsoBox originR={-1} originL={-0.4} w={0.15} d={0.6} h={9} top={INK_LIGHT} right={INK_LIGHT} left={INK} />
       <IsoBox originR={0.6} originL={-0.4} w={0.15} d={0.6} h={9} top={INK_LIGHT} right={INK_LIGHT} left={INK} />
-    </>
-  );
-}
-function ExecutiveCabinIcon() {
-  return (
-    <>
-      <IsoBox originR={-1.3} originL={-0.6} w={1.9} d={1.1} h={6} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
-      <IsoBox originR={-0.5} originL={0.7} w={0.6} d={0.4} h={4} top={INK_TOP} right={INK} left={INK} />
-      <IsoBox originR={1.3} originL={-1.2} w={0.4} d={0.4} h={5.5} top="#8bbf7a" right="#6fa25e" left="#57894a" />
-    </>
-  );
-}
-function StoreRoomIcon() {
-  return (
-    <>
-      <IsoBox originR={-1.1} originL={-0.9} w={0.9} d={0.9} h={4} top={INK_LIGHT} right="#645d53" left={INK} />
-      <IsoBox originR={-0.1} originL={-0.9} w={0.9} d={0.9} h={5.5} top={INK_LIGHT} right="#645d53" left={INK} />
-      <IsoBox originR={-1.1} originL={0.1} w={0.9} d={0.9} h={3} top={INK_LIGHT} right="#645d53" left={INK} />
-    </>
-  );
-}
-function ServeRoomIcon() {
-  return (
-    <>
-      <IsoBox originR={-1.4} originL={-0.4} w={1.7} d={0.7} h={7} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
-      <IsoBox originR={0.1} originL={-1} w={0.3} d={0.3} h={3} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
-    </>
-  );
-}
-function PrayerRoomIcon() {
-  return (
-    <>
-      <IsoBox originR={-0.5} originL={-0.9} w={0.9} d={1.7} h={0.6} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
-      <IsoBox originR={-0.15} originL={0.1} w={0.2} d={0.5} h={10} top="#efe6d3" right="#e3d7ba" left="#d3c39e" />
-    </>
-  );
-}
-function PantryIcon() {
-  return (
-    <>
-      <IsoBox originR={-1.1} originL={-0.9} w={0.7} d={0.55} h={12} top="#e7e2d8" right="#cfc9bc" left="#b6afa0" />
-      <IsoBox originR={-0.2} originL={-0.9} w={1.1} d={0.55} h={5} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
-    </>
-  );
-}
-function WashroomIcon() {
-  return (
-    <>
-      <IsoBox originR={-0.8} originL={-0.5} w={1.1} d={0.6} h={3} top="#e7e2d8" right="#cfc9bc" left="#b6afa0" />
-      <IsoBox originR={-0.55} originL={-0.25} w={0.6} d={0.15} h={0.8} top="#cfe6ee" right="#a9cfdb" left="#8fb8c6" />
-      <IsoBox originR={-0.5} originL={0.9} w={0.5} d={0.15} h={7} top="#dcecef" right="#bcd8dd" left="#a3c3c8" />
+      {show(features, "glassPartition") && (
+        <IsoBox originR={-1.3} originL={0.5} w={0.15} d={0.8} h={7} top={BLUE_TOP} right={BLUE} left={BLUE_DEEP} />
+      )}
+      {show(features, "storageUnit") && (
+        <IsoBox originR={0.7} originL={0.6} w={0.8} d={0.4} h={3} top={PALE_TOP} right={PALE} left={PALE_DEEP} />
+      )}
     </>
   );
 }
 
-const ICONS: Record<string, () => ReactElement> = {
+function ExecutiveCabinIcon({ features }: { features?: Features }) {
+  return (
+    <>
+      <IsoBox originR={-1.3} originL={-0.6} w={1.9} d={1.1} h={6} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
+      <IsoBox originR={1.3} originL={-1.2} w={0.4} d={0.4} h={5.5} top="#8bbf7a" right="#6fa25e" left="#57894a" />
+      {show(features, "meetingTable") && (
+        <IsoBox originR={-0.5} originL={0.7} w={0.6} d={0.4} h={4} top={INK_TOP} right={INK} left={INK} />
+      )}
+      {show(features, "sofaSeating") && (
+        <IsoBox originR={-1.6} originL={-1.3} w={1.0} d={0.5} h={3} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
+      )}
+      {show(features, "privateWashroom") && (
+        <IsoBox originR={1.4} originL={1.0} w={0.6} d={0.6} h={7} top={BLUE_TOP} right={BLUE} left={BLUE_DEEP} />
+      )}
+      {show(features, "bookshelf") && (
+        <IsoBox originR={-1.9} originL={0.8} w={0.3} d={0.4} h={9} top={PALE_TOP} right={PALE} left={PALE_DEEP} />
+      )}
+    </>
+  );
+}
+
+function StoreRoomIcon({ features }: { features?: Features }) {
+  return (
+    <>
+      {show(features, "shelvingRacks") && (
+        <>
+          <IsoBox originR={-1.1} originL={-0.9} w={0.9} d={0.9} h={4} top={INK_LIGHT} right="#645d53" left={INK} />
+          <IsoBox originR={-0.1} originL={-0.9} w={0.9} d={0.9} h={5.5} top={INK_LIGHT} right="#645d53" left={INK} />
+          <IsoBox originR={-1.1} originL={0.1} w={0.9} d={0.9} h={3} top={INK_LIGHT} right="#645d53" left={INK} />
+        </>
+      )}
+      {show(features, "lockableCabinet") && (
+        <IsoBox originR={1.0} originL={-1.0} w={0.6} d={0.5} h={5} top={INK_TOP} right={INK} left={INK} />
+      )}
+      {show(features, "heavyDutyFlooring") && (
+        <IsoBox originR={-0.3} originL={-0.3} w={1.6} d={1.6} h={0.3} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
+      )}
+    </>
+  );
+}
+
+function ServeRoomIcon({ features }: { features?: Features }) {
+  return (
+    <>
+      {show(features, "servingCounter") && (
+        <>
+          <IsoBox originR={-1.4} originL={-0.4} w={1.7} d={0.7} h={7} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
+          <IsoBox originR={0.1} originL={-1} w={0.3} d={0.3} h={3} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
+        </>
+      )}
+      {show(features, "sink") && <IsoBox originR={0.3} originL={-1.2} w={0.4} d={0.3} h={2} top={BLUE_TOP} right={BLUE} left={BLUE_DEEP} />}
+      {show(features, "applianceWall") && (
+        <IsoBox originR={1.3} originL={-0.6} w={0.3} d={0.3} h={8} top={PALE_TOP} right={PALE} left={PALE_DEEP} />
+      )}
+    </>
+  );
+}
+
+function PrayerRoomIcon({ features }: { features?: Features }) {
+  return (
+    <>
+      {show(features, "prayerMats") && (
+        <IsoBox originR={-0.5} originL={-0.9} w={0.9} d={1.7} h={0.6} top={GOLD_TOP} right={GOLD} left={GOLD_DEEP} />
+      )}
+      {show(features, "qiblaMarker") && (
+        <IsoBox originR={-0.15} originL={0.1} w={0.2} d={0.5} h={10} top="#efe6d3" right="#e3d7ba" left="#d3c39e" />
+      )}
+      {show(features, "wuduArea") && (
+        <IsoBox originR={1.0} originL={-1.3} w={0.5} d={0.4} h={1.5} top={BLUE_TOP} right={BLUE} left={BLUE_DEEP} />
+      )}
+    </>
+  );
+}
+
+function PantryIcon({ features }: { features?: Features }) {
+  return (
+    <>
+      {show(features, "applianceWall") && (
+        <IsoBox originR={-1.1} originL={-0.9} w={0.7} d={0.55} h={12} top={PALE_TOP} right={PALE} left={PALE_DEEP} />
+      )}
+      {show(features, "islandCounter") && (
+        <IsoBox originR={-0.2} originL={-0.9} w={1.1} d={0.55} h={5} top={ACCENT_TOP} right={ACCENT} left={ACCENT_DEEP} />
+      )}
+      {show(features, "barSeating") && (
+        <>
+          <IsoBox originR={0.6} originL={-1.5} w={0.3} d={0.3} h={3} top={ACCENT_TOP} right={ACCENT_DEEP} left="#a8442a" />
+          <IsoBox originR={1.0} originL={-1.2} w={0.3} d={0.3} h={3} top={ACCENT_TOP} right={ACCENT_DEEP} left="#a8442a" />
+        </>
+      )}
+    </>
+  );
+}
+
+function WashroomIcon({ features }: { features?: Features }) {
+  return (
+    <>
+      {show(features, "vanityCounter") && (
+        <>
+          <IsoBox originR={-0.8} originL={-0.5} w={1.1} d={0.6} h={3} top={PALE_TOP} right={PALE} left={PALE_DEEP} />
+          <IsoBox originR={-0.55} originL={-0.25} w={0.6} d={0.15} h={0.8} top={BLUE_TOP} right={BLUE} left={BLUE_DEEP} />
+        </>
+      )}
+      {show(features, "showerCubicle") && (
+        <IsoBox originR={-0.5} originL={0.9} w={0.5} d={0.15} h={7} top="#dcecef" right="#bcd8dd" left="#a3c3c8" />
+      )}
+      {show(features, "accessibleFixtures") && (
+        <IsoBox originR={0.8} originL={-0.6} w={0.15} d={0.6} h={4} top={INK_LIGHT} right={INK_LIGHT} left={INK} />
+      )}
+    </>
+  );
+}
+
+const ICONS: Record<string, (props: { features?: Features }) => ReactElement> = {
   reception: ReceptionIcon,
   meetingRoom: MeetingRoomIcon,
   openWorkstation: OpenWorkstationIcon,
@@ -190,12 +316,20 @@ const ICONS: Record<string, () => ReactElement> = {
   washroom: WashroomIcon,
 };
 
-export default function SpaceIcon({ spaceKey, className }: { spaceKey: string; className?: string }) {
+export default function SpaceIcon({
+  spaceKey,
+  className,
+  features,
+}: {
+  spaceKey: string;
+  className?: string;
+  features?: Features;
+}) {
   const Furniture = ICONS[spaceKey];
   return (
     <svg viewBox="0 0 100 100" className={className}>
       <RoomShell />
-      {Furniture && <Furniture />}
+      {Furniture && <Furniture features={features} />}
     </svg>
   );
 }

@@ -1,13 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signUp, signIn } from "@/app/actions/auth";
 
+function partnerSignupRole(): "contractor" | "designer" | null {
+  if (typeof window === "undefined") return null;
+  const role = new URLSearchParams(window.location.search).get("role");
+  return role === "contractor" || role === "designer" ? role : null;
+}
+
 export default function LoginPage() {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [partnerRole] = useState(partnerSignupRole);
+  const [mode, setMode] = useState<"signin" | "signup">(() => (partnerSignupRole() ? "signup" : "signin"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [company, setCompany] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +25,19 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const result = mode === "signup" ? await signUp({ email, password, fullName }) : await signIn({ email, password });
+      const result =
+        mode === "signup"
+          ? await signUp({
+              email,
+              password,
+              fullName,
+              company: partnerRole ? undefined : company,
+              role: partnerRole ?? undefined,
+            })
+          : // Signing in through the public form - see signIn()'s
+            // isPendingApplicant handling for why a not-yet-approved
+            // contractor/designer still lands on their own apply page.
+            await signIn({ email, password, viaStaffLogin: false });
       if ("error" in result) {
         setError(result.error);
         return;
@@ -29,12 +50,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-[var(--bg)] px-4 py-16">
-      <div className="w-full max-w-sm border border-[var(--line)] bg-[var(--surface)] p-8" style={{ borderRadius: "var(--radius)" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="PickTheBrick" style={{ height: 44, width: "auto", marginBottom: 18 }} />
+    <div className="flex flex-1 flex-col bg-[var(--bg)]">
+      <header className="flex items-center px-8 py-3" style={{ borderBottom: "1px solid var(--line)" }}>
+        <Link href="/" className="inline-flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="PickTheBrick" style={{ height: 40, width: "auto" }} />
+        </Link>
+      </header>
+      <div className="flex flex-1 items-center justify-center px-4 py-16">
+        <div className="w-full max-w-sm border border-[var(--line)] bg-[var(--surface)] p-8" style={{ borderRadius: "var(--radius)" }}>
         <p className="mt-1 mb-6 text-sm text-[var(--muted)]">
-          {mode === "signin" ? "Sign in to build your fitout quote." : "Create an account to get started."}
+          {mode === "signin"
+            ? "Sign in to build your fitout quote."
+            : partnerRole === "contractor"
+              ? "Create a contractor account to apply to partner with us."
+              : partnerRole === "designer"
+                ? "Create a designer account to apply to partner with us."
+                : "Create an account to get started."}
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -44,6 +76,16 @@ export default function LoginPage() {
               placeholder="Full name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              className="border border-[var(--line)] px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
+              style={{ borderRadius: "var(--radius)" }}
+            />
+          )}
+          {mode === "signup" && !partnerRole && (
+            <input
+              type="text"
+              placeholder="Company name (optional)"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
               className="border border-[var(--line)] px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
               style={{ borderRadius: "var(--radius)" }}
             />
@@ -90,6 +132,7 @@ export default function LoginPage() {
         >
           {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
         </button>
+        </div>
       </div>
     </div>
   );

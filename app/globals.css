@@ -22,3 +22,124 @@ body {
   color: var(--fg);
   font-family: var(--font-raleway), Arial, Helvetica, sans-serif;
 }
+
+/* Always-on-top account widget (dashboard + sign out) - see app/components/AccountBar.tsx */
+.account-bar {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1000;
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+}
+.account-bar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+}
+.account-bar-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+.account-bar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Below ~700px, page headers wrap and their own right-aligned links can
+   reach the top-right corner - move the bar to the bottom-right instead of
+   chasing every page's header layout at every breakpoint. */
+@media (max-width: 700px) {
+  .account-bar {
+    top: auto;
+    bottom: 14px;
+  }
+}
+
+/* Floating WhatsApp/AI-chat buttons for clients who get stuck - see
+   app/components/SupportChatButtons.tsx. Sits bottom-right, stacked above
+   the home page's .staff-login-link. */
+.support-chat-buttons {
+  position: fixed;
+  right: 16px;
+  bottom: 84px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.support-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: #fff;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+  transition: transform 0.15s;
+}
+.support-chat-btn:hover {
+  transform: translateY(-2px);
+}
+.support-chat-btn.whatsapp {
+  background: #25d366;
+}
+.support-chat-btn.ai {
+  background: var(--accent);
+}
+
+/* On mobile, .account-bar moves to bottom-right too - shift the chat
+   buttons to bottom-left instead of stacking on top of it. */
+@media (max-width: 700px) {
+  .support-chat-buttons {
+    right: auto;
+    left: 16px;
+    bottom: 16px;
+  }
+}
+
+/* Click-to-enlarge overlay - see app/components/Lightbox.tsx. Global since
+   it's used from both the client Build modal and the admin product editor. */
+.lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(20, 18, 15, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  cursor: zoom-out;
+}
+.lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius);
+  cursor: default;
+}
+.lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 34px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+}

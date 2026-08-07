@@ -2,7 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import type { Role } from "@/app/generated/prisma/enums";
+import { Role } from "@/app/generated/prisma/enums";
 
 const SESSION_COOKIE = "ptb_session";
 const SESSION_DAYS = 30;
@@ -10,6 +10,11 @@ const SESSION_DAYS = 30;
 export type SessionUser = {
   id: string;
   email: string;
+  // Effective role for this session, not necessarily the account's real
+  // `User.role` - see effectiveRole() below. Every existing role-gating check
+  // (proxy.ts, page.tsx redirects, requireAdmin()-style action guards) reads
+  // this field, so the client/staff-login split needed no changes anywhere
+  // else.
   role: Role;
   fullName: string | null;
 };
@@ -22,9 +27,19 @@ export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
-export async function createSession(userId: string) {
+// A staff-capable account (designer/contractor/marketing/captain/admin/
+// super_admin) that signed in through the public /login form is treated as a
+// plain client for the whole lifetime of that session - the same email and
+// password only unlock the role's real dashboard when authenticated via the
+// hidden /staff-login route. A `client` account behaves identically either
+// way, since "client" is already its effective role. See Session.viaStaffLogin.
+export function effectiveRole(realRole: Role, viaStaffLogin: boolean): Role {
+  return viaStaffLogin ? realRole : Role.client;
+}
+
+export async function createSession(userId: string, viaStaffLogin: boolean) {
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  const session = await prisma.session.create({ data: { userId, expiresAt } });
+  const session = await prisma.session.create({ data: { userId, expiresAt, viaStaffLogin } });
 
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, session.id, {
@@ -47,7 +62,7 @@ export async function getSession(): Promise<SessionUser | null> {
   return {
     id: session.user.id,
     email: session.user.email,
-    role: session.user.role,
+    role: effectiveRole(session.user.role, session.viaStaffLogin),
     fullName: session.user.fullName,
   };
 }

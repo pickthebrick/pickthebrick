@@ -16,7 +16,12 @@ enum Role {
   captain
   contractor
   admin
+  // Everything a regular admin can do, plus managing admin accounts
+  // (create/delete) and receiving job applications - see lib/roles.ts'
+  // ADMIN_ROLES helper, which is what every admin-only gate actually checks.
+  super_admin
   designer
+  marketing
 }
 
 enum DesignRequestStatus {
@@ -40,6 +45,38 @@ enum QuoteStatus {
   paid
 }
 
+enum ContractorApplicationStatus {
+  pending
+  approved
+  rejected
+  blocked
+}
+
+enum DesignerApplicationStatus {
+  pending
+  approved
+  rejected
+  blocked
+}
+
+enum SiteInspectionStatus {
+  requested
+  scheduled
+  completed
+  cancelled
+}
+
+enum PaymentClaimStatus {
+  pending
+  approved
+  paid
+}
+
+enum TimelineItemStatus {
+  unassigned
+  assigned
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -47,6 +84,10 @@ model User {
   fullName     String?
   company      String?
   phone        String?
+  // Set from the admin Database tab (or the contractor apply form, going
+  // forward) - kept distinct from `phone` since a WhatsApp number can differ
+  // from the general contact number.
+  whatsappNumber String?
   role         Role     @default(client)
   createdAt    DateTime @default(now())
 
@@ -58,6 +99,12 @@ model User {
 
   designRequestsAsClient   DesignRequest[] @relation("ClientDesignRequests")
   designRequestsAsDesigner DesignRequest[] @relation("DesignerAssignments")
+
+  contractorApplication ContractorApplication?
+  designerApplication   DesignerApplication?
+  projectAssignments    ProjectContractor[]
+  timelineItemsAsContractor ProjectTimelineItem[]
+  timelineItemApplications TimelineItemApplication[]
 }
 
 model Session {
@@ -66,6 +113,13 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  // Which login entry point created this session - the public /login form
+  // (false) or the hidden /staff-login route (true). A staff-capable account
+  // (designer/contractor/marketing/captain/admin/super_admin) that signs in
+  // through the public form gets treated as a plain client for the lifetime
+  // of that session (see getSession() in lib/auth.ts and proxy.ts) - the same
+  // credentials only unlock the role's actual dashboard via /staff-login.
+  viaStaffLogin Boolean @default(false)
 }
 
 model Category {
@@ -77,7 +131,19 @@ model Category {
   highlight String?
   enabled   Boolean @default(true)
   sortOrder Int     @default(0)
+  // What PickTheBrick pays a contractor is always less than what it sells
+  // this category's work for - the gap between buy and sell price is the
+  // business's margin. Adjustable per category by the super admin only (see
+  // app/admin/contractor-pricing); every price a contractor sees (open job
+  // values, payment claim amounts) is the client sell price reduced by this
+  // percent. Defaults to 15% across every category.
+  contractorReductionPercent Int @default(15)
   types     Type[]
+
+  applications ContractorApplicationCategory[]
+  quoteItems   QuoteItem[]
+  projectContractors ProjectContractor[]
+  timelineItems ProjectTimelineItem[]
 }
 
 model Type {
@@ -88,6 +154,9 @@ model Type {
   label      String
   sortOrder  Int       @default(0)
   subtypes   Subtype[]
+
+  timelineItems ProjectTimelineItem[]
+  applications  ContractorApplicationType[]
 
   @@unique([categoryId, key])
 }
@@ -118,10 +187,17 @@ model Product {
   unit        Unit?
   featured    Boolean @default(false)
   sortOrder   Int     @default(0)
+  // Per-product override so the client-facing Size/Color sections can be
+  // hidden even when rows exist (e.g. sourced data isn't a fit) - not every
+  // product has real size/color variation, unlike the old hardcoded SIZES
+  // list that showed on every product regardless.
+  sizeVariantsEnabled  Boolean @default(true)
+  colorVariantsEnabled Boolean @default(true)
 
   quoteItems   QuoteItem[]
   images       ProductImage[]
   colorOptions ProductColorOption[]
+  sizes        ProductSize[]
   specs        ProductSpec[]
   downloads    ProductDownload[]
 }
@@ -140,6 +216,21 @@ model ProductColorOption {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   name      String
   hex       String
+  // Real swatch photo (e.g. a wood/fabric finish shot) - takes priority over
+  // the flat hex circle on the client when present.
+  imagePath String?
+  sortOrder Int     @default(0)
+}
+
+// Real dimension/size variants (e.g. "W1200 X D740 X H750 MM") - a product
+// with none of these rows never shows a Size section on the client, instead
+// of the old hardcoded SIZES list every product used to show regardless of
+// fit.
+model ProductSize {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label     String
   sortOrder Int     @default(0)
 }
 
@@ -176,6 +267,9 @@ model Quote {
   materialsTotal Float       @default(0)
   installTotal   Float       @default(0)
   grandTotal     Float       @default(0)
+  // Client-facing daily-sequential reference number, DD/MM/YY/NN, assigned
+  // once the quote is submitted - null for quotes still in draft.
+  referenceNumber String?    @unique
   createdAt      DateTime    @default(now())
   submittedAt    DateTime?
   confirmedAt    DateTime?
@@ -184,6 +278,12 @@ model Quote {
 
   items         QuoteItem[]
   statusHistory QuoteStatusHistory[]
+
+  progress     ProjectProgress?
+  inspections  SiteInspectionRequest[]
+  paymentClaims PaymentClaim[]
+  projectContractors ProjectContractor[]
+  timelineItems ProjectTimelineItem[]
 }
 
 model QuoteItem {
@@ -192,6 +292,11 @@ model QuoteItem {
   quote         Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   productId     String?
   product       Product? @relation(fields: [productId], references: [id])
+  // Denormalized snapshot of the category at quote time, kept even if the
+  // catalog category is later renamed/removed. categoryId is the live FK,
+  // added later so it's null on items created before this field existed.
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id])
   name          String
   categoryLabel String
   typeLabel     String
@@ -229,12 +334,60 @@ model DesignRequest {
   designerId   String?
   designer     User?               @relation("DesignerAssignments", fields: [designerId], references: [id])
   designerNote String?
+  // Snapshot of the package price computed from packageKey+sqft at the
+  // moment the request was started (see lib/designPricing.ts) - the client
+  // dashboard/checkout screens read this instead of recomputing, since the
+  // pricing table could change later without altering an already-started request.
+  packagePrice Float?
+  // Set when the client has no layout of their own and instead requests a
+  // captain-arranged site visit (AED 500, added to packagePrice for the total).
+  siteVisitRequested Boolean @default(false)
+  siteVisitFee       Float   @default(0)
+  // The client's preferred date for the site visit, picked on the handover
+  // screen before proceeding to checkout - purely informational for the
+  // captain, who arranges the actual visit (see app/actions/design.ts's
+  // requestSiteVisit and the captain's own site-inspection scheduling in
+  // app/actions/progress.ts, which is a separate, later-stage concept).
+  siteVisitPreferredDate DateTime?
+  // Payment method chosen on the post-handover checkout screen - UI + manual
+  // record only, no gateway is wired up; admin reconciles cash/pay-later offline.
+  paymentMethod           String?
+  paymentMethodSelectedAt DateTime?
   createdAt    DateTime            @default(now())
   submittedAt  DateTime?
   assignedAt   DateTime?
+  // 24 hours after assignedAt, whether from a designer self-claim or an
+  // admin assignment - informational only (see AdminDesignerClient.tsx /
+  // DesignerClient.tsx overdue highlighting), nothing auto-reassigns.
+  claimDeadline DateTime?
   deliveredAt  DateTime?
 
-  files DesignRequestFile[]
+  // How many times the designer has delivered/redelivered a submittal via
+  // submitDesignRevision (app/actions/design.ts) - capped per package (see
+  // MAX_REVISIONS in lib/designPricing.ts). lastRevisionAt gates the next
+  // upload behind a logged client comment (see DesignRequestRevisionComment).
+  revisionsUsed  Int       @default(0)
+  lastRevisionAt DateTime?
+
+  files            DesignRequestFile[]
+  spaceEntries     DesignRequestSpace[]
+  revisionComments DesignRequestRevisionComment[]
+}
+
+// A running log of client<->designer communication about a delivered
+// revision - the designer is required to log a comment here (their own
+// summary if the feedback came via a phone/Zoom call, channel="call")
+// before uploading the next revision, so there's always a record of what
+// was discussed in case of a future dispute. Visible to the client,
+// designer, and admin.
+model DesignRequestRevisionComment {
+  id              String        @id @default(cuid())
+  designRequestId String
+  designRequest   DesignRequest @relation(fields: [designRequestId], references: [id], onDelete: Cascade)
+  authorRole      String
+  body            String
+  channel         String        @default("text")
+  createdAt       DateTime      @default(now())
 }
 
 model DesignRequestFile {
@@ -244,6 +397,34 @@ model DesignRequestFile {
   label           String
   filePath        String
   sortOrder       Int           @default(0)
+  // The uploading designer can self-delete only within a 10-minute window of
+  // this timestamp (see DESIGNER_DELETE_WINDOW_MS in app/actions/design.ts) -
+  // after that, only an admin can remove the file.
+  createdAt       DateTime      @default(now())
+}
+
+// One row per space *instance* the client added on the Spaces step (so 2
+// Executive Cabins = 2 rows), each answered independently in the Features
+// wizard.
+model DesignRequestSpace {
+  id              String  @id @default(cuid())
+  designRequestId String
+  designRequest   DesignRequest @relation(fields: [designRequestId], references: [id], onDelete: Cascade)
+  spaceKey        String
+  sortOrder       Int     @default(0)
+  notes           String?
+
+  answers DesignRequestSpaceAnswer[]
+}
+
+model DesignRequestSpaceAnswer {
+  id                   String             @id @default(cuid())
+  designRequestSpaceId String
+  designRequestSpace   DesignRequestSpace @relation(fields: [designRequestSpaceId], references: [id], onDelete: Cascade)
+  questionKey          String
+  value                String
+
+  @@unique([designRequestSpaceId, questionKey])
 }
 
 // Marketing banners, managed by Admin, shown on the Client build page.
@@ -255,4 +436,259 @@ model Banner {
   active    Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+}
+
+// A contractor's self-submitted application to partner with PickTheBrick -
+// which catalog categories they can work in plus a trade license, pending
+// admin approval before the account can be assigned to any project.
+model ContractorApplication {
+  id              String                       @id @default(cuid())
+  contractorId    String                       @unique
+  contractor      User                         @relation(fields: [contractorId], references: [id])
+  licenseFilePath String
+  // Business details captured on the "become a partner" form - specific to
+  // this application (not the account itself), so re-applying after a
+  // rejection can update them.
+  companyName     String?
+  contactPhone    String?
+  officeLocation  String?
+  status          ContractorApplicationStatus  @default(pending)
+  submittedAt     DateTime                     @default(now())
+  reviewedAt      DateTime?
+  reviewNote      String?
+  // When the contractor accepted the Partner Terms & Conditions - captured
+  // for audit purposes each time they (re)submit (see lib/contractorTerms.ts).
+  agreedTermsAt   DateTime?
+
+  categories ContractorApplicationCategory[]
+  types      ContractorApplicationType[]
+}
+
+model ContractorApplicationCategory {
+  id            String                 @id @default(cuid())
+  applicationId String
+  application   ContractorApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category               @relation(fields: [categoryId], references: [id])
+
+  @@unique([applicationId, categoryId])
+}
+
+// Type-level expertise within an approved category - e.g. a contractor
+// approved for "Flooring" might only cover "Tiles", not "Carpet". Required
+// going forward: every checked category must have at least one type here
+// (see submitContractorApplication in app/actions/contractors.ts). Contractor
+// assignment eligibility (assertAssignableContractor in app/actions/timeline.ts)
+// checks this table, not just ContractorApplicationCategory.
+model ContractorApplicationType {
+  id            String                @id @default(cuid())
+  applicationId String
+  application   ContractorApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  typeId        String
+  type          Type                  @relation(fields: [typeId], references: [id])
+
+  @@unique([applicationId, typeId])
+}
+
+// A designer's self-application to partner with PickTheBrick - mirrors
+// ContractorApplication's shape/status workflow (see app/actions/designers.ts).
+// This is project-based freelance work, not employment - see the copy on
+// app/designer/apply/page.tsx.
+model DesignerApplication {
+  id             String                     @id @default(cuid())
+  designerId     String                     @unique
+  designer       User                       @relation(fields: [designerId], references: [id])
+  knowsRevit     Boolean                    @default(false)
+  location       String?
+  country        String?
+  whatsappNumber String?
+  portfolioUrl   String?
+  cvFilePath     String?
+  status         DesignerApplicationStatus  @default(pending)
+  submittedAt    DateTime                   @default(now())
+  reviewedAt     DateTime?
+  reviewNote     String?
+  agreedTermsAt  DateTime?
+}
+
+// Delivery/site-work progress on a confirmed project - each dimension is
+// reported by the contractor and separately approved (signed off) by the
+// captain; only the approved values count toward payment eligibility.
+model ProjectProgress {
+  id               String   @id @default(cuid())
+  quoteId          String   @unique
+  quote            Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  deliveryReported Int      @default(0)
+  deliveryApproved Int      @default(0)
+  siteReported     Int      @default(0)
+  siteApproved     Int      @default(0)
+  updatedAt        DateTime @updatedAt
+}
+
+model SiteInspectionRequest {
+  id          String                @id @default(cuid())
+  quoteId     String
+  quote       Quote                 @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  status      SiteInspectionStatus  @default(requested)
+  note        String?
+  // The contractor's requested date when they raised this (null when the
+  // captain created the visit directly - see createSiteInspection). The
+  // captain can pick a different scheduledAt when accepting.
+  preferredDate DateTime?
+  scheduledAt DateTime?
+  captainNote String?
+  requestedAt DateTime              @default(now())
+  // The captain's write-up of what they found on site, entered once the
+  // visit is marked completed - frozen after being set (see
+  // recordSiteVisitNotes in app/actions/progress.ts), unlike captainNote
+  // above which is just scheduling context and can be overwritten anytime.
+  visitNotes           String?
+  visitNotesRecordedAt DateTime?
+}
+
+// One contractor assigned to one catalog category within a project - a
+// project can have several (drywall, flooring, etc.), each tracked
+// independently; overall project progress is the average across all of them.
+model ProjectContractor {
+  id               String    @id @default(cuid())
+  quoteId          String
+  quote            Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  contractorId     String
+  contractor       User      @relation(fields: [contractorId], references: [id])
+  categoryId       String?
+  category         Category? @relation(fields: [categoryId], references: [id])
+  deliveryReported Int       @default(0)
+  deliveryApproved Int       @default(0)
+  siteReported     Int       @default(0)
+  siteApproved     Int       @default(0)
+  assignedAt       DateTime  @default(now())
+
+  @@unique([quoteId, categoryId])
+}
+
+// One row of a project's timeline (Gantt-style) - captain (or admin) types
+// a label plus a start/end date; the UI draws a bar from these, no
+// drag/resize interaction. Cascade-deleted with the quote.
+//
+// Also the unit of contractor assignment (replacing the old per-category
+// ProjectContractor flow - see assignTimelineItemContractor in
+// app/actions/timeline.ts): category/type/contractor are set together via
+// the Assign button, flipping status to `assigned`, at which point the
+// delivery/site progress fields below become editable (contractor reports,
+// captain/admin approves - same shape ProjectContractor used to track).
+model ProjectTimelineItem {
+  id        String   @id @default(cuid())
+  quoteId   String
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  label     String
+  startDate DateTime
+  endDate   DateTime
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  categoryId   String?
+  category     Category? @relation(fields: [categoryId], references: [id])
+  typeId       String?
+  type         Type?     @relation(fields: [typeId], references: [id])
+  contractorId String?
+  contractor   User?     @relation(fields: [contractorId], references: [id])
+  status       TimelineItemStatus @default(unassigned)
+
+  deliveryReported Int @default(0)
+  deliveryApproved Int @default(0)
+  siteReported     Int @default(0)
+  siteApproved     Int @default(0)
+
+  applications TimelineItemApplication[]
+}
+
+// A contractor expressing interest in an unassigned timeline item they're
+// type-approved for (see the "Open jobs" tab in app/contractor/ContractorClient.tsx
+// and applyForOpenJob in app/actions/timeline.ts) - purely informational,
+// surfaced to the captain/admin as a marker in the Contractor picker
+// (GanttChart.tsx) so applicants can be given priority; doesn't block the
+// captain/admin from assigning anyone else who's type-approved.
+model TimelineItemApplication {
+  id             String              @id @default(cuid())
+  timelineItemId String
+  timelineItem   ProjectTimelineItem @relation(fields: [timelineItemId], references: [id], onDelete: Cascade)
+  contractorId   String
+  contractor     User                @relation(fields: [contractorId], references: [id])
+  appliedAt      DateTime            @default(now())
+
+  @@unique([timelineItemId, contractorId])
+}
+
+// A contractor's request to draw down payment against currently
+// captain-approved progress - snapshots the eligible percent/amount at
+// request time; admin resolves it (mirrors the existing markQuotePaid flow).
+// Editable copy for every outbound notification event - one row per event
+// key (e.g. "captain_assigned"), holding both channels' text so admin has a
+// single place to edit a given event's messaging. Seeded from the copy that
+// used to be hardcoded in lib/email.ts; sendTemplatedEmail/sendTemplatedWhatsApp
+// read from here at send time, interpolating {{placeholders}}.
+model NotificationTemplate {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  label        String
+  emailSubject String
+  emailBody    String
+  whatsappBody String
+  updatedAt    DateTime @updatedAt
+}
+
+model PaymentClaim {
+  id               String             @id @default(cuid())
+  quoteId          String
+  quote            Quote              @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  requestedPercent Int
+  requestedAmount  Float
+  status           PaymentClaimStatus @default(pending)
+  note             String?
+  requestedAt      DateTime           @default(now())
+  resolvedAt       DateTime?
+}
+
+// A career vacancy, managed from the admin Careers tab - shown publicly on
+// /careers. Applications reference the posting by id but also snapshot its
+// title (jobTitle on JobApplication), so a deleted/closed posting never
+// breaks an already-submitted application's record.
+model JobPosting {
+  id             String   @id @default(cuid())
+  title          String
+  department     String?
+  location       String?
+  employmentType String?
+  description    String
+  enabled        Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id           String      @id @default(cuid())
+  jobPostingId String?
+  jobPosting   JobPosting? @relation(fields: [jobPostingId], references: [id], onDelete: SetNull)
+  // Snapshot of the posting's title at application time - survives the
+  // posting being edited or removed later.
+  jobTitle     String
+  fullName     String
+  email        String
+  phone        String?
+  coverNote    String?
+  cvPath       String
+  createdAt    DateTime    @default(now())
+}
+
+// Singleton row (fixed id "ai-designer-banner") backing the joke "AI
+// Designer" banner on /design - editable from the admin Marketing tab so
+// marketing can change its copy or turn it off without a code change.
+model AiDesignerBanner {
+  id           String  @id @default("ai-designer-banner")
+  headline     String  @default("AI Designer")
+  subText      String  @default("Humans are the best.....But AI designer is coming soon!!!")
+  popupMessage String  @default("Our human designers are still better at it.")
+  enabled      Boolean @default(true)
 }

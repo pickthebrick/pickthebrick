@@ -2,13 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { isAdminRole } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { findSwapIndex } from "@/lib/reorder";
 import { Role, type Unit } from "@/app/generated/prisma/enums";
 
 async function requireAdmin() {
   const session = await getSession();
-  if (!session || session.role !== Role.admin) throw new Error("Admin only");
+  if (!session || !isAdminRole(session.role)) throw new Error("Admin only");
+  return session;
+}
+
+async function requireSuperAdmin() {
+  const session = await getSession();
+  if (!session || session.role !== Role.super_admin) throw new Error("Super admin only");
   return session;
 }
 
@@ -65,6 +72,17 @@ export async function deleteCategory(categoryId: string) {
   await requireAdmin();
   await prisma.category.delete({ where: { id: categoryId } });
   revalidateProducts();
+}
+
+// Only a super admin can adjust what a contractor is paid vs. what
+// PickTheBrick sells for (see Category.contractorReductionPercent and
+// app/admin/contractor-pricing) - a regular admin can manage the catalog
+// itself but not this margin.
+export async function updateCategoryContractorReduction(categoryId: string, percent: number) {
+  await requireSuperAdmin();
+  const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+  await prisma.category.update({ where: { id: categoryId }, data: { contractorReductionPercent: clamped } });
+  revalidatePath("/admin/contractor-pricing");
 }
 
 export async function moveCategory(categoryId: string, direction: "up" | "down") {

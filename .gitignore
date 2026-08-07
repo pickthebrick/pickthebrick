@@ -45,3 +45,7 @@ next-env.d.ts
 # local sqlite database
 /prisma/dev.db
 /prisma/dev.db-journal
+
+# Claude Code local tooling (not part of the app)
+/.claude/worktrees/
+/.claude/settings.local.json

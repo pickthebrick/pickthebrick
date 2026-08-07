@@ -4,6 +4,7 @@ import { writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { isAdminRole } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { Role } from "@/app/generated/prisma/enums";
 
@@ -16,7 +17,7 @@ const ALLOWED_TYPES: Record<string, string> = {
 
 async function requireAdmin() {
   const session = await getSession();
-  if (!session || session.role !== Role.admin) throw new Error("Admin only");
+  if (!session || (!isAdminRole(session.role) && session.role !== Role.marketing)) throw new Error("Admin only");
   return session;
 }
 
@@ -61,4 +62,20 @@ export async function deleteBanner(id: string) {
   await unlink(path.join(process.cwd(), "public", banner.imagePath.replace(/^\//, ""))).catch(() => {});
   revalidatePath("/admin/marketing");
   revalidatePath("/build");
+}
+
+// Singleton row backing the joke "AI Designer" banner on /design - see
+// app/design/page.tsx and the AiDesignerBanner model.
+export async function updateAiDesignerBanner(data: { headline: string; subText: string; popupMessage: string; enabled: boolean }) {
+  await requireAdmin();
+  const headline = data.headline.trim() || "AI Designer";
+  const subText = data.subText.trim() || "Humans are the best.....But AI designer is coming soon!!!";
+  const popupMessage = data.popupMessage.trim() || "Our human designers are still better at it.";
+  await prisma.aiDesignerBanner.upsert({
+    where: { id: "ai-designer-banner" },
+    create: { id: "ai-designer-banner", headline, subText, popupMessage, enabled: data.enabled },
+    update: { headline, subText, popupMessage, enabled: data.enabled },
+  });
+  revalidatePath("/admin/marketing");
+  revalidatePath("/design");
 }

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ProductThumb } from "./ProductThumb";
+import Lightbox from "@/app/components/Lightbox";
 
-const SIZES = ["600x600mm", "300x600mm", "Custom Size"];
 const DOWNLOAD_KINDS: { kind: "datasheet" | "method" | "3d"; label: string }[] = [
   { kind: "datasheet", label: "Data Sheet" },
   { kind: "method", label: "Method Statement" },
@@ -42,7 +42,10 @@ export type ModalProduct = {
   subtypeLabel: string;
   unit: string;
   images?: string[];
-  colorOptions?: { id: string; name: string; hex: string }[];
+  colorOptions?: { id: string; name: string; hex: string; imagePath: string | null }[];
+  sizes?: { id: string; label: string }[];
+  sizeVariantsEnabled?: boolean;
+  colorVariantsEnabled?: boolean;
   specs?: { id: string; label: string; value: string }[];
   downloads?: { id: string; label: string; kind: string; filePath: string }[];
 };
@@ -66,9 +69,13 @@ export default function ProductModal({
   const hasRealImages = images.length > 0;
   const [activeImg, setActiveImg] = useState(0);
   const [color, setColor] = useState<string | null>(product.colorOptions?.[0]?.id ?? null);
-  const [size, setSize] = useState(SIZES[0]);
+  const sizes = product.sizes ?? [];
+  const [size, setSize] = useState(sizes[0]?.id ?? null);
   const [qty, setQty] = useState(initialQty);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const isCount = product.unit === "count";
+  const showColors = (product.colorVariantsEnabled ?? true) && (product.colorOptions?.length ?? 0) > 0;
+  const showSizes = (product.sizeVariantsEnabled ?? true) && sizes.length > 0;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -81,7 +88,7 @@ export default function ProductModal({
         </div>
         <div className="modal-body">
           <div className="modal-gallery">
-            <div className="main-img">
+            <div className="main-img" onClick={() => setLightboxOpen(true)} title="Click to enlarge">
               <ProductThumb seed={product.id} variant={activeImg} images={images} />
             </div>
             <div className="thumb-col">
@@ -125,31 +132,39 @@ export default function ProductModal({
             </button>
           </div>
 
-          {product.colorOptions && product.colorOptions.length > 0 && (
+          {showColors && (
             <>
               <div className="modal-section-label">Color</div>
               <div className="swatch-row">
-                {product.colorOptions.map((c) => (
-                  <div
+                {product.colorOptions!.map((c) => (
+                  <button
                     key={c.id}
+                    type="button"
                     title={c.name}
                     className={`swatch ${color === c.id ? "selected" : ""}`}
-                    style={{ background: c.hex }}
+                    style={c.imagePath ? undefined : { background: c.hex }}
                     onClick={() => setColor(c.id)}
-                  />
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {c.imagePath && <img src={c.imagePath} alt={c.name} />}
+                  </button>
                 ))}
               </div>
             </>
           )}
 
-          <div className="modal-section-label">Size</div>
-          <div className="opt-row">
-            {SIZES.map((s) => (
-              <div key={s} className={`opt-chip ${size === s ? "selected" : ""}`} onClick={() => setSize(s)}>
-                {s}
+          {showSizes && (
+            <>
+              <div className="modal-section-label">Size</div>
+              <div className="opt-row">
+                {sizes.map((s) => (
+                  <div key={s.id} className={`opt-chip ${size === s.id ? "selected" : ""}`} onClick={() => setSize(s.id)}>
+                    {s.label}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
 
           <div className="modal-section-label">Specification</div>
           <table className="spec-table">
@@ -194,6 +209,9 @@ export default function ProductModal({
           </button>
         </div>
       </div>
+      {lightboxOpen && hasRealImages && (
+        <Lightbox src={images[activeImg] ?? images[0]} alt={product.name} onClose={() => setLightboxOpen(false)} />
+      )}
     </div>
   );
 }

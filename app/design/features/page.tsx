@@ -1,0 +1,78 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { DesignRequestStatus } from "@/app/generated/prisma/enums";
+import { PACKAGE_LABELS, labelSpaceInstances } from "@/lib/spaces";
+import DesignStepper from "../DesignStepper";
+import FeaturesWizard from "./FeaturesWizard";
+import "../../marketing.css";
+
+export default async function DesignFeaturesPage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
+  const { id } = await searchParams;
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (!id) redirect("/design");
+
+  const request = await prisma.designRequest.findUnique({
+    where: { id },
+    select: {
+      clientId: true,
+      status: true,
+      packageKey: true,
+      sqft: true,
+      spaceEntries: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, spaceKey: true, notes: true, answers: { select: { questionKey: true, value: true } } },
+      },
+    },
+  });
+  if (!request || request.clientId !== session.id) redirect("/design");
+  if (request.spaceEntries.length === 0) redirect(`/design/spaces?id=${id}`);
+
+  if (request.status !== DesignRequestStatus.draft) {
+    return (
+      <div className="ptb-marketing">
+        <header>
+          <Link href="/" className="brand-mark">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="PickTheBrick" />
+          </Link>
+          <nav>
+            <Link href="/">Home</Link>
+            <Link href="/design">Design</Link>
+          </nav>
+        </header>
+        <main>
+          <DesignStepper current={3} />
+          <div className="hero">
+            <span className="hero-eyebrow">Features</span>
+            <h1>Request submitted</h1>
+            <p>Your designer has this on their queue - you can track progress from your dashboard.</p>
+          </div>
+          <div className="sqft-input-card" style={{ textAlign: "center" }}>
+            <p>
+              {PACKAGE_LABELS[request.packageKey] ?? request.packageKey} package &middot;{" "}
+              {Number(request.sqft).toLocaleString()} sqft
+            </p>
+          </div>
+          <div className="design-summary" style={{ justifyContent: "center" }}>
+            <Link href={`/design/handover?id=${id}`} className="design-start-btn">
+              Continue →
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const instances = labelSpaceInstances(request.spaceEntries).map((e) => ({
+    id: e.id,
+    spaceKey: e.spaceKey,
+    label: e.label,
+    notes: e.notes ?? "",
+    answers: Object.fromEntries(e.answers.map((a) => [a.questionKey, a.value])),
+  }));
+
+  return <FeaturesWizard designRequestId={id} instances={instances} />;
+}
