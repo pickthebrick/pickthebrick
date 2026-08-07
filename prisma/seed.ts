@@ -13,8 +13,10 @@ import vm from "node:vm";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../app/generated/prisma/client";
 import { Role } from "../app/generated/prisma/enums";
+import { PrismaNeon } from "@prisma/adapter-neon";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 type Product = { name: string; rate: number; install: number };
 type Subtype = { label: string; products: Product[] };
