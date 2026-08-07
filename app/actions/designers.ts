@@ -1,7 +1,5 @@
 "use server";
 
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/roles";
@@ -15,6 +13,7 @@ import {
   sendDesignerApplicationBlockedEmail,
 } from "@/lib/email";
 import { sendTemplatedWhatsApp } from "@/lib/whatsapp";
+import { uploadToStorage } from "@/lib/storage";
 
 const CV_EXTENSIONS = new Set(["pdf", "jpg", "jpeg", "png", "doc", "docx"]);
 
@@ -68,8 +67,7 @@ export async function submitDesignerApplication(formData: FormData) {
     if (!CV_EXTENSIONS.has(ext)) throw new Error("Please upload a PDF, DOC, JPG, or PNG file");
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(process.cwd(), "public", "designer-cvs", filename), buffer);
-    cvFilePath = `/designer-cvs/${filename}`;
+    cvFilePath = await uploadToStorage("designer-cvs", filename, buffer, file.type);
   } else if (cvLink) {
     cvFilePath = cvLink;
   }

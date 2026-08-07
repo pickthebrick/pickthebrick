@@ -1,12 +1,11 @@
 "use server";
 
-import { writeFile, unlink } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { Role } from "@/app/generated/prisma/enums";
+import { uploadToStorage, deleteFromStorage } from "@/lib/storage";
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -34,11 +33,11 @@ export async function createBanner(formData: FormData) {
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(process.cwd(), "public", "banners", filename), buffer);
+  const imagePath = await uploadToStorage("banners", filename, buffer, file.type);
 
   const count = await prisma.banner.count();
   await prisma.banner.create({
-    data: { imagePath: `/banners/${filename}`, linkUrl, title, sortOrder: count },
+    data: { imagePath, linkUrl, title, sortOrder: count },
   });
 
   revalidatePath("/admin/marketing");
@@ -59,7 +58,7 @@ export async function deleteBanner(id: string) {
   const banner = await prisma.banner.findUnique({ where: { id } });
   if (!banner) return;
   await prisma.banner.delete({ where: { id } });
-  await unlink(path.join(process.cwd(), "public", banner.imagePath.replace(/^\//, ""))).catch(() => {});
+  await deleteFromStorage(banner.imagePath).catch(() => {});
   revalidatePath("/admin/marketing");
   revalidatePath("/build");
 }

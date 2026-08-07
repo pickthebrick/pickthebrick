@@ -1,7 +1,5 @@
 "use server";
 
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/roles";
@@ -15,6 +13,7 @@ import {
   sendContractorApplicationBlockedEmail,
 } from "@/lib/email";
 import { sendTemplatedWhatsApp } from "@/lib/whatsapp";
+import { uploadToStorage } from "@/lib/storage";
 
 const LICENSE_EXTENSIONS = new Set(["pdf", "jpg", "jpeg", "png"]);
 
@@ -76,8 +75,7 @@ export async function submitContractorApplication(categoryIds: string[], typeIds
     if (!LICENSE_EXTENSIONS.has(ext)) throw new Error("Please upload a PDF, JPG, or PNG file");
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(process.cwd(), "public", "trade-licenses", filename), buffer);
-    licenseFilePath = `/trade-licenses/${filename}`;
+    licenseFilePath = await uploadToStorage("trade-licenses", filename, buffer, file.type);
   }
   if (!licenseFilePath) throw new Error("Please upload your trade license");
 

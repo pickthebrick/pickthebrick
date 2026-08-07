@@ -1,7 +1,5 @@
 "use server";
 
-import { writeFile, unlink } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/roles";
@@ -10,6 +8,7 @@ import { Role, DesignRequestStatus } from "@/app/generated/prisma/enums";
 import { priceFor, MAX_REVISIONS, type PackageKey } from "@/lib/designPricing";
 import { sendDesignerAssignedEmail, sendDesignerRemovedEmail } from "@/lib/email";
 import { sendTemplatedWhatsApp } from "@/lib/whatsapp";
+import { uploadToStorage, deleteFromStorage } from "@/lib/storage";
 
 const SITE_VISIT_FEE = 500;
 const LAYOUT_EXTENSIONS = new Set(["pdf", "dwg", "dxf", "jpg", "jpeg", "png"]);
@@ -189,9 +188,8 @@ export async function uploadDesignRequestLayout(id: string, formData: FormData) 
     }
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(process.cwd(), "public", "design-submittals", filename), buffer);
+    filePath = await uploadToStorage("design-submittals", filename, buffer, file.type);
     label = `${CLIENT_UPLOAD_LABEL_PREFIX} ${file.name}`;
-    filePath = `/design-submittals/${filename}`;
   }
 
   const count = await prisma.designRequestFile.count({ where: { designRequestId: id } });
@@ -331,11 +329,11 @@ export async function submitDesignRevision(id: string, label: string, formData: 
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(process.cwd(), "public", "design-submittals", filename), buffer);
+  const filePath = await uploadToStorage("design-submittals", filename, buffer, file.type);
 
   const count = await prisma.designRequestFile.count({ where: { designRequestId: id } });
   await prisma.designRequestFile.create({
-    data: { designRequestId: id, label: label.trim(), filePath: `/design-submittals/${filename}`, sortOrder: count },
+    data: { designRequestId: id, label: label.trim(), filePath, sortOrder: count },
   });
   await prisma.designRequest.update({
     where: { id },
@@ -384,7 +382,7 @@ export async function deleteDesignRequestFile(fileId: string) {
 
   if (isAdminRole(session.role)) {
     await prisma.designRequestFile.delete({ where: { id: fileId } });
-    await unlink(path.join(process.cwd(), "public", file.filePath.replace(/^\//, ""))).catch(() => {});
+    await deleteFromStorage(file.filePath).catch(() => {});
     revalidateDesignRequests();
     return;
   }
@@ -396,7 +394,7 @@ export async function deleteDesignRequestFile(fileId: string) {
   }
 
   await prisma.designRequestFile.delete({ where: { id: fileId } });
-  await unlink(path.join(process.cwd(), "public", file.filePath.replace(/^\//, ""))).catch(() => {});
+  await deleteFromStorage(file.filePath).catch(() => {});
   revalidateDesignRequests();
 }
 

@@ -1,12 +1,11 @@
 "use server";
 
-import { writeFile, unlink } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { findSwapIndex } from "@/lib/reorder";
+import { uploadToStorage, deleteFromStorage } from "@/lib/storage";
 import type { Unit } from "@/app/generated/prisma/enums";
 
 const IMAGE_TYPES: Record<string, string> = {
@@ -123,19 +122,19 @@ export async function addProductImage(productId: string, formData: FormData) {
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(process.cwd(), "public", "product-images", filename), buffer);
+  const imagePath = await uploadToStorage("product-images", filename, buffer, file.type);
 
   const asThumbnail = formData.get("thumbnail") === "on";
   if (asThumbnail) {
     const existing = await prisma.productImage.findMany({ where: { productId }, orderBy: { sortOrder: "asc" } });
     await prisma.$transaction([
       ...existing.map((img, i) => prisma.productImage.update({ where: { id: img.id }, data: { sortOrder: i + 1 } })),
-      prisma.productImage.create({ data: { productId, path: `/product-images/${filename}`, sortOrder: 0 } }),
+      prisma.productImage.create({ data: { productId, path: imagePath, sortOrder: 0 } }),
     ]);
   } else {
     const count = await prisma.productImage.count({ where: { productId } });
     await prisma.productImage.create({
-      data: { productId, path: `/product-images/${filename}`, sortOrder: count },
+      data: { productId, path: imagePath, sortOrder: count },
     });
   }
   revalidateProducts();
@@ -146,7 +145,7 @@ export async function deleteProductImage(imageId: string) {
   const image = await prisma.productImage.findUnique({ where: { id: imageId } });
   if (!image) return;
   await prisma.productImage.delete({ where: { id: imageId } });
-  await unlink(path.join(process.cwd(), "public", image.path.replace(/^\//, ""))).catch(() => {});
+  await deleteFromStorage(image.path).catch(() => {});
   revalidateProducts();
 }
 
@@ -184,8 +183,7 @@ export async function addColorOption(productId: string, name: string, hex: strin
     if (!ext) throw new Error("Please upload a JPG, PNG, WEBP, or GIF image");
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(process.cwd(), "public", "product-images", filename), buffer);
-    imagePath = `/product-images/${filename}`;
+    imagePath = await uploadToStorage("product-images", filename, buffer, file.type);
   }
 
   const count = await prisma.productColorOption.count({ where: { productId } });
@@ -198,7 +196,7 @@ export async function deleteColorOption(colorId: string) {
   const color = await prisma.productColorOption.findUnique({ where: { id: colorId } });
   if (!color) return;
   await prisma.productColorOption.delete({ where: { id: colorId } });
-  if (color.imagePath) await unlink(path.join(process.cwd(), "public", color.imagePath.replace(/^\//, ""))).catch(() => {});
+  if (color.imagePath) await deleteFromStorage(color.imagePath).catch(() => {});
   revalidateProducts();
 }
 
@@ -265,11 +263,11 @@ export async function addProductDownload(productId: string, label: string, kind:
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(process.cwd(), "public", "product-downloads", filename), buffer);
+  const filePath = await uploadToStorage("product-downloads", filename, buffer);
 
   const count = await prisma.productDownload.count({ where: { productId } });
   await prisma.productDownload.create({
-    data: { productId, label: label.trim(), kind, filePath: `/product-downloads/${filename}`, sortOrder: count },
+    data: { productId, label: label.trim(), kind, filePath, sortOrder: count },
   });
   revalidateProducts();
 }
@@ -279,6 +277,6 @@ export async function deleteProductDownload(downloadId: string) {
   const download = await prisma.productDownload.findUnique({ where: { id: downloadId } });
   if (!download) return;
   await prisma.productDownload.delete({ where: { id: downloadId } });
-  await unlink(path.join(process.cwd(), "public", download.filePath.replace(/^\//, ""))).catch(() => {});
+  await deleteFromStorage(download.filePath).catch(() => {});
   revalidateProducts();
 }

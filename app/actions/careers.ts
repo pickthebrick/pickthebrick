@@ -1,13 +1,12 @@
 "use server";
 
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { Role } from "@/app/generated/prisma/enums";
 import { sendJobApplicationReceivedEmail } from "@/lib/email";
+import { uploadToStorage } from "@/lib/storage";
 
 async function requireAdmin() {
   const session = await getSession();
@@ -106,8 +105,7 @@ export async function submitJobApplication(formData: FormData) {
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(process.cwd(), "public", "job-applications", filename), buffer);
-  const cvPath = `/job-applications/${filename}`;
+  const cvPath = await uploadToStorage("job-applications", filename, buffer, file.type);
 
   await prisma.jobApplication.create({
     data: { jobPostingId, jobTitle, fullName, email, phone, coverNote, cvPath },
