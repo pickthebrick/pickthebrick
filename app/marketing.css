@@ -25,11 +25,15 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  /* Never let the flex row squeeze this below its natural size - that's what
+     was distorting the logo's aspect ratio on narrow (iPhone-width) screens. */
+  flex-shrink: 0;
 }
 .ptb-marketing .brand-mark img {
   height: 48px;
   width: auto;
   display: block;
+  flex-shrink: 0;
 }
 .ptb-marketing nav {
   display: flex;
@@ -1752,6 +1756,29 @@
   }
   .ptb-marketing .features-graphic-icon {
     max-width: 160px;
+  }
+}
+
+/* Below ~700px (iPhone widths) the header's 3 nav items no longer fit
+   alongside the logo on one line - wrap them onto their own row instead of
+   letting them overlap. Matches AccountBar's own <=700px breakpoint, whose
+   "move to bottom-right" behavior already frees up the padding-right: 100px
+   reserved for it above that width. */
+@media (max-width: 700px) {
+  .ptb-marketing header {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    padding: 12px 16px;
+    padding-right: 16px;
+  }
+  .ptb-marketing .brand-mark img {
+    height: 36px;
+  }
+  .ptb-marketing nav {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
   }
 }
 

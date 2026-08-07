@@ -22,11 +22,13 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 .ptb-dash .brand-mark img {
   height: 42px;
   width: auto;
   display: block;
+  flex-shrink: 0;
 }
 .ptb-dash .brand {
   font-weight: 600;
