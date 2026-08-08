@@ -16,6 +16,7 @@ export default function PdfDownloadButton({
   location,
   officeSize,
   referenceNumber,
+  clientName,
 }: {
   items: {
     name: string;
@@ -30,6 +31,7 @@ export default function PdfDownloadButton({
   location: string | null;
   officeSize: string | null;
   referenceNumber: string | null;
+  clientName?: string | null;
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -50,6 +52,7 @@ export default function PdfDownloadButton({
         location,
         officeSize,
         referenceNumber,
+        clientName,
       });
       doc.save(`PickTheBrick-Quotation-${referenceNumber?.replace(/\//g, "-") ?? "draft"}.pdf`);
     } finally {

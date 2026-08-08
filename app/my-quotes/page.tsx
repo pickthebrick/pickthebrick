@@ -12,7 +12,7 @@ export default async function MyQuotesPage() {
   if (!session) redirect("/login");
   if (session.role !== Role.client) redirect(ROLE_HOME[session.role]);
 
-  const [quotes, designRequests] = await Promise.all([
+  const [quotes, designRequests, client] = await Promise.all([
     prisma.quote.findMany({
       where: { clientId: session.id },
       include: {
@@ -53,7 +53,12 @@ export default async function MyQuotesPage() {
       },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.user.findUnique({ where: { id: session.id }, select: { fullName: true, company: true, email: true } }),
   ]);
+
+  const clientLabel = client?.company
+    ? `${client.fullName ?? client.email} · ${client.company}`
+    : (client?.fullName ?? client?.email ?? null);
 
   return (
     <div className="ptb-dash">
@@ -66,7 +71,7 @@ export default async function MyQuotesPage() {
       <main>
         <h1>My dashboard</h1>
         <p className="sub">Everything about your quotes, projects, and payments in one place.</p>
-        <MyQuotesClient quotes={quotes} designRequests={designRequests} />
+        <MyQuotesClient quotes={quotes} designRequests={designRequests} clientLabel={clientLabel} />
       </main>
     </div>
   );

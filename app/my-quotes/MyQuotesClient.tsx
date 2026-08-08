@@ -138,7 +138,15 @@ function DeleteButton({ label, onConfirm }: { label: string; onConfirm: () => Pr
   );
 }
 
-export default function MyQuotesClient({ quotes, designRequests }: { quotes: Quote[]; designRequests: DesignRequest[] }) {
+export default function MyQuotesClient({
+  quotes,
+  designRequests,
+  clientLabel,
+}: {
+  quotes: Quote[];
+  designRequests: DesignRequest[];
+  clientLabel: string | null;
+}) {
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>("quotes");
   const [error, setError] = useState<string | null>(null);
@@ -241,6 +249,7 @@ export default function MyQuotesClient({ quotes, designRequests }: { quotes: Quo
                         location={q.location}
                         officeSize={q.officeSize}
                         referenceNumber={q.referenceNumber}
+                        clientName={clientLabel}
                       />
                       <button
                         type="button"

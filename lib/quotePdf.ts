@@ -37,18 +37,24 @@ function placeholderImageUrl(productId: string) {
   return `https://picsum.photos/seed/${encodeURIComponent(productId + "-0")}/400/300`;
 }
 
+const VAT_RATE = 0.05;
+
 export async function buildQuotePdf({
   items,
   grandTotal,
   location,
   officeSize,
   referenceNumber,
+  clientName,
 }: {
   items: QuotePdfItem[];
   grandTotal: number;
   location?: string | null;
   officeSize?: string | null;
   referenceNumber?: string | null;
+  // "Name" or "Name - Company", matching the label already shown to the
+  // captain when editing a client's quote (see app/build/page.tsx).
+  clientName?: string | null;
 }) {
   const { jsPDF } = await import("jspdf");
   const { TERMS_AND_CONDITIONS } = await import("@/lib/terms");
@@ -129,6 +135,22 @@ export async function buildQuotePdf({
   doc.setLineWidth(1);
   doc.line(MARGIN, y, RIGHT, y);
   y += 22;
+
+  if (clientName) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    doc.text("PREPARED FOR", MARGIN, y);
+    y += 13;
+    doc.setFontSize(10.5);
+    doc.setTextColor(...INK);
+    doc.text(clientName, MARGIN, y);
+    y += 18;
+    doc.setDrawColor(...LINE);
+    doc.setLineWidth(0.75);
+    doc.line(MARGIN, y, RIGHT, y);
+    y += 24;
+  }
 
   if (location || officeSize) {
     doc.setFont("helvetica", "normal");
@@ -211,6 +233,13 @@ export async function buildQuotePdf({
   doc.setFontSize(16);
   doc.setTextColor(...DARK_GREY);
   doc.text("AED " + grandTotal.toLocaleString(), RIGHT, y, { align: "right" });
+  y += 18;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...MUTED);
+  doc.text("VAT (5%)", RIGHT - 200, y);
+  doc.text("AED " + Math.round(grandTotal * VAT_RATE).toLocaleString(), RIGHT, y, { align: "right" });
   y += 26;
 
   doc.setFont("helvetica", "italic");

@@ -314,6 +314,7 @@ export default function BuildClient({
       grandTotal: grand,
       location,
       officeSize,
+      clientName: clientLabel,
     });
     doc.save("PickTheBrick-Quotation.pdf");
   }

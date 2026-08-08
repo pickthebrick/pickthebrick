@@ -61,12 +61,17 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
   if (session.role !== Role.client) redirect(ROLE_HOME[session.role]);
 
   const quoteId = await getOrCreateDraftQuote();
-  const [catalog, initialCart, banners, quote] = await Promise.all([
+  const [catalog, initialCart, banners, quote, client] = await Promise.all([
     fetchCatalog(),
     fetchCartLines(quoteId),
     prisma.banner.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
     prisma.quote.findUnique({ where: { id: quoteId }, select: { location: true, officeSize: true } }),
+    prisma.user.findUnique({ where: { id: session.id }, select: { fullName: true, company: true, email: true } }),
   ]);
+
+  const clientLabel = client?.company
+    ? `${client.fullName ?? client.email} · ${client.company}`
+    : (client?.fullName ?? client?.email ?? null);
 
   return (
     <BuildClient
@@ -76,6 +81,7 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
       banners={banners}
       initialLocation={quote?.location ?? null}
       initialOfficeSize={quote?.officeSize ?? null}
+      clientLabel={clientLabel ?? undefined}
     />
   );
 }
