@@ -7,6 +7,10 @@ import { useEffect, useRef } from "react";
 // element - object-fit:cover fills the whole box on its own, so there's no
 // backing layer/color ever visible behind it. Drop the file at
 // public/isometric-office.png (or change IMAGE_SRC below) to swap it.
+// object-position is centered rather than top: the source PNG's own top
+// ~20% is empty white canvas above the illustrated room (measured directly
+// off the file), so anchoring to "top" mostly showed that blank margin
+// instead of the office scene - centering lands on the actual artwork.
 const IMAGE_SRC = "/isometric-office.png";
 
 export default function IsometricOfficeSection() {

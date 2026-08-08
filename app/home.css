@@ -434,7 +434,7 @@
 .iso-section {
   position: relative;
   overflow: hidden;
-  min-height: 560px;
+  min-height: 390px;
 }
 .iso-bg-img {
   position: absolute;
@@ -444,7 +444,7 @@
   width: 100%;
   height: calc(100% + 40px);
   object-fit: cover;
-  object-position: top;
+  object-position: center;
   will-change: transform;
 }
 
