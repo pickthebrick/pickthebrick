@@ -12,7 +12,7 @@ export default async function MarketingPage() {
   if (!session) redirect("/login");
   if (!isAdminRole(session.role) && session.role !== Role.marketing) redirect(ROLE_HOME[session.role]);
 
-  const [banners, aiDesignerBanner, categories, caseStudyCards] = await Promise.all([
+  const [banners, aiDesignerBanner, categories, caseStudyCards, spaceLayerImages] = await Promise.all([
     prisma.banner.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.aiDesignerBanner.upsert({
       where: { id: "ai-designer-banner" },
@@ -25,6 +25,7 @@ export default async function MarketingPage() {
         prisma.caseStudyCard.upsert({ where: { id }, create: { id }, update: {} })
       )
     ),
+    prisma.spaceLayerImage.findMany({ select: { spaceKey: true, slot: true, imageUrl: true } }),
   ]);
 
   return (
@@ -36,6 +37,7 @@ export default async function MarketingPage() {
         aiDesignerBanner={aiDesignerBanner}
         categories={categories}
         caseStudyCards={caseStudyCards}
+        spaceLayerImages={spaceLayerImages}
       />
     </AdminShell>
   );

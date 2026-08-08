@@ -837,6 +837,7 @@
   width: 64px;
   height: 64px;
   display: block;
+  object-fit: cover;
 }
 .ptb-marketing .space-label {
   font-size: 12.5px;
@@ -980,6 +981,19 @@
   max-width: 220px;
   height: auto;
   transition: transform 0.2s;
+}
+.ptb-marketing .features-graphic-layers {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 4 / 3;
+}
+.ptb-marketing .features-graphic-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .ptb-marketing .features-questions {
   background: var(--surface);

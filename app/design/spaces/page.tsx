@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { resolveActor, actorOwns } from "@/lib/actor";
 import { DesignRequestStatus } from "@/app/generated/prisma/enums";
+import { buttonSlot } from "@/lib/spaceLayers";
 import SpacesSurvey from "./SpacesSurvey";
 
 export default async function DesignSpacesPage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
@@ -21,5 +22,19 @@ export default async function DesignSpacesPage({ searchParams }: { searchParams:
     initialQuantities[entry.spaceKey] = (initialQuantities[entry.spaceKey] ?? 0) + 1;
   }
 
-  return <SpacesSurvey id={id} packageKey={request.packageKey} sqft={request.sqft} initialQuantities={initialQuantities} />;
+  const buttonImageRows = await prisma.spaceLayerImage.findMany({
+    where: { slot: buttonSlot() },
+    select: { spaceKey: true, imageUrl: true },
+  });
+  const buttonImages = Object.fromEntries(buttonImageRows.map((r) => [r.spaceKey, r.imageUrl]));
+
+  return (
+    <SpacesSurvey
+      id={id}
+      packageKey={request.packageKey}
+      sqft={request.sqft}
+      initialQuantities={initialQuantities}
+      buttonImages={buttonImages}
+    />
+  );
 }

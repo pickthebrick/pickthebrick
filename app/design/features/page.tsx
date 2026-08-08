@@ -74,5 +74,22 @@ export default async function DesignFeaturesPage({ searchParams }: { searchParam
     answers: Object.fromEntries(e.answers.map((a) => [a.questionKey, a.value])),
   }));
 
-  return <FeaturesWizard designRequestId={id} instances={instances} isAnonymous={!("clientId" in actor)} />;
+  const spaceKeys = [...new Set(instances.map((i) => i.spaceKey))];
+  const layerRows = await prisma.spaceLayerImage.findMany({
+    where: { spaceKey: { in: spaceKeys } },
+    select: { spaceKey: true, slot: true, imageUrl: true },
+  });
+  const layerImages: Record<string, Record<string, string>> = {};
+  for (const row of layerRows) {
+    (layerImages[row.spaceKey] ??= {})[row.slot] = row.imageUrl;
+  }
+
+  return (
+    <FeaturesWizard
+      designRequestId={id}
+      instances={instances}
+      isAnonymous={!("clientId" in actor)}
+      layerImages={layerImages}
+    />
+  );
 }

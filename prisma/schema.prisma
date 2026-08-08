@@ -734,3 +734,22 @@ model CaseStudyCard {
   buttonLabel String  @default("View project")
   buttonUrl   String  @default("/build")
 }
+
+// Marketer-uploaded artwork for the Design flow's per-space visuals - one row
+// per (space, slot). `slot` is one of:
+//   "button"                          - the space-picker card image (SpacesSurvey.tsx)
+//   "base"                            - always-on room image (FeaturesWizard.tsx)
+//   "feature:<questionKey>"           - shown while that boolean switch is on
+//   "choice:<questionKey>:<value>"    - shown while that choice option is selected
+// (see lib/spaceLayers.ts, which is the only place that builds/parses slot
+// strings, and lib/spaceQuestions.ts for the questionKey/value vocabulary).
+// Every slot is optional - client-facing code falls back to the hand-drawn
+// SpaceIcon SVG for any space/slot that hasn't been uploaded yet.
+model SpaceLayerImage {
+  id       String @id @default(cuid())
+  spaceKey String
+  slot     String
+  imageUrl String
+
+  @@unique([spaceKey, slot])
+}

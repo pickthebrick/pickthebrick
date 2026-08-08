@@ -383,6 +383,28 @@
   color: var(--fg);
 }
 
+.design-layers-space-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.design-layers-space-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.design-layers-space-chip.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .banner-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

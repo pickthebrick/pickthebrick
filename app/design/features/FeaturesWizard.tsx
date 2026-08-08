@@ -6,6 +6,7 @@ import Link from "next/link";
 import DesignStepper from "../DesignStepper";
 import SpaceIcon from "../SpaceIcon";
 import { SPACE_QUESTIONS } from "@/lib/spaceQuestions";
+import { resolveLayerImages } from "@/lib/spaceLayers";
 import { saveDesignRequestSpaceAnswers, deleteDesignRequestSpace, submitDesignRequest } from "@/app/actions/design";
 import AuthGate from "@/app/components/AuthGate";
 import "../../marketing.css";
@@ -22,10 +23,12 @@ export default function FeaturesWizard({
   designRequestId,
   instances: initialInstances,
   isAnonymous = false,
+  layerImages = {},
 }: {
   designRequestId: string;
   instances: SpaceInstance[];
   isAnonymous?: boolean;
+  layerImages?: Record<string, Record<string, string>>;
 }) {
   const router = useRouter();
   const [spaceList, setSpaceList] = useState(initialInstances);
@@ -47,6 +50,7 @@ export default function FeaturesWizard({
   const answers = drafts[current.id] ?? {};
   const notes = notesDrafts[current.id] ?? "";
   const liveFeatures = Object.fromEntries(Object.entries(answers).map(([k, v]) => [k, v === "true"]));
+  const layers = resolveLayerImages(current.spaceKey, answers, layerImages[current.spaceKey] ?? {});
 
   function setAnswer(key: string, value: string) {
     setDrafts((prev) => ({ ...prev, [current.id]: { ...prev[current.id], [key]: value } }));
@@ -195,7 +199,16 @@ export default function FeaturesWizard({
 
         <div className="features-wizard">
           <div className="features-graphic">
-            <SpaceIcon spaceKey={current.spaceKey} features={liveFeatures} className="features-graphic-icon" />
+            {layers ? (
+              <div className="features-graphic-layers">
+                {layers.map((url, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={url + i} src={url} alt="" className="features-graphic-layer" />
+                ))}
+              </div>
+            ) : (
+              <SpaceIcon spaceKey={current.spaceKey} features={liveFeatures} className="features-graphic-icon" />
+            )}
           </div>
           <div className="features-questions">
             <div className="features-questions-head">

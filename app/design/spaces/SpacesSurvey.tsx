@@ -14,11 +14,13 @@ const MAX_QTY = 6;
 export default function SpacesSurvey({
   id,
   initialQuantities,
+  buttonImages,
 }: {
   id: string;
   packageKey: string;
   sqft: number;
   initialQuantities: Record<string, number>;
+  buttonImages: Record<string, string>;
 }) {
   const router = useRouter();
   const [quantities, setQuantities] = useState<Record<string, number>>(initialQuantities);
@@ -86,7 +88,12 @@ export default function SpacesSurvey({
                 onClick={!isSelected ? () => select(s.key) : undefined}
               >
                 {isSelected && <span className="space-check">✓</span>}
-                <SpaceIcon spaceKey={s.key} className="space-icon" />
+                {buttonImages[s.key] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={buttonImages[s.key]} alt="" className="space-icon" />
+                ) : (
+                  <SpaceIcon spaceKey={s.key} className="space-icon" />
+                )}
                 <span className="space-label">{s.label}</span>
                 {isSelected && (
                   <div className="space-qty-stepper" onClick={(e) => e.stopPropagation()}>

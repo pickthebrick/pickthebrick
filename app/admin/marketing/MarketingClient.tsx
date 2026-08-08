@@ -13,6 +13,7 @@ import {
 } from "@/app/actions/banners";
 import { setCategoryImage, removeCategoryImage } from "@/app/actions/catalog";
 import AdminPanel from "../AdminPanel";
+import DesignLayersClient from "./DesignLayersClient";
 
 type Banner = {
   id: string;
@@ -39,11 +40,13 @@ export default function MarketingClient({
   aiDesignerBanner,
   categories,
   caseStudyCards,
+  spaceLayerImages,
 }: {
   banners: Banner[];
   aiDesignerBanner: AiDesignerBanner;
   categories: CategoryRow[];
   caseStudyCards: CaseStudyCard[];
+  spaceLayerImages: { spaceKey: string; slot: string; imageUrl: string }[];
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -358,6 +361,10 @@ export default function MarketingClient({
             </div>
           ))}
         </div>
+      </AdminPanel>
+
+      <AdminPanel title="Design space layer images" count={spaceLayerImages.length} defaultOpen={false}>
+        <DesignLayersClient images={spaceLayerImages} />
       </AdminPanel>
     </>
   );
