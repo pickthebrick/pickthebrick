@@ -1,8 +1,10 @@
 "use client";
 
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { DesignPathIcon, BuildPathIcon, CategoryIcon } from "./components/HomeIllustrations";
 import HeroQuoteDemo from "./components/HeroQuoteDemo";
+import ParallaxCtaBand from "./components/ParallaxCtaBand";
 import SiteFooter from "./components/SiteFooter";
 import "./marketing.css";
 import "./home.css";
@@ -26,6 +28,61 @@ const VALUE_PROPS = [
   },
 ];
 
+const PROCESS_STEPS = [
+  { title: "Tell us about your office", body: "Area, location, people, requirements" },
+  { title: "Configure your workspace", body: "Rooms, furniture, finishes, services" },
+  { title: "Get your design", body: "Professional layout + visualisation" },
+  { title: "Know your cost", body: "Transparent itemized estimate" },
+  { title: "Approve", body: "Confirm scope and pricing" },
+  { title: "We build it", body: "Vetted contractors, one Project Manager" },
+];
+
+const WHY_CARDS = [
+  { icon: "⚡", title: "Speed", body: "Professional layout in 48 hours, not weeks of back-and-forth." },
+  { icon: "👁", title: "Transparency", body: "Know your indicative cost early - before you commit to anything." },
+  { icon: "✓", title: "Quality", body: "Specified brands, warrantied work, vetted contractors only." },
+  { icon: "🤝", title: "Accountability", body: "One platform, one Project Manager, from design through construction." },
+];
+
+const CASE_STUDIES = [
+  {
+    tag: "Technology Company · Dubai",
+    title: "2,800 sqft office fit-out",
+    stats: [
+      ["42", "employees"],
+      ["48 hrs", "design"],
+      ["19 days", "fit-out"],
+      ["AED 890K", "budget"],
+    ],
+  },
+  {
+    tag: "Professional Services · DIFC",
+    title: "1,800 sqft office fit-out",
+    stats: [
+      ["28", "employees"],
+      ["36 hrs", "design"],
+      ["14 days", "fit-out"],
+      ["AED 610K", "budget"],
+    ],
+  },
+  {
+    tag: "Logistics Firm · JAFZA",
+    title: "4,200 sqft office fit-out",
+    stats: [
+      ["65", "employees"],
+      ["48 hrs", "design"],
+      ["26 days", "fit-out"],
+      ["AED 1.4M", "budget"],
+    ],
+  },
+];
+
+function estimateRange(sqft: number, people: number) {
+  const low = Math.round((sqft * 260 + people * 1800) / 1000) * 1000;
+  const high = Math.round((sqft * 340 + people * 2600) / 1000) * 1000;
+  return { low, high };
+}
+
 export default function HomeClient({
   isClientSession,
   categories,
@@ -33,6 +90,10 @@ export default function HomeClient({
   isClientSession: boolean;
   categories: { key: string; label: string }[];
 }) {
+  const [estSqft, setEstSqft] = useState(2500);
+  const [estPeople, setEstPeople] = useState(35);
+  const { low: estLow, high: estHigh } = estimateRange(estSqft, estPeople);
+
   return (
     <div className="ptb-marketing">
       <header>
@@ -89,6 +150,185 @@ export default function HomeClient({
               </svg>
             </a>
           </section>
+
+          {/* ---------- instant estimator ---------- */}
+          <section className="home-section tight">
+            <div className="home-section-inner">
+              <div className="home-section-head">
+                <div className="home-section-eyebrow">Get a feel for it</div>
+                <h2 className="home-section-title">How much, roughly?</h2>
+                <p className="home-section-body">
+                  Move the sliders - this is a ballpark, not a quote. The real one takes about 5 minutes on Build.
+                </p>
+              </div>
+              <div className="home-estimator">
+                <div className="home-estimator-head">
+                  <div className="home-estimator-title">Instant estimate</div>
+                  <div className="home-estimator-live">
+                    <span className="hero-demo-pulse" />
+                    Live preview
+                  </div>
+                </div>
+                <div className="home-estimator-row">
+                  <label>
+                    Office size <span>{estSqft.toLocaleString()} sqft</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={500}
+                    max={8000}
+                    step={100}
+                    value={estSqft}
+                    onChange={(e) => setEstSqft(Number(e.target.value))}
+                  />
+                </div>
+                <div className="home-estimator-row">
+                  <label>
+                    Number of people <span>{estPeople}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={5}
+                    max={150}
+                    step={5}
+                    value={estPeople}
+                    onChange={(e) => setEstPeople(Number(e.target.value))}
+                  />
+                </div>
+                <div className="home-estimator-result">
+                  <div>
+                    <div className="label">Estimated fit-out cost</div>
+                    <div className="range">
+                      AED {estLow.toLocaleString()} – {estHigh.toLocaleString()}
+                    </div>
+                  </div>
+                  <Link href="/build" className="home-estimator-go">
+                    Get exact quote →
+                  </Link>
+                </div>
+              </div>
+              <p className="home-estimator-microcopy">
+                No account needed for this estimate · Full itemized quote takes ~5 minutes
+              </p>
+            </div>
+          </section>
+
+          {/* ---------- process ---------- */}
+          <section className="home-section tight">
+            <div className="home-section-inner">
+              <div className="home-section-head">
+                <div className="home-section-eyebrow">How it works</div>
+                <h2 className="home-section-title">Design → Price → Build</h2>
+                <p className="home-section-body">
+                  One platform, guided end to end - not six phone calls to six different contractors.
+                </p>
+              </div>
+              <div className="home-process-flow">
+                {PROCESS_STEPS.map((step, i) => (
+                  <Fragment key={step.title}>
+                    <div className="home-proc-step">
+                      <div className="home-proc-num">{i + 1}</div>
+                      <div className="home-proc-title">{step.title}</div>
+                      <div className="home-proc-body">{step.body}</div>
+                    </div>
+                    {i < PROCESS_STEPS.length - 1 && <div className="home-proc-arrow">→</div>}
+                  </Fragment>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ---------- weeks vs days ---------- */}
+          <section className="home-section tight">
+            <div className="home-section-inner">
+              <div className="home-section-head">
+                <div className="home-section-eyebrow">The difference</div>
+                <h2 className="home-section-title">Weeks, or days?</h2>
+                <p className="home-section-body">Same outcome. Radically different timeline.</p>
+              </div>
+              <div className="home-race">
+                <div className="home-race-row">
+                  <div className="home-race-label">
+                    <span>Traditional fit-out</span>
+                    <span>Site visit → Design → Revisions → BOQ → Quote → Negotiate</span>
+                  </div>
+                  <div className="home-race-track">
+                    <div className="home-race-fill slow">Multiple contractors, endless back-and-forth</div>
+                    <div className="home-race-time">2–4 weeks</div>
+                  </div>
+                </div>
+                <div className="home-race-row">
+                  <div className="home-race-label">
+                    <span>PickTheBrick</span>
+                    <span>Configure → Design → Price → Build</span>
+                  </div>
+                  <div className="home-race-track">
+                    <div className="home-race-fill fast">One platform, guided configuration</div>
+                    <div className="home-race-time">2–4 days</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ---------- why choose us ---------- */}
+          <section className="home-section tight">
+            <div className="home-section-inner">
+              <div className="home-section-head">
+                <div className="home-section-eyebrow">Why PickTheBrick</div>
+                <h2 className="home-section-title">Four real reasons, not one repeated</h2>
+              </div>
+              <div className="home-why-grid">
+                {WHY_CARDS.map((c) => (
+                  <div key={c.title} className="home-why-card">
+                    <div className="home-why-icon">{c.icon}</div>
+                    <h3>{c.title}</h3>
+                    <p>{c.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ---------- case studies ---------- */}
+          <section className="home-section tight">
+            <div className="home-section-inner">
+              <div className="home-section-head">
+                <div className="home-section-eyebrow">Evidence, not decoration</div>
+                <h2 className="home-section-title">Built with PickTheBrick</h2>
+                <p className="home-section-body">Real projects, real numbers - not just star ratings.</p>
+              </div>
+              <div className="home-case-grid">
+                {CASE_STUDIES.map((c) => (
+                  <div key={c.title} className="home-case-card">
+                    <div className="home-case-photo" />
+                    <div className="home-case-body">
+                      <div className="home-case-tag">{c.tag}</div>
+                      <div className="home-case-title">{c.title}</div>
+                      <div className="home-case-stats">
+                        {c.stats.map(([v, label]) => (
+                          <div key={label}>
+                            <span className="v">{v}</span>
+                            {label}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="home-case-rating">★★★★★ Google review</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ---------- priced today, built next ---------- */}
+          <ParallaxCtaBand className="home-build-cta">
+            <h2>Your office, priced today. Built next.</h2>
+            <p>Ten trades, one platform, one dedicated Project Manager - from first click to move-in.</p>
+            <Link href="/build" className="home-hero-cta-primary">
+              Start Designing →
+            </Link>
+          </ParallaxCtaBand>
 
           {/* ---------- how it works ---------- */}
           <section className="home-section" id="how-it-works">
