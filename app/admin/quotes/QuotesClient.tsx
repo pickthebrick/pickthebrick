@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState } from "react";
 import type { QuoteStatus } from "@/app/generated/prisma/enums";
 import { ProductThumb } from "@/app/build/ProductThumb";
+import { contactLabel } from "@/lib/contactLabel";
 import AdminPanel from "../AdminPanel";
 import AssignCaptainCell from "./AssignCaptainCell";
 
@@ -38,7 +39,9 @@ type Quote = {
   officeSize: string | null;
   captainId: string | null;
   grandTotal: number;
-  client: { fullName: string | null; email: string };
+  client: { fullName: string | null; email: string } | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
   items: QuoteItem[];
   timelineItems: { contractor: { fullName: string | null; email: string } | null }[];
 };
@@ -54,7 +57,7 @@ export default function QuotesClient({ quotes, captains }: { quotes: Quote[]; ca
         if (statusFilter !== "all" && q.status !== statusFilter) return false;
         if (search.trim()) {
           const s = search.trim().toLowerCase();
-          const haystack = `${q.client.fullName ?? ""} ${q.client.email}`.toLowerCase();
+          const haystack = contactLabel(q).toLowerCase();
           if (!haystack.includes(s)) return false;
         }
         return true;
@@ -103,10 +106,10 @@ export default function QuotesClient({ quotes, captains }: { quotes: Quote[]; ca
                 <tr>
                   <td>{q.submittedAt ? new Date(q.submittedAt).toLocaleString() : "-"}</td>
                   <td>
-                    {q.client.fullName ?? q.client.email}
+                    {contactLabel(q)}
                     <br />
                     <span className="sub" style={{ marginBottom: 0 }}>
-                      {q.client.email}
+                      {q.client?.email ?? q.contactPhone ?? q.contactEmail ?? "No account"}
                     </span>
                   </td>
                   <td>

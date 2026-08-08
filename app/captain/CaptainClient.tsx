@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { QuoteStatus } from "@/app/generated/prisma/enums";
 import { respondToSiteInspection, createSiteInspection, recordSiteVisitNotes } from "@/app/actions/progress";
+import { contactLabel } from "@/lib/contactLabel";
 import GanttChart, { type TimelineItem } from "./GanttChart";
 import AdminPanel from "@/app/admin/AdminPanel";
 
@@ -40,7 +41,9 @@ type Project = {
   referenceNumber: string | null;
   location: string | null;
   officeSize: string | null;
-  client: Client;
+  client: Client | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
   inspections: Inspection[];
   timelineItems: TimelineItem[];
 };
@@ -110,8 +113,8 @@ export default function CaptainClient({
               className={selectedId === p.id ? "active" : ""}
               onClick={() => setSelectedId(p.id)}
             >
-              {p.client.fullName ?? p.client.email}
-              {p.client.company && (
+              {contactLabel(p)}
+              {p.client?.company && (
                 <span style={{ display: "block", fontSize: 10.5, color: "var(--muted)", fontWeight: 400 }}>
                   {p.client.company}
                 </span>
@@ -141,9 +144,10 @@ export default function CaptainClient({
                 <h1>{projectName(p.officeSize, p.location)}</h1>
                 <p className="sub">
                   <span className={`status-badge ${p.status}`}>{STATUS_LABEL[p.status]}</span>{" "}
-                  {p.referenceNumber ?? "-"} &middot; {p.client.fullName ?? p.client.email} &middot; {p.client.email}
-                  {p.client.company ? ` · ${p.client.company}` : ""}
-                  {p.client.phone ? ` · ${p.client.phone}` : ""} &middot; Started{" "}
+                  {p.referenceNumber ?? "-"} &middot; {contactLabel(p)} &middot;{" "}
+                  {p.client?.email ?? p.contactPhone ?? p.contactEmail ?? "No account"}
+                  {p.client?.company ? ` · ${p.client.company}` : ""}
+                  {p.client?.phone ? ` · ${p.client.phone}` : ""} &middot; Started{" "}
                   {p.confirmedAt ? new Date(p.confirmedAt).toLocaleDateString() : "-"} &middot; AED{" "}
                   {p.grandTotal.toLocaleString()}
                   {p.status === "captain_confirmed" && (

@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DesignRequestStatus } from "@/app/generated/prisma/enums";
 import { deleteDesignRequestFile, assignDesigner } from "@/app/actions/design";
+import { contactLabel } from "@/lib/contactLabel";
 import { PACKAGE_LABELS, groupSpaceEntries } from "@/lib/spaces";
 import { MAX_REVISIONS, type PackageKey } from "@/lib/designPricing";
 import AdminPanel from "../AdminPanel";
@@ -31,7 +32,9 @@ type Request = {
   siteVisitRequested: boolean;
   designerId: string | null;
   revisionsUsed: number;
-  client: { fullName: string | null; email: string };
+  client: { fullName: string | null; email: string } | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
   designer: { fullName: string | null; email: string } | null;
   spaceEntries: SpaceEntry[];
   files: File[];
@@ -111,10 +114,10 @@ export default function AdminDesignerClient({ requests, designers }: { requests:
             <tr>
               <td>{r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "-"}</td>
               <td>
-                {r.client.fullName ?? r.client.email}
+                {contactLabel(r)}
                 <br />
                 <span className="sub" style={{ marginBottom: 0 }}>
-                  {r.client.email}
+                  {r.client?.email ?? r.contactPhone ?? r.contactEmail ?? "No account"}
                 </span>
               </td>
               <td>{PACKAGE_LABELS[r.packageKey] ?? r.packageKey}</td>
@@ -236,7 +239,7 @@ export default function AdminDesignerClient({ requests, designers }: { requests:
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <div className="modal-title" style={{ marginBottom: 0 }}>
-                {managing.client.fullName ?? managing.client.email}
+                {contactLabel(managing)}
               </div>
               <div className="modal-close" onClick={() => setManaging(null)}>
                 &times;

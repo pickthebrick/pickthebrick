@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { Role, DesignRequestStatus } from "@/app/generated/prisma/enums";
 import { ROLE_HOME } from "@/lib/roles";
 import { PACKAGE_LABELS } from "@/lib/spaces";
+import { contactLabel } from "@/lib/contactLabel";
 import DesignerShell from "../DesignerShell";
 import "../../dashboard.css";
 
@@ -21,7 +22,15 @@ export default async function DesignerPaymentsPage() {
 
   const requests = await prisma.designRequest.findMany({
     where: { designerId: session.id, status: DesignRequestStatus.delivered },
-    select: { id: true, packageKey: true, packagePrice: true, deliveredAt: true, client: { select: { fullName: true, email: true } } },
+    select: {
+      id: true,
+      packageKey: true,
+      packagePrice: true,
+      deliveredAt: true,
+      contactPhone: true,
+      contactEmail: true,
+      client: { select: { fullName: true, email: true } },
+    },
     orderBy: { deliveredAt: "desc" },
   });
 
@@ -52,7 +61,7 @@ export default async function DesignerPaymentsPage() {
           <tbody>
             {requests.map((r) => (
               <tr key={r.id}>
-                <td>{r.client.fullName ?? r.client.email}</td>
+                <td>{contactLabel(r)}</td>
                 <td>{PACKAGE_LABELS[r.packageKey] ?? r.packageKey}</td>
                 <td>{r.deliveredAt ? new Date(r.deliveredAt).toLocaleDateString() : "-"}</td>
                 <td style={{ textAlign: "right" }}>AED {(r.packagePrice ?? 0).toLocaleString()}</td>

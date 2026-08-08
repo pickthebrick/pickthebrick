@@ -30,6 +30,8 @@ export default async function DesignerPage() {
       siteVisitRequested: true,
       revisionsUsed: true,
       lastRevisionAt: true,
+      contactPhone: true,
+      contactEmail: true,
       client: { select: { fullName: true, email: true, company: true } },
       files: { orderBy: { sortOrder: "asc" }, select: { id: true, label: true, filePath: true, createdAt: true } },
       spaceEntries: {

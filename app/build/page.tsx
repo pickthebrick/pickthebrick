@@ -11,13 +11,13 @@ import BuildClient from "./BuildClient";
 export default async function BuildPage({ searchParams }: { searchParams: Promise<{ editQuote?: string }> }) {
   const { editQuote } = await searchParams;
   const session = await getSession();
-  if (!session) redirect("/login");
 
   // A Captain opens this in a new tab from CaptainClient.tsx's "Edit
   // client's quote" link - a narrow, deliberate exception to the usual
   // client-only /build gate (see proxy.ts). Scoped to a specific
   // captain_confirmed quote the Captain themselves owns.
   if (editQuote) {
+    if (!session) redirect("/login");
     if (session.role !== Role.captain) redirect(ROLE_HOME[session.role]);
 
     const quote = await prisma.quote.findUnique({
@@ -27,6 +27,8 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
         status: true,
         location: true,
         officeSize: true,
+        contactPhone: true,
+        contactEmail: true,
         client: { select: { fullName: true, company: true, email: true } },
       },
     });
@@ -40,9 +42,11 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
       prisma.banner.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
     ]);
 
-    const clientLabel = quote.client.company
-      ? `${quote.client.fullName ?? quote.client.email} · ${quote.client.company}`
-      : quote.client.fullName ?? quote.client.email;
+    const clientLabel = quote.client
+      ? quote.client.company
+        ? `${quote.client.fullName ?? quote.client.email} · ${quote.client.company}`
+        : (quote.client.fullName ?? quote.client.email)
+      : (quote.contactPhone ?? quote.contactEmail ?? "anonymous lead");
 
     return (
       <BuildClient
@@ -58,7 +62,9 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
     );
   }
 
-  if (session.role !== Role.client) redirect(ROLE_HOME[session.role]);
+  // A signed-in non-client role has nowhere useful to go on /build - proxy.ts
+  // already bounces them via ROLE_AREAS, this is just belt-and-suspenders.
+  if (session && session.role !== Role.client) redirect(ROLE_HOME[session.role]);
 
   const quoteId = await getOrCreateDraftQuote();
   const [catalog, initialCart, banners, quote, client] = await Promise.all([
@@ -66,7 +72,9 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
     fetchCartLines(quoteId),
     prisma.banner.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
     prisma.quote.findUnique({ where: { id: quoteId }, select: { location: true, officeSize: true } }),
-    prisma.user.findUnique({ where: { id: session.id }, select: { fullName: true, company: true, email: true } }),
+    session
+      ? prisma.user.findUnique({ where: { id: session.id }, select: { fullName: true, company: true, email: true } })
+      : null,
   ]);
 
   const clientLabel = client?.company
@@ -82,6 +90,7 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
       initialLocation={quote?.location ?? null}
       initialOfficeSize={quote?.officeSize ?? null}
       clientLabel={clientLabel ?? undefined}
+      isAnonymous={!session}
     />
   );
 }

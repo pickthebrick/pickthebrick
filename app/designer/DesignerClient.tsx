@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import { claimDesignRequest } from "@/app/actions/design";
+import { contactLabel } from "@/lib/contactLabel";
 import { PACKAGE_LABELS, groupSpaceEntries } from "@/lib/spaces";
 import { MAX_REVISIONS, type PackageKey } from "@/lib/designPricing";
 import SpaceRequirements from "./SpaceRequirements";
@@ -23,7 +24,9 @@ export type DesignRequestRow = {
   siteVisitRequested: boolean;
   revisionsUsed: number;
   lastRevisionAt: Date | null;
-  client: { fullName: string | null; email: string; company: string | null };
+  client: { fullName: string | null; email: string; company: string | null } | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
   files: DesignRequestFile[];
   spaceEntries: DesignRequestSpaceRow[];
   revisionComments: RevisionComment[];
@@ -142,8 +145,8 @@ export default function DesignerClient({ requests }: { requests: DesignRequestRo
               <Fragment key={r.id}>
                 <tr>
                   <td>
-                    {r.client.fullName ?? r.client.email}
-                    <div className="sub">{r.client.company ?? r.client.email}</div>
+                    {contactLabel(r)}
+                    <div className="sub">{r.client?.company ?? r.client?.email ?? r.contactPhone ?? r.contactEmail ?? "No account"}</div>
                   </td>
                   <td>{PACKAGE_LABELS[r.packageKey] ?? r.packageKey}</td>
                   <td>{r.sqft.toLocaleString()} sqft</td>
@@ -193,8 +196,8 @@ export default function DesignerClient({ requests }: { requests: DesignRequestRo
               <Fragment key={r.id}>
                 <tr>
                   <td>
-                    {r.client.fullName ?? r.client.email}
-                    <div className="sub">{r.client.company ?? r.client.email}</div>
+                    {contactLabel(r)}
+                    <div className="sub">{r.client?.company ?? r.client?.email ?? r.contactPhone ?? r.contactEmail ?? "No account"}</div>
                   </td>
                   <td>
                     {PACKAGE_LABELS[r.packageKey] ?? r.packageKey}
@@ -250,8 +253,8 @@ export default function DesignerClient({ requests }: { requests: DesignRequestRo
               <Fragment key={r.id}>
                 <tr>
                   <td>
-                    {r.client.fullName ?? r.client.email}
-                    <div className="sub">{r.client.company ?? r.client.email}</div>
+                    {contactLabel(r)}
+                    <div className="sub">{r.client?.company ?? r.client?.email ?? r.contactPhone ?? r.contactEmail ?? "No account"}</div>
                   </td>
                   <td>
                     {PACKAGE_LABELS[r.packageKey] ?? r.packageKey}

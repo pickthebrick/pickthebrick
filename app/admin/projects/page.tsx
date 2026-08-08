@@ -23,6 +23,8 @@ export default async function AdminProjectsPage() {
         referenceNumber: true,
         location: true,
         officeSize: true,
+        contactPhone: true,
+        contactEmail: true,
         client: { select: { fullName: true, email: true } },
         captain: { select: { fullName: true, email: true } },
         inspections: {

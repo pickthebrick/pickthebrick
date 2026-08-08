@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveActor, actorOwns } from "@/lib/actor";
 import { DesignRequestStatus } from "@/app/generated/prisma/enums";
 import { PACKAGE_LABELS, labelSpaceInstances } from "@/lib/spaces";
 import DesignStepper from "../DesignStepper";
@@ -10,14 +10,14 @@ import "../../marketing.css";
 
 export default async function DesignFeaturesPage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
   const { id } = await searchParams;
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const actor = await resolveActor();
   if (!id) redirect("/design");
 
   const request = await prisma.designRequest.findUnique({
     where: { id },
     select: {
       clientId: true,
+      anonymousSessionId: true,
       status: true,
       packageKey: true,
       sqft: true,
@@ -27,7 +27,7 @@ export default async function DesignFeaturesPage({ searchParams }: { searchParam
       },
     },
   });
-  if (!request || request.clientId !== session.id) redirect("/design");
+  if (!request || !actorOwns(actor, request)) redirect("/design");
   if (request.spaceEntries.length === 0) redirect(`/design/spaces?id=${id}`);
 
   if (request.status !== DesignRequestStatus.draft) {
@@ -74,5 +74,5 @@ export default async function DesignFeaturesPage({ searchParams }: { searchParam
     answers: Object.fromEntries(e.answers.map((a) => [a.questionKey, a.value])),
   }));
 
-  return <FeaturesWizard designRequestId={id} instances={instances} />;
+  return <FeaturesWizard designRequestId={id} instances={instances} isAnonymous={!("clientId" in actor)} />;
 }

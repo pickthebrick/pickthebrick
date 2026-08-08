@@ -36,6 +36,8 @@ export default async function CaptainPage() {
         referenceNumber: true,
         location: true,
         officeSize: true,
+        contactPhone: true,
+        contactEmail: true,
         client: { select: CLIENT_SELECT },
         inspections: {
           orderBy: { requestedAt: "desc" },

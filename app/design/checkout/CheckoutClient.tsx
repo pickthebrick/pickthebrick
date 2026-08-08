@@ -21,6 +21,7 @@ export default function CheckoutClient({
   siteVisitRequested,
   siteVisitFee,
   initialMethod,
+  isAnonymous = false,
 }: {
   designRequestId: string;
   packageLabel: string;
@@ -28,6 +29,7 @@ export default function CheckoutClient({
   siteVisitRequested: boolean;
   siteVisitFee: number;
   initialMethod: string | null;
+  isAnonymous?: boolean;
 }) {
   const [busy, setBusy] = useState<Method | null>(null);
   const [confirmedMethod, setConfirmedMethod] = useState<string | null>(initialMethod);
@@ -92,8 +94,12 @@ export default function CheckoutClient({
                   ? "Our team will follow up to collect payment."
                   : "This is a prototype - no real charge has been made."}
               </p>
-              <Link href="/my-quotes" className="design-start-btn" style={{ display: "block", width: "100%", textAlign: "center", textDecoration: "none" }}>
-                Go to my dashboard →
+              <Link
+                href={isAnonymous ? "/" : "/my-quotes"}
+                className="design-start-btn"
+                style={{ display: "block", width: "100%", textAlign: "center", textDecoration: "none" }}
+              >
+                {isAnonymous ? "Back to home →" : "Go to my dashboard →"}
               </Link>
             </div>
           ) : (

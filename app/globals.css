@@ -131,6 +131,107 @@ body {
   border-radius: var(--radius);
   cursor: default;
 }
+/* Shared light-touch contact capture (see app/components/ContactCaptureForm.tsx)
+   - used in both Build's confirm step and Design's submit step. */
+.contact-capture {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.contact-capture-toggle {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.contact-capture-toggle button {
+  padding: 0 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: none;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+.contact-capture-toggle button.selected {
+  background: var(--accent);
+  color: #fff;
+}
+.contact-capture input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+}
+.contact-capture-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+/* Account-only feature gate for anonymous visitors (see
+   app/components/SignupGate.tsx) - e.g. downloading/sharing the quote PDF. */
+.signup-gate-trigger {
+  padding: 10px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.signup-gate-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex-basis: 100%;
+}
+.signup-gate-form .form-error {
+  flex-basis: 100%;
+}
+.signup-gate-form input {
+  flex: 1;
+  min-width: 140px;
+  padding: 10px 12px;
+  font-size: 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+}
+.signup-gate-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.signup-gate-cancel {
+  padding: 10px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.signup-gate-submit {
+  padding: 10px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
 .lightbox-close {
   position: absolute;
   top: 18px;

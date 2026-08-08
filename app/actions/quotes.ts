@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole, ADMIN_ROLES } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
+import { resolveActor, actorOwns, type Actor } from "@/lib/actor";
 import { Role, QuoteStatus, type Unit } from "@/app/generated/prisma/enums";
 import {
   sendQuoteSubmittedEmail,
@@ -41,21 +42,23 @@ async function recordHistory(quoteId: string, fromStatus: string | null, toStatu
 
 // Returns (creating if needed) the caller's single active draft quote - this
 // is what lets an in-progress cart survive a refresh/disconnect, since it
-// lives in QuoteItem rows rather than page-level state.
+// lives in QuoteItem rows rather than page-level state. Works identically
+// for a signed-in client or an anonymous visitor (see lib/actor.ts) - the
+// resolved actor is stamped onto whichever of clientId/anonymousSessionId
+// applies, so the same draft is found again on a later visit either way.
 export async function getOrCreateDraftQuote() {
-  const session = await requireSession();
-  if (session.role !== Role.client) throw new Error("Only clients can build quotes");
+  const actor = await resolveActor();
 
-  const existing = await prisma.quote.findFirst({ where: { clientId: session.id, status: QuoteStatus.draft } });
+  const existing = await prisma.quote.findFirst({ where: { ...actor, status: QuoteStatus.draft } });
   if (existing) return existing.id;
 
-  const created = await prisma.quote.create({ data: { clientId: session.id, status: QuoteStatus.draft } });
+  const created = await prisma.quote.create({ data: { ...actor, status: QuoteStatus.draft } });
   return created.id;
 }
 
 export async function setQuoteDetails(quoteId: string, location: string, officeSize: string) {
-  const session = await requireSession();
-  await assertOwnDraft(quoteId, session.id);
+  const actor = await resolveActor();
+  await assertOwnDraft(quoteId, actor);
 
   if (!location.trim() || !officeSize.trim()) {
     throw new Error("Please fill in both the location and the office size");
@@ -65,6 +68,21 @@ export async function setQuoteDetails(quoteId: string, location: string, officeS
     where: { id: quoteId },
     data: { location: location.trim(), officeSize: officeSize.trim() },
   });
+}
+
+// Sets the contact info an anonymous quote is submitted under (no User row
+// to hold it) - collected at the "I'm done" step. A signed-in client never
+// needs this (their account already has an email), but calling it is
+// harmless either way, so BuildClient doesn't need to branch on it.
+export async function setQuoteContact(quoteId: string, contact: { phone?: string; email?: string }) {
+  const actor = await resolveActor();
+  await assertOwnDraft(quoteId, actor);
+
+  const phone = contact.phone?.trim() || null;
+  const email = contact.email?.trim() || null;
+  if (!phone && !email) throw new Error("Please enter a phone number or email");
+
+  await prisma.quote.update({ where: { id: quoteId }, data: { contactPhone: phone, contactEmail: email } });
 }
 
 export type CartLineInput = {
@@ -78,16 +96,16 @@ export type CartLineInput = {
   qty: number;
 };
 
-async function assertOwnDraft(quoteId: string, clientId: string) {
+async function assertOwnDraft(quoteId: string, actor: Actor) {
   const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
-  if (!quote || quote.clientId !== clientId || quote.status !== QuoteStatus.draft) {
+  if (!quote || !actorOwns(actor, quote) || quote.status !== QuoteStatus.draft) {
     throw new Error("Quote is not an editable draft you own");
   }
 }
 
 export async function upsertCartItem(quoteId: string, line: CartLineInput) {
-  const session = await requireSession();
-  await assertOwnDraft(quoteId, session.id);
+  const actor = await resolveActor();
+  await assertOwnDraft(quoteId, actor);
 
   // Resolves the live Category by label so items can later be grouped by
   // categoryId for per-timeline-item contractor assignment (see
@@ -120,8 +138,8 @@ export async function upsertCartItem(quoteId: string, line: CartLineInput) {
 }
 
 export async function removeCartItem(quoteId: string, productId: string) {
-  const session = await requireSession();
-  await assertOwnDraft(quoteId, session.id);
+  const actor = await resolveActor();
+  await assertOwnDraft(quoteId, actor);
 
   await prisma.quoteItem.delete({ where: { quoteId_productId: { quoteId, productId } } }).catch(() => {});
   await recalcTotals(quoteId);
@@ -203,8 +221,8 @@ export async function captainSetQuoteDetails(quoteId: string, location: string, 
 // caller's draft quote, leaving the same draft row so a fresh cart can be
 // rebuilt against it - used by the build page's "Start over" button.
 export async function startOverDraftQuote(quoteId: string) {
-  const session = await requireSession();
-  await assertOwnDraft(quoteId, session.id);
+  const actor = await resolveActor();
+  await assertOwnDraft(quoteId, actor);
 
   await prisma.quoteItem.deleteMany({ where: { quoteId } });
   await prisma.quote.update({
@@ -291,14 +309,17 @@ async function generateReferenceNumber(): Promise<string> {
 }
 
 export async function submitQuote(quoteId: string) {
-  const session = await requireSession();
+  const actor = await resolveActor();
   const quote = await prisma.quote.findUnique({
     where: { id: quoteId },
     include: { items: true, client: true },
   });
-  if (!quote || quote.clientId !== session.id) throw new Error("Quote not found");
+  if (!quote || !actorOwns(actor, quote)) throw new Error("Quote not found");
   if (quote.status !== QuoteStatus.draft) throw new Error("Quote is not in draft status");
   if (quote.items.length === 0) throw new Error("Cannot submit an empty quote");
+  if (!quote.client && !quote.contactPhone && !quote.contactEmail) {
+    throw new Error("Please add a phone number or email before submitting");
+  }
 
   await recalcTotals(quoteId);
   const referenceNumber = await generateReferenceNumber();
@@ -306,15 +327,20 @@ export async function submitQuote(quoteId: string) {
     where: { id: quoteId },
     data: { status: QuoteStatus.submitted, submittedAt: new Date(), referenceNumber },
   });
-  await recordHistory(quoteId, quote.status, QuoteStatus.submitted, session.id);
-  await sendQuoteSubmittedEmail(quote.client.email);
-  await sendTemplatedWhatsApp("quote_submitted", quote.client.whatsappNumber);
+  if ("clientId" in actor) {
+    await recordHistory(quoteId, quote.status, QuoteStatus.submitted, actor.clientId);
+  }
+  const clientEmail = quote.client?.email ?? quote.contactEmail ?? undefined;
+  const clientWhatsapp = quote.client?.whatsappNumber ?? quote.contactPhone;
+  if (clientEmail) await sendQuoteSubmittedEmail(clientEmail);
+  await sendTemplatedWhatsApp("quote_submitted", clientWhatsapp);
 
   const admins = await prisma.user.findMany({ where: { role: { in: ADMIN_ROLES } } });
+  const clientLabel = quote.client?.email ?? quote.contactEmail ?? quote.contactPhone ?? "an anonymous lead";
   for (const admin of admins) {
-    await sendQuoteSubmittedAdminAlertEmail(admin.email, quote.client.email, referenceNumber);
+    await sendQuoteSubmittedAdminAlertEmail(admin.email, clientLabel, referenceNumber);
     await sendTemplatedWhatsApp("quote_submitted_admin_alert", admin.whatsappNumber, {
-      clientEmail: quote.client.email,
+      clientEmail: clientLabel,
       referenceNumber,
     });
   }
@@ -355,8 +381,9 @@ export async function assignCaptain(quoteId: string, captainId: string) {
     await recordHistory(quoteId, quote.status, QuoteStatus.captain_confirmed, session.id);
     await sendCaptainAssignedEmail(captain.email, quoteId);
     await sendTemplatedWhatsApp("captain_assigned", captain.whatsappNumber, { quoteId });
-    await sendQuoteConfirmedEmail(quote.client.email);
-    await sendTemplatedWhatsApp("quote_confirmed", quote.client.whatsappNumber);
+    const clientEmail = quote.client?.email ?? quote.contactEmail;
+    if (clientEmail) await sendQuoteConfirmedEmail(clientEmail);
+    await sendTemplatedWhatsApp("quote_confirmed", quote.client?.whatsappNumber ?? quote.contactPhone);
   } else {
     await prisma.quote.update({ where: { id: quoteId }, data: { captainId } });
     // Mid-project swap - notify both sides since a whole active project is changing hands.
@@ -411,8 +438,9 @@ export async function approveQuote(quoteId: string) {
     data: { status: QuoteStatus.admin_approved, approvedAt: new Date() },
   });
   await recordHistory(quoteId, quote.status, QuoteStatus.admin_approved, session.id);
-  await sendQuoteApprovedEmail(quote.client.email);
-  await sendTemplatedWhatsApp("quote_approved", quote.client.whatsappNumber);
+  const approvedClientEmail = quote.client?.email ?? quote.contactEmail;
+  if (approvedClientEmail) await sendQuoteApprovedEmail(approvedClientEmail);
+  await sendTemplatedWhatsApp("quote_approved", quote.client?.whatsappNumber ?? quote.contactPhone);
   revalidatePath("/admin");
 }
 
@@ -429,8 +457,9 @@ export async function markQuotePaid(quoteId: string) {
     data: { status: QuoteStatus.paid, paidAt: new Date() },
   });
   await recordHistory(quoteId, quote.status, QuoteStatus.paid, session.id);
-  await sendQuotePaidEmail(quote.client.email);
-  await sendTemplatedWhatsApp("quote_paid", quote.client.whatsappNumber);
+  const paidClientEmail = quote.client?.email ?? quote.contactEmail;
+  if (paidClientEmail) await sendQuotePaidEmail(paidClientEmail);
+  await sendTemplatedWhatsApp("quote_paid", quote.client?.whatsappNumber ?? quote.contactPhone);
   if (quote.contractor) {
     await sendContractorPaymentRecordedEmail(quote.contractor.email, quoteId);
     await sendTemplatedWhatsApp("contractor_payment_recorded", quote.contractor.whatsappNumber, { quoteId });

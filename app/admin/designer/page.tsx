@@ -25,6 +25,8 @@ export default async function AdminDesignerPage() {
         siteVisitRequested: true,
         designerId: true,
         revisionsUsed: true,
+        contactPhone: true,
+        contactEmail: true,
         client: { select: { fullName: true, email: true } },
         designer: { select: { fullName: true, email: true } },
         spaceEntries: {

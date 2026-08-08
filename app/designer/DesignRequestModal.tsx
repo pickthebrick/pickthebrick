@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { submitDesignRevision, deleteDesignRequestFile, deliverDesignRequest, addDesignRequestRevisionComment } from "@/app/actions/design";
 import { PACKAGE_LABELS } from "@/lib/spaces";
 import { MAX_REVISIONS, type PackageKey } from "@/lib/designPricing";
+import { contactLabel } from "@/lib/contactLabel";
 import type { DesignRequestRow } from "./DesignerClient";
 
 // Keep in sync with DESIGNER_FILE_DELETE_WINDOW_MS in app/actions/design.ts.
@@ -90,7 +91,7 @@ export default function DesignRequestModal({
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <div className="modal-title" style={{ marginBottom: 0 }}>
-            {request.client.fullName ?? request.client.email}
+            {contactLabel(request)}
           </div>
           <div className="modal-close" onClick={onClose}>
             &times;

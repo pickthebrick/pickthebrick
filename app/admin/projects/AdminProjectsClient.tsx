@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { QuoteStatus } from "@/app/generated/prisma/enums";
 import { respondToSiteInspection } from "@/app/actions/progress";
+import { contactLabel } from "@/lib/contactLabel";
 import GanttChart, { type TimelineItem } from "../../captain/GanttChart";
 import AdminPanel from "../AdminPanel";
 
@@ -40,7 +41,9 @@ type Project = {
   referenceNumber: string | null;
   location: string | null;
   officeSize: string | null;
-  client: { fullName: string | null; email: string };
+  client: { fullName: string | null; email: string } | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
   captain: { fullName: string | null; email: string } | null;
   inspections: Inspection[];
   timelineItems: TimelineItem[];
@@ -99,7 +102,7 @@ export default function AdminProjectsClient({
         if (statusFilter !== "all" && p.status !== statusFilter) return false;
         if (search.trim()) {
           const s = search.trim().toLowerCase();
-          const haystack = `${p.client.fullName ?? ""} ${p.client.email} ${p.referenceNumber ?? ""}`.toLowerCase();
+          const haystack = `${contactLabel(p)} ${p.referenceNumber ?? ""}`.toLowerCase();
           if (!haystack.includes(s)) return false;
         }
         return true;
@@ -146,7 +149,7 @@ export default function AdminProjectsClient({
                   <span className={`status-badge ${p.status}`}>{STATUS_LABEL[p.status]}</span>
                   <span className="sub" style={{ marginBottom: 0 }}>
                     {p.referenceNumber ?? "-"} &middot; {projectName(p.officeSize, p.location)} &middot;{" "}
-                    {p.client.fullName ?? p.client.email} &middot; Captain: {p.captain?.fullName ?? p.captain?.email ?? "-"}{" "}
+                    {contactLabel(p)} &middot; Captain: {p.captain?.fullName ?? p.captain?.email ?? "-"}{" "}
                     &middot; AED {p.grandTotal.toLocaleString()} &middot; {overallProgress(p.timelineItems)}% overall
                     {openInspections.length > 0 && ` · ${openInspections.length} inspection(s) pending`}
                   </span>

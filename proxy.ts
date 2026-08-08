@@ -4,6 +4,16 @@ import { ROLE_HOME } from "@/lib/roles";
 import { Role } from "@/app/generated/prisma/enums";
 
 const SESSION_COOKIE = "ptb_session";
+// Duplicated from lib/anonSession.ts (which is server-only, same reasoning
+// as SESSION_COOKIE above) - minted here rather than lazily inside a Server
+// Action, since Next.js only allows cookies().set() from a real Server
+// Action/Route Handler, not from a Server Component's render, and
+// getOrCreateDraftQuote()/startDesignRequest() are called directly from
+// page.tsx renders. Middleware is the one place that can both set the
+// cookie for future requests AND make it visible to *this* request's render
+// (by rewriting the forwarded request's Cookie header below).
+const ANON_COOKIE = "ptb_anon";
+const ANON_DAYS = 180;
 
 const ROLE_AREAS: Record<Role, string[]> = {
   client: ["build", "my-quotes"],
@@ -17,16 +27,54 @@ const ROLE_AREAS: Record<Role, string[]> = {
   marketing: ["admin"],
 };
 
-// The only page viewable with no session at all - Design and Build both
-// require login, but only once the visitor actually heads into one of those
-// flows from here (see the ?next= handling below), not before. Redirects
-// any other signed-in role away, same as every other client-only area.
+// Viewable with no session at all, redirecting any other signed-in role
+// away to their own dashboard (same as every other client-only area).
 const PUBLIC_ROUTES = ["/"];
 // Pure marketing pages (ad/social landing targets, see app/landing/[category])
-// - viewable by literally anyone regardless of role or session, no redirect.
-// Only the "Add to cart" links off these pages funnel into the normal
-// client-only /build login wall.
+// - viewable by literally anyone regardless of role or session, no redirect,
+// and no further role checks ever apply to them.
 const PUBLIC_NO_REDIRECT_PREFIXES = ["/landing/", "/ask-ai", "/careers"];
+// Build and Design used to force login before a visitor could even start;
+// now both work fully anonymously (see lib/anonSession.ts / lib/actor.ts)
+// and only ask for contact info at the end of the flow. Unlike the prefixes
+// above, this only skips the *login redirect* below - once a session does
+// exist, the normal ROLE_AREAS check further down still applies as before,
+// so a signed-in non-client role hitting bare /build still bounces to their
+// own dashboard, and the captain ?editQuote= exception is unaffected.
+// Matched exactly/by "/" boundary (not a bare startsWith) so this can never
+// accidentally swallow /designer, the unrelated staff dashboard route.
+const ANONYMOUS_OK_PREFIXES = ["/build", "/design"];
+function isAnonymousOkRoute(pathname: string) {
+  return ANONYMOUS_OK_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
+// Ensures ptb_anon is set - both on the outgoing response (so the browser
+// carries it on future requests) and, if it didn't already exist, on the
+// forwarded request's Cookie header too, so the Server Component rendering
+// *this* request already sees it via cookies() instead of getting nothing
+// on the very first anonymous visit.
+function withAnonSessionCookie(request: NextRequest) {
+  const existing = request.cookies.get(ANON_COOKIE)?.value;
+  if (existing) return NextResponse.next();
+
+  const anonId = crypto.randomUUID();
+  const requestHeaders = new Headers(request.headers);
+  const existingCookieHeader = requestHeaders.get("cookie");
+  requestHeaders.set(
+    "cookie",
+    existingCookieHeader ? `${existingCookieHeader}; ${ANON_COOKIE}=${anonId}` : `${ANON_COOKIE}=${anonId}`,
+  );
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.cookies.set(ANON_COOKIE, anonId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: ANON_DAYS * 24 * 60 * 60,
+  });
+  return response;
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -52,8 +100,9 @@ export async function proxy(request: NextRequest) {
 
   if (!validSession) {
     if (isAuthRoute || isPublicRoute || isPublicNoRedirect) return NextResponse.next();
+    if (isAnonymousOkRoute(pathname)) return withAnonSessionCookie(request);
     // Send the visitor to log in, then straight back to whatever they were
-    // trying to reach (Design or Build) instead of a generic role home.
+    // trying to reach instead of a generic role home.
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = `?next=${encodeURIComponent(pathname + search)}`;

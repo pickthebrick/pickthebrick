@@ -1,19 +1,19 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveActor, actorOwns } from "@/lib/actor";
 import { PACKAGE_LABELS } from "@/lib/spaces";
 import CheckoutClient from "./CheckoutClient";
 
 export default async function DesignCheckoutPage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
   const { id } = await searchParams;
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const actor = await resolveActor();
   if (!id) redirect("/design");
 
   const request = await prisma.designRequest.findUnique({
     where: { id },
     select: {
       clientId: true,
+      anonymousSessionId: true,
       packageKey: true,
       packagePrice: true,
       siteVisitRequested: true,
@@ -21,7 +21,7 @@ export default async function DesignCheckoutPage({ searchParams }: { searchParam
       paymentMethod: true,
     },
   });
-  if (!request || request.clientId !== session.id) redirect("/design");
+  if (!request || !actorOwns(actor, request)) redirect("/design");
 
   return (
     <CheckoutClient
@@ -31,6 +31,7 @@ export default async function DesignCheckoutPage({ searchParams }: { searchParam
       siteVisitRequested={request.siteVisitRequested}
       siteVisitFee={request.siteVisitFee}
       initialMethod={request.paymentMethod}
+      isAnonymous={!("clientId" in actor)}
     />
   );
 }

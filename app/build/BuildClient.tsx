@@ -7,6 +7,7 @@ import {
   removeCartItem,
   submitQuote,
   setQuoteDetails,
+  setQuoteContact,
   startOverDraftQuote,
   captainUpsertCartItem,
   captainRemoveCartItem,
@@ -20,6 +21,8 @@ import { ProductThumb } from "./ProductThumb";
 import ProductModal from "./ProductModal";
 import QuoteDetailsModal from "./QuoteDetailsModal";
 import TermsSection from "./TermsSection";
+import ContactCaptureForm, { type ContactMethod } from "@/app/components/ContactCaptureForm";
+import SignupGate from "@/app/components/SignupGate";
 import "./build.css";
 
 const SQM_TO_SQFT = 10.7639;
@@ -90,6 +93,7 @@ export default function BuildClient({
   initialOfficeSize,
   editAsCaptain = false,
   clientLabel,
+  isAnonymous = false,
 }: {
   catalog: Catalog;
   quoteId: string;
@@ -99,6 +103,11 @@ export default function BuildClient({
   initialOfficeSize: string | null;
   editAsCaptain?: boolean;
   clientLabel?: string;
+  // No session at all - see lib/actor.ts. Hides account-only chrome (the
+  // "My quotes" link, which would just bounce an anonymous visitor to
+  // /login) and gates the contact-capture/account-upsell steps later in
+  // the flow.
+  isAnonymous?: boolean;
 }) {
   const [cart, setCart] = useState<CartLine[]>(initialCart);
   const [error, setError] = useState<string | null>(null);
@@ -124,6 +133,8 @@ export default function BuildClient({
   const [view, setView] = useState<"build" | "preview" | "success">("build");
   const [confirmingComplete, setConfirmingComplete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [contactMethod, setContactMethod] = useState<ContactMethod>("phone");
+  const [contactValue, setContactValue] = useState("");
   const [modalProductId, setModalProductId] = useState<string | null>(null);
 
   const cartMap = useMemo(() => new Map(cart.map((l) => [l.productId, l])), [cart]);
@@ -267,8 +278,18 @@ export default function BuildClient({
 
   async function handleSubmit() {
     if (cart.length === 0) return;
+    if (isAnonymous && !contactValue.trim()) {
+      setError("Please enter a phone number or email so we can send your quote");
+      return;
+    }
     setSubmitting(true);
     try {
+      if (isAnonymous) {
+        await setQuoteContact(
+          quoteId,
+          contactMethod === "phone" ? { phone: contactValue.trim() } : { email: contactValue.trim() },
+        );
+      }
       await submitQuote(quoteId);
       setView("success");
     } catch (e) {
@@ -347,9 +368,11 @@ export default function BuildClient({
               Editing {clientLabel ?? "client"}&apos;s quote
             </span>
           ) : (
-            <a href="/my-quotes" style={{ fontSize: 13, fontWeight: 600 }}>
-              My quotes
-            </a>
+            !isAnonymous && (
+              <a href="/my-quotes" style={{ fontSize: 13, fontWeight: 600 }}>
+                My quotes
+              </a>
+            )
           )}
         </div>
       </header>
@@ -737,15 +760,21 @@ export default function BuildClient({
                     >
                       I&apos;m done
                     </button>
-                    <button type="button" className="icon-btn" onClick={shareViaWhatsApp} title="Share via WhatsApp" aria-label="Share via WhatsApp">
-                      <WhatsAppIcon />
-                    </button>
-                    <button type="button" className="icon-btn" onClick={shareViaEmail} title="Share via Email" aria-label="Share via Email">
-                      <EmailIcon />
-                    </button>
-                    <button type="button" className="icon-btn" onClick={downloadPdf} title="Download PDF" aria-label="Download PDF">
-                      <DownloadIcon />
-                    </button>
+                    {isAnonymous ? (
+                      <SignupGate prompt="Sign up to download or share your quote" />
+                    ) : (
+                      <>
+                        <button type="button" className="icon-btn" onClick={shareViaWhatsApp} title="Share via WhatsApp" aria-label="Share via WhatsApp">
+                          <WhatsAppIcon />
+                        </button>
+                        <button type="button" className="icon-btn" onClick={shareViaEmail} title="Share via Email" aria-label="Share via Email">
+                          <EmailIcon />
+                        </button>
+                        <button type="button" className="icon-btn" onClick={downloadPdf} title="Download PDF" aria-label="Download PDF">
+                          <DownloadIcon />
+                        </button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="action-row">
@@ -754,10 +783,26 @@ export default function BuildClient({
                       office moving — or get in touch with our team now on{" "}
                       <a href="tel:+971523142272">0523142272</a>.
                     </div>
+                    {isAnonymous && (
+                      <div style={{ flexBasis: "100%" }}>
+                        <div className="contact-capture-label">Send my quote to WhatsApp</div>
+                        <ContactCaptureForm
+                          method={contactMethod}
+                          onMethodChange={setContactMethod}
+                          value={contactValue}
+                          onValueChange={setContactValue}
+                          autoFocus
+                        />
+                      </div>
+                    )}
                     <button className="action-btn secondary" onClick={() => setConfirmingComplete(false)}>
                       Cancel
                     </button>
-                    <button className="action-btn primary" disabled={submitting} onClick={handleSubmit}>
+                    <button
+                      className="action-btn primary"
+                      disabled={submitting || (isAnonymous && !contactValue.trim())}
+                      onClick={handleSubmit}
+                    >
                       {submitting ? "Submitting..." : "Yes, I'm done"}
                     </button>
                   </div>
@@ -775,10 +820,16 @@ export default function BuildClient({
             <h2>Quote saved</h2>
             <p>Your PickTheBrick quote is locked in. A Captain from our team will be in touch shortly to help turn this into a real fitout.</p>
             <div className="action-row" style={{ marginTop: 24 }}>
-              <a className="action-btn primary" href="/my-quotes" style={{ textDecoration: "none" }}>
-                View my quotes
-              </a>
-              <Link className="action-btn secondary" href="/" style={{ textDecoration: "none" }}>
+              {!isAnonymous && (
+                <a className="action-btn primary" href="/my-quotes" style={{ textDecoration: "none" }}>
+                  View my quotes
+                </a>
+              )}
+              <Link
+                className={isAnonymous ? "action-btn primary" : "action-btn secondary"}
+                href="/"
+                style={{ textDecoration: "none" }}
+              >
                 Go to home page
               </Link>
             </div>

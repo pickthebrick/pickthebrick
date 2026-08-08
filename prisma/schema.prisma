@@ -261,8 +261,17 @@ model ProductDownload {
 
 model Quote {
   id             String      @id @default(cuid())
-  clientId       String
-  client         User        @relation("ClientQuotes", fields: [clientId], references: [id])
+  // Nullable so an anonymous visitor can build/submit a quote with no
+  // account at all - anonymousSessionId identifies them instead (see
+  // lib/anonSession.ts). Exactly one of clientId/anonymousSessionId is set
+  // until claimAnonymousSession() re-parents the row onto a real account.
+  clientId       String?
+  client         User?       @relation("ClientQuotes", fields: [clientId], references: [id])
+  anonymousSessionId String?
+  // Captured at the "I'm done" step for a quote with no clientId, since
+  // there's no User row to hold a contact address - see setQuoteContact().
+  contactPhone   String?
+  contactEmail   String?
   status         QuoteStatus @default(draft)
   location       String?
   officeSize     String?
@@ -331,8 +340,14 @@ model QuoteStatusHistory {
 // the moment they start the flow through the designer delivering files back.
 model DesignRequest {
   id           String              @id @default(cuid())
-  clientId     String
-  client       User                @relation("ClientDesignRequests", fields: [clientId], references: [id])
+  // Nullable for the same reason as Quote.clientId above - an anonymous
+  // visitor is identified by anonymousSessionId instead until they claim
+  // the request onto a real account.
+  clientId     String?
+  client       User?               @relation("ClientDesignRequests", fields: [clientId], references: [id])
+  anonymousSessionId String?
+  contactPhone String?
+  contactEmail String?
   packageKey   String
   sqft         Float
   spaces       String              @default("")

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
+import { resolveActor, actorOwns, type Actor } from "@/lib/actor";
 import { Role, DesignRequestStatus } from "@/app/generated/prisma/enums";
 import { priceFor, MAX_REVISIONS, type PackageKey } from "@/lib/designPricing";
 import { sendDesignerAssignedEmail, sendDesignerRemovedEmail } from "@/lib/email";
@@ -39,26 +40,40 @@ function revalidateDesignRequests() {
   revalidatePath("/admin/designer");
 }
 
-async function assertOwnDraftRequest(id: string, clientId: string) {
+async function assertOwnDraftRequest(id: string, actor: Actor) {
   const request = await prisma.designRequest.findUnique({ where: { id } });
-  if (!request || request.clientId !== clientId || request.status !== DesignRequestStatus.draft) {
+  if (!request || !actorOwns(actor, request) || request.status !== DesignRequestStatus.draft) {
     throw new Error("Design request is not an editable draft you own");
   }
   return request;
 }
 
 // Starts a client's design request the moment they click "Start Design" -
-// package + sqft are known immediately, spaces get filled in on the next step.
+// package + sqft are known immediately, spaces get filled in on the next
+// step. Works for a signed-in client or an anonymous visitor alike, exactly
+// like getOrCreateDraftQuote() in app/actions/quotes.ts.
 export async function startDesignRequest(packageKey: string, sqft: number) {
-  const session = await requireSession();
-  if (session.role !== Role.client) throw new Error("Only clients can start a design request");
+  const actor = await resolveActor();
   if (!Number.isFinite(sqft) || sqft <= 0) throw new Error("Invalid office size");
 
   const packagePrice = priceFor(packageKey as PackageKey, sqft);
   const created = await prisma.designRequest.create({
-    data: { clientId: session.id, packageKey, sqft, packagePrice },
+    data: { ...actor, packageKey, sqft, packagePrice },
   });
   return created.id;
+}
+
+// Sets the contact info an anonymous design request is submitted under - see
+// setQuoteContact() in app/actions/quotes.ts for the equivalent on Build.
+export async function setDesignRequestContact(id: string, contact: { phone?: string; email?: string }) {
+  const actor = await resolveActor();
+  await assertOwnDraftRequest(id, actor);
+
+  const phone = contact.phone?.trim() || null;
+  const email = contact.email?.trim() || null;
+  if (!phone && !email) throw new Error("Please enter a phone number or email");
+
+  await prisma.designRequest.update({ where: { id }, data: { contactPhone: phone, contactEmail: email } });
 }
 
 // Replaces the whole space list for a draft request. Simple wipe-and-recreate:
@@ -66,8 +81,8 @@ export async function startDesignRequest(packageKey: string, sqft: number) {
 // which cascades away any answers already saved for the previous list. That's
 // an accepted MVP trade-off - the wizard flows forward, not back-and-forth.
 export async function setDesignRequestSpaces(id: string, entries: { spaceKey: string; quantity: number }[]) {
-  const session = await requireSession();
-  await assertOwnDraftRequest(id, session.id);
+  const actor = await resolveActor();
+  await assertOwnDraftRequest(id, actor);
 
   await prisma.designRequestSpace.deleteMany({ where: { designRequestId: id } });
 
@@ -89,12 +104,12 @@ export async function saveDesignRequestSpaceAnswers(
   answers: Record<string, string>,
   notes: string,
 ) {
-  const session = await requireSession();
+  const actor = await resolveActor();
   const instance = await prisma.designRequestSpace.findUnique({
     where: { id: spaceInstanceId },
     include: { designRequest: true },
   });
-  if (!instance || instance.designRequest.clientId !== session.id || instance.designRequest.status !== DesignRequestStatus.draft) {
+  if (!instance || !actorOwns(actor, instance.designRequest) || instance.designRequest.status !== DesignRequestStatus.draft) {
     throw new Error("Design request space is not one you can edit");
   }
 
@@ -109,12 +124,12 @@ export async function saveDesignRequestSpaceAnswers(
 }
 
 export async function deleteDesignRequestSpace(spaceInstanceId: string) {
-  const session = await requireSession();
+  const actor = await resolveActor();
   const instance = await prisma.designRequestSpace.findUnique({
     where: { id: spaceInstanceId },
     include: { designRequest: true },
   });
-  if (!instance || instance.designRequest.clientId !== session.id || instance.designRequest.status !== DesignRequestStatus.draft) {
+  if (!instance || !actorOwns(actor, instance.designRequest) || instance.designRequest.status !== DesignRequestStatus.draft) {
     throw new Error("Design request space is not one you can edit");
   }
 
@@ -136,8 +151,11 @@ export async function deleteDesignRequest(id: string) {
 }
 
 export async function submitDesignRequest(id: string) {
-  const session = await requireSession();
-  await assertOwnDraftRequest(id, session.id);
+  const actor = await resolveActor();
+  const request = await assertOwnDraftRequest(id, actor);
+  if (!("clientId" in actor) && !request.contactPhone && !request.contactEmail) {
+    throw new Error("Please add a phone number or email before submitting");
+  }
 
   await prisma.designRequest.update({
     where: { id },
@@ -146,9 +164,9 @@ export async function submitDesignRequest(id: string) {
   revalidateDesignRequests();
 }
 
-async function assertOwnSubmittedRequest(id: string, clientId: string) {
+async function assertOwnSubmittedRequest(id: string, actor: Actor) {
   const request = await prisma.designRequest.findUnique({ where: { id } });
-  if (!request || request.clientId !== clientId || request.status !== DesignRequestStatus.submitted) {
+  if (!request || !actorOwns(actor, request) || request.status !== DesignRequestStatus.submitted) {
     throw new Error("Design request is not one you can edit");
   }
   return request;
@@ -166,8 +184,8 @@ const MAX_LAYOUT_UPLOAD_BYTES = 10 * 1024 * 1024;
 // share) - when a link is given, it's stored directly as the filePath with
 // no disk write, since the UI just renders it as an <a href>.
 export async function uploadDesignRequestLayout(id: string, formData: FormData) {
-  const session = await requireSession();
-  await assertOwnSubmittedRequest(id, session.id);
+  const actor = await resolveActor();
+  await assertOwnSubmittedRequest(id, actor);
 
   const link = (formData.get("link") as string | null)?.trim();
   const file = formData.get("file") as File | null;
@@ -202,8 +220,8 @@ export async function uploadDesignRequestLayout(id: string, formData: FormData) 
 // No layout on hand - request a captain-arranged site visit instead. Adds
 // the flat AED 500 fee to the request's total (see MyQuotesClient's payments tab).
 export async function requestSiteVisit(id: string, preferredDate?: string) {
-  const session = await requireSession();
-  await assertOwnSubmittedRequest(id, session.id);
+  const actor = await resolveActor();
+  await assertOwnSubmittedRequest(id, actor);
 
   await prisma.designRequest.update({
     where: { id },
@@ -220,8 +238,8 @@ export async function recordDesignPaymentMethod(
   id: string,
   method: "card" | "apple_pay" | "google_pay" | "cash" | "pay_later",
 ) {
-  const session = await requireSession();
-  await assertOwnSubmittedRequest(id, session.id);
+  const actor = await resolveActor();
+  await assertOwnSubmittedRequest(id, actor);
 
   await prisma.designRequest.update({
     where: { id },
