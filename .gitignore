@@ -49,3 +49,6 @@ next-env.d.ts
 # Claude Code local tooling (not part of the app)
 /.claude/worktrees/
 /.claude/settings.local.json
+
+.vercel
+.env*
