@@ -28,7 +28,9 @@ export default function IsometricOfficeSection() {
         // is centered, so the image sits at its resting position when the
         // section is in the middle of the screen.
         const progress = Math.max(-1, Math.min(1, 1 - (rect.top + rect.height / 2) / (window.innerHeight / 2)));
-        if (layerRef.current) layerRef.current.style.transform = `translate3d(0, ${progress * -50}px, 0)`;
+        // Kept well inside the img's own scale(1.1) overscan (see home.css)
+        // so this translate never scrolls empty space into view.
+        if (layerRef.current) layerRef.current.style.transform = `translate3d(0, ${progress * -30}px, 0)`;
         ticking = false;
       });
     }
