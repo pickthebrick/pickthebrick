@@ -4,9 +4,15 @@
    Design/Build/marketing pages that still use the plainer .ptb-marketing
    header/footer shell this file reuses. */
 
+/* Very light dot grid (base44.com-style) so the page has quiet texture
+   instead of a flat, empty-looking fill - subtle enough to sit behind text
+   and cards without competing with them. Opaque section backgrounds further
+   down the page (e.g. .home-cta-band) simply paint over it. */
 .home-page {
   min-height: 100%;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: radial-gradient(rgba(58, 54, 50, 0.12) 1px, transparent 1px);
+  background-size: 26px 26px;
   color: var(--fg);
   overflow-x: clip;
 }
@@ -293,15 +299,80 @@
   font-weight: 800;
   color: var(--accent-deep);
 }
+/* Ghost cursor - purely decorative, walks to the "Flooring" chip then down
+   each line as it fades in, so the demo reads as something being clicked
+   together rather than just text appearing. Stops are tuned by eye against
+   the chip-hit (14-22%) and line fade-in (~23% / ~48% / ~73% of the loop)
+   timings above, not measured pixel-for-pixel against a live render. */
+.hero-demo-cursor {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  z-index: 3;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+  animation: hero-demo-cursor-path 6s infinite;
+}
+.hero-demo-cursor svg {
+  width: 100%;
+  height: 100%;
+}
+.hero-demo-click-ring {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  z-index: 2;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  animation: hero-demo-ring-pulse 6s infinite;
+}
+@keyframes hero-demo-cursor-path {
+  0% { top: 220px; left: 10px; opacity: 0; }
+  3% { opacity: 1; }
+  12% { top: 56px; left: 100px; }
+  16% { top: 56px; left: 100px; }
+  25% { top: 96px; left: 26px; }
+  29% { top: 96px; left: 26px; }
+  50% { top: 144px; left: 26px; }
+  54% { top: 144px; left: 26px; }
+  75% { top: 192px; left: 26px; }
+  79% { top: 192px; left: 26px; }
+  92% { top: 192px; left: 26px; opacity: 1; }
+  97% { opacity: 0; }
+  100% { top: 220px; left: 10px; opacity: 0; }
+}
+@keyframes hero-demo-ring-pulse {
+  0%, 11% { opacity: 0; transform: scale(0.6); top: 56px; left: 100px; }
+  13% { opacity: 0.9; transform: scale(1.3); top: 56px; left: 100px; }
+  17% { opacity: 0; transform: scale(1.7); top: 56px; left: 100px; }
+  24%, 26% { opacity: 0; transform: scale(0.6); top: 96px; left: 26px; }
+  28% { opacity: 0.9; transform: scale(1.3); top: 96px; left: 26px; }
+  32% { opacity: 0; transform: scale(1.7); top: 96px; left: 26px; }
+  49%, 51% { opacity: 0; transform: scale(0.6); top: 144px; left: 26px; }
+  53% { opacity: 0.9; transform: scale(1.3); top: 144px; left: 26px; }
+  57% { opacity: 0; transform: scale(1.7); top: 144px; left: 26px; }
+  74%, 76% { opacity: 0; transform: scale(0.6); top: 192px; left: 26px; }
+  78% { opacity: 0.9; transform: scale(1.3); top: 192px; left: 26px; }
+  82% { opacity: 0; transform: scale(1.7); top: 192px; left: 26px; }
+  100% { opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
   .hero-demo-pulse,
   .hero-demo-chip.hit,
-  .hero-demo-line {
+  .hero-demo-line,
+  .hero-demo-cursor,
+  .hero-demo-click-ring {
     animation: none;
   }
   .hero-demo-line {
     opacity: 1;
     transform: none;
+  }
+  .hero-demo-cursor,
+  .hero-demo-click-ring {
+    display: none;
   }
 }
 
@@ -354,6 +425,35 @@
   .parallax-grid {
     animation: none;
   }
+}
+
+/* ---------- isometric office parallax (placeholder - see
+   app/components/IsometricOfficeSection.tsx) ---------- */
+.iso-section {
+  padding: 64px 24px 88px;
+  overflow: hidden;
+}
+.iso-section-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.iso-graphic {
+  position: relative;
+  height: 340px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.iso-layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.iso-layer svg {
+  width: 100%;
+  height: 100%;
+}
+.iso-layer-boxes {
+  filter: drop-shadow(0 10px 14px rgba(58, 54, 50, 0.12));
 }
 
 /* ---------- shared section shell ---------- */

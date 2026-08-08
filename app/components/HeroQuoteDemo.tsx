@@ -97,6 +97,18 @@ export default function HeroQuoteDemo() {
             AED 0
           </div>
         </div>
+
+        <div className="hero-demo-click-ring" />
+        <div className="hero-demo-cursor">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M4 2 L4 20 L9 15.5 L12.5 22 L15 20.5 L11.5 14 L18 14 Z"
+              fill="var(--fg)"
+              stroke="#fff"
+              strokeWidth="1.2"
+            />
+          </svg>
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { DesignPathIcon, BuildPathIcon, CategoryIcon } from "./components/HomeIllustrations";
 import HeroQuoteDemo from "./components/HeroQuoteDemo";
+import IsometricOfficeSection from "./components/IsometricOfficeSection";
 import SiteFooter from "./components/SiteFooter";
 import "./marketing.css";
 import "./home.css";
@@ -90,6 +91,8 @@ export default function HomeClient({
             </a>
           </section>
 
+          <IsometricOfficeSection />
+
           {/* ---------- how it works ---------- */}
           <section className="home-section" id="how-it-works">
             <div className="home-section-inner">
@@ -103,7 +106,7 @@ export default function HomeClient({
               <div className="home-split">
                 <Link href="/design" className="home-split-card">
                   <DesignPathIcon className="home-split-icon" />
-                  <h3>Design</h3>
+                  <h3>Design Your Office Layout</h3>
                   <p>
                     A professional designer turns a short survey of your space into a concept layout, complete with
                     furniture arrangement, electrical, and a reflected ceiling plan.
@@ -112,7 +115,7 @@ export default function HomeClient({
                 </Link>
                 <Link href="/build" className="home-split-card">
                   <BuildPathIcon className="home-split-icon" />
-                  <h3>Build</h3>
+                  <h3>Build Your Fitout Estimate</h3>
                   <p>
                     Already know what you want? Pick products directly from the full catalog - flooring, partitions,
                     ceilings, furniture and more - and get an itemised, priced quote instantly.
