@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { DesignPathIcon, BuildPathIcon, CategoryIcon } from "./components/HomeIllustrations";
 import HeroQuoteDemo from "./components/HeroQuoteDemo";
-import IsometricOfficeSection from "./components/IsometricOfficeSection";
 import SiteFooter from "./components/SiteFooter";
 import "./marketing.css";
 import "./home.css";
@@ -90,8 +89,6 @@ export default function HomeClient({
               </svg>
             </a>
           </section>
-
-          <IsometricOfficeSection />
 
           {/* ---------- how it works ---------- */}
           <section className="home-section" id="how-it-works">

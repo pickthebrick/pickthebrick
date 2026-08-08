@@ -427,27 +427,6 @@
   }
 }
 
-/* ---------- isometric office parallax (see
-   app/components/IsometricOfficeSection.tsx) - the image itself is the only
-   element, object-fit:cover fills the section completely so there's never
-   any backing color/pattern showing through. */
-.iso-section {
-  position: relative;
-  overflow: hidden;
-  min-height: 390px;
-}
-.iso-bg-img {
-  position: absolute;
-  /* Small overscan so the scroll-parallax translate below never reveals an
-     edge of the image. */
-  inset: -20px 0;
-  width: 100%;
-  height: calc(100% + 40px);
-  object-fit: cover;
-  object-position: center;
-  will-change: transform;
-}
-
 /* ---------- shared section shell ---------- */
 .home-section {
   padding: 88px 24px;
