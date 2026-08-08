@@ -85,12 +85,16 @@ function estimateRange(sqft: number, people: number) {
   return { low, high };
 }
 
+type CaseStudyCard = { id: string; imageUrl: string | null; buttonLabel: string; buttonUrl: string };
+
 export default function HomeClient({
   isClientSession,
   categories,
+  caseStudyCards,
 }: {
   isClientSession: boolean;
   categories: { key: string; label: string; imageUrl: string | null }[];
+  caseStudyCards: CaseStudyCard[];
 }) {
   const [estSqft, setEstSqft] = useState(1000);
   const [estPeople, setEstPeople] = useState(12);
@@ -311,24 +315,37 @@ export default function HomeClient({
                 <p className="home-section-body">Real projects, real numbers - not just star ratings.</p>
               </div>
               <div className="home-case-grid">
-                {CASE_STUDIES.map((c) => (
-                  <div key={c.title} className="home-case-card">
-                    <div className="home-case-photo" />
-                    <div className="home-case-body">
-                      <div className="home-case-tag">{c.tag}</div>
-                      <div className="home-case-title">{c.title}</div>
-                      <div className="home-case-stats">
-                        {c.stats.map(([v, label]) => (
-                          <div key={label}>
-                            <span className="v">{v}</span>
-                            {label}
-                          </div>
-                        ))}
+                {CASE_STUDIES.map((c, i) => {
+                  const card = caseStudyCards[i];
+                  return (
+                    <div key={c.title} className="home-case-card">
+                      {card?.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img className="home-case-photo" src={card.imageUrl} alt={c.title} />
+                      ) : (
+                        <div className="home-case-photo" />
+                      )}
+                      <div className="home-case-body">
+                        <div className="home-case-tag">{c.tag}</div>
+                        <div className="home-case-title">{c.title}</div>
+                        <div className="home-case-stats">
+                          {c.stats.map(([v, label]) => (
+                            <div key={label}>
+                              <span className="v">{v}</span>
+                              {label}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="home-case-rating">★★★★★ Google review</div>
+                        {card && (
+                          <Link href={card.buttonUrl} className="home-case-btn">
+                            {card.buttonLabel}
+                          </Link>
+                        )}
                       </div>
-                      <div className="home-case-rating">★★★★★ Google review</div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>

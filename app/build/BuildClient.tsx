@@ -59,30 +59,6 @@ function baseUnitLabel(unit: Unit) {
   return "sqm";
 }
 
-function WhatsAppIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12c0 1.86.5 3.6 1.38 5.1L2 22l5.05-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2Zm0 18.1a8.1 8.1 0 0 1-4.13-1.13l-.3-.18-3 .79.8-2.93-.19-.3A8.1 8.1 0 1 1 20.1 12 8.1 8.1 0 0 1 12 20.1Zm4.44-6.06c-.24-.12-1.44-.71-1.66-.79s-.39-.12-.55.12-.63.79-.78.95-.29.18-.53.06a6.6 6.6 0 0 1-1.95-1.2 7.3 7.3 0 0 1-1.35-1.68c-.14-.24 0-.37.11-.49.11-.11.24-.29.36-.43a1.6 1.6 0 0 0 .24-.4.44.44 0 0 0 0-.42c-.06-.12-.55-1.33-.76-1.82s-.4-.41-.55-.42h-.47a.9.9 0 0 0-.65.3 2.75 2.75 0 0 0-.86 2.05 4.78 4.78 0 0 0 1 2.53 10.9 10.9 0 0 0 4.18 3.7c.58.25 1.04.4 1.4.51a3.36 3.36 0 0 0 1.54.1 2.52 2.52 0 0 0 1.65-1.16 2 2 0 0 0 .14-1.16c-.06-.1-.22-.16-.46-.28Z" />
-    </svg>
-  );
-}
-function EmailIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="m4 7 8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-function DownloadIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M12 3v12m0 0-4-4m4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export default function BuildClient({
   catalog,
   quoteId,
@@ -133,11 +109,11 @@ export default function BuildClient({
   const [view, setView] = useState<"build" | "preview" | "success">("build");
   const [confirmingComplete, setConfirmingComplete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  // Which action an anonymous visitor was trying to take when AuthGate
-  // interrupted them - resumed automatically once they sign up/in (see
+  // Set while an anonymous visitor is mid-way through the AuthGate shown by
+  // "I'm done" - resumed automatically once they sign up/in (see
   // handleAuthSuccess), so the gate never leaves them stranded with an
-  // extra click to re-trigger what they originally asked for.
-  const [pendingAction, setPendingAction] = useState<null | "submit" | "download" | "whatsapp">(null);
+  // extra click to re-submit.
+  const [pendingAction, setPendingAction] = useState<null | "submit">(null);
   const [modalProductId, setModalProductId] = useState<string | null>(null);
 
   const cartMap = useMemo(() => new Map(cart.map((l) => [l.productId, l])), [cart]);
@@ -343,14 +319,13 @@ export default function BuildClient({
 
   // Fires once AuthGate reports a successful sign up/in - refreshes the
   // server-rendered isAnonymous prop for good (so it doesn't flip back on the
-  // next render) and resumes whichever action the visitor originally clicked.
+  // next render, and unlocks the WhatsApp/Download buttons) and resumes the
+  // submit the visitor originally clicked "I'm done" for.
   async function handleAuthSuccess() {
     router.refresh();
     const action = pendingAction;
     setPendingAction(null);
     if (action === "submit") await completeSubmit();
-    else if (action === "download") await downloadPdf();
-    else if (action === "whatsapp") shareViaWhatsApp();
   }
 
   const [confirmingStartOver, setConfirmingStartOver] = useState(false);
@@ -396,13 +371,6 @@ export default function BuildClient({
           <span className="install-banner-sub">
             Every price already includes our contractor on-site — no separate labor bill later.
           </span>
-        </div>
-      )}
-
-      {!editAsCaptain && (
-        <div className="build-intro-line">
-          <span className="build-intro-eyebrow">Ready to start?</span>
-          Already have a design and quantities ready? Add your items below and get an instant, itemized price.
         </div>
       )}
 
@@ -786,7 +754,12 @@ export default function BuildClient({
                 <TermsSection agreed={agreedToTerms} onAgreedChange={setAgreedToTerms} />
 
                 {!confirmingComplete ? (
-                  <div className="action-row">
+                  // Fixed 2x2 grid: Edit/Done always active on top, WhatsApp/Download
+                  // on the bottom stay disabled until the visitor has an account -
+                  // "I'm done" is the only door into AuthGate (see handleDoneClick);
+                  // once signed in, isAnonymous flips false (router.refresh() in
+                  // handleAuthSuccess) and these two unlock for direct use.
+                  <div className="action-row done-grid">
                     <button className="action-btn secondary" onClick={() => setView("build")}>
                       Edit quote
                     </button>
@@ -798,36 +771,24 @@ export default function BuildClient({
                     >
                       I&apos;m done
                     </button>
-                    {isAnonymous ? (
-                      pendingAction ? (
-                        <AuthGate
-                          context={pendingAction === "download" ? "Sign in to download your quote" : "Sign in to send your quote to WhatsApp"}
-                          onSuccess={handleAuthSuccess}
-                          onCancel={() => setPendingAction(null)}
-                        />
-                      ) : (
-                        <>
-                          <button type="button" className="share-btn" onClick={() => setPendingAction("whatsapp")}>
-                            WhatsApp
-                          </button>
-                          <button type="button" className="share-btn" onClick={() => setPendingAction("download")}>
-                            Download
-                          </button>
-                        </>
-                      )
-                    ) : (
-                      <>
-                        <button type="button" className="icon-btn" onClick={shareViaWhatsApp} title="Share via WhatsApp" aria-label="Share via WhatsApp">
-                          <WhatsAppIcon />
-                        </button>
-                        <button type="button" className="icon-btn" onClick={shareViaEmail} title="Share via Email" aria-label="Share via Email">
-                          <EmailIcon />
-                        </button>
-                        <button type="button" className="icon-btn" onClick={downloadPdf} title="Download PDF" aria-label="Download PDF">
-                          <DownloadIcon />
-                        </button>
-                      </>
-                    )}
+                    <button
+                      type="button"
+                      className="action-btn secondary"
+                      disabled={isAnonymous}
+                      title={isAnonymous ? "Sign in to share your quote" : undefined}
+                      onClick={shareViaWhatsApp}
+                    >
+                      Share via WhatsApp
+                    </button>
+                    <button
+                      type="button"
+                      className="action-btn secondary"
+                      disabled={isAnonymous}
+                      title={isAnonymous ? "Sign in to download your quote" : undefined}
+                      onClick={downloadPdf}
+                    >
+                      Download
+                    </button>
                   </div>
                 ) : (
                   <div className="action-row">

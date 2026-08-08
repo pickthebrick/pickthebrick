@@ -31,6 +31,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
+  justify-content: center;
+  text-align: center;
   gap: 4px 14px;
   padding: 11px 32px;
   background: var(--accent);
@@ -45,17 +47,6 @@
 .install-banner-sub {
   font-size: 12.5px;
   opacity: 0.92;
-}
-.build-intro-line {
-  padding: 8px 32px 0;
-  font-size: 12px;
-  color: var(--muted);
-  flex-shrink: 0;
-}
-.build-intro-eyebrow {
-  font-weight: 700;
-  color: var(--fg);
-  margin-right: 6px;
 }
 /* Small persistent "included" marker next to every price in the Build flow -
    product cards, cart line items, the preview table, and the product modal. */
@@ -738,6 +729,13 @@
   margin-top: 26px;
   flex-wrap: wrap;
 }
+/* Fixed 2x2 grid for the quote-preview action buttons (Edit/Done on top,
+   WhatsApp/Download on the bottom) - guarantees exactly two per row instead
+   of leaving the count to flex-wrap at arbitrary widths. */
+.ptb-build .action-row.done-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
 .ptb-build .action-btn {
   flex: 1;
   min-width: 140px;
@@ -1087,8 +1085,7 @@
   .ptb-build .brand-mark img {
     height: 38px;
   }
-  .install-banner,
-  .build-intro-line {
+  .install-banner {
     padding-left: 16px;
     padding-right: 16px;
   }

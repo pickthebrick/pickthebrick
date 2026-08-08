@@ -2,7 +2,15 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createBanner, toggleBannerActive, deleteBanner, updateAiDesignerBanner } from "@/app/actions/banners";
+import {
+  createBanner,
+  toggleBannerActive,
+  deleteBanner,
+  updateAiDesignerBanner,
+  setCaseStudyImage,
+  removeCaseStudyImage,
+  updateCaseStudyButton,
+} from "@/app/actions/banners";
 import { setCategoryImage, removeCategoryImage } from "@/app/actions/catalog";
 import AdminPanel from "../AdminPanel";
 
@@ -18,14 +26,24 @@ type AiDesignerBanner = { headline: string; subText: string; popupMessage: strin
 
 type CategoryRow = { id: string; key: string; label: string; imageUrl: string | null };
 
+type CaseStudyCard = { id: string; imageUrl: string | null; buttonLabel: string; buttonUrl: string };
+
+const CASE_STUDY_LABELS: Record<string, string> = {
+  "case-1": "Case study 1 - Technology Company, Dubai",
+  "case-2": "Case study 2 - Professional Services, DIFC",
+  "case-3": "Case study 3 - Logistics Firm, JAFZA",
+};
+
 export default function MarketingClient({
   banners,
   aiDesignerBanner,
   categories,
+  caseStudyCards,
 }: {
   banners: Banner[];
   aiDesignerBanner: AiDesignerBanner;
   categories: CategoryRow[];
+  caseStudyCards: CaseStudyCard[];
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -107,6 +125,50 @@ export default function MarketingClient({
     await removeCategoryImage(categoryId);
     router.refresh();
     setCatBusyId(null);
+  }
+
+  const [caseBusyId, setCaseBusyId] = useState<string | null>(null);
+  const [caseError, setCaseError] = useState<string | null>(null);
+  const [caseButtonDrafts, setCaseButtonDrafts] = useState<Record<string, { label: string; url: string }>>(() =>
+    Object.fromEntries(caseStudyCards.map((c) => [c.id, { label: c.buttonLabel, url: c.buttonUrl }]))
+  );
+
+  async function handleCaseImageChange(id: string, file: File | null) {
+    if (!file) return;
+    setCaseBusyId(id);
+    setCaseError(null);
+    const formData = new FormData();
+    formData.set("image", file);
+    try {
+      await setCaseStudyImage(id, formData);
+      router.refresh();
+    } catch (err) {
+      setCaseError(err instanceof Error ? err.message : "Could not upload image");
+    } finally {
+      setCaseBusyId(null);
+    }
+  }
+
+  async function handleCaseImageRemove(id: string) {
+    setCaseBusyId(id);
+    await removeCaseStudyImage(id);
+    router.refresh();
+    setCaseBusyId(null);
+  }
+
+  async function handleCaseButtonSave(id: string) {
+    const draft = caseButtonDrafts[id];
+    if (!draft) return;
+    setCaseBusyId(id);
+    setCaseError(null);
+    try {
+      await updateCaseStudyButton(id, draft.label, draft.url);
+      router.refresh();
+    } catch (err) {
+      setCaseError(err instanceof Error ? err.message : "Could not save button");
+    } finally {
+      setCaseBusyId(null);
+    }
   }
 
   async function handleDelete(id: string) {
@@ -223,6 +285,74 @@ export default function MarketingClient({
                       Remove
                     </button>
                   )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </AdminPanel>
+
+      <AdminPanel title="Case study cards (homepage 'Built with PickTheBrick')" count={caseStudyCards.length}>
+        <p className="empty" style={{ padding: "0 0 12px" }}>
+          Each card&apos;s photo and button link are editable here - the tag, title, and stats stay fixed in code.
+        </p>
+        {caseError && <p style={{ color: "#b91c1c", fontSize: 13, marginBottom: 10 }}>{caseError}</p>}
+        <div className="banner-grid">
+          {caseStudyCards.map((c) => (
+            <div key={c.id} className="banner-card">
+              <div className="banner-card-img-wrap">
+                {c.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.imageUrl} alt="" />
+                ) : (
+                  <div className="empty" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                    No photo yet
+                  </div>
+                )}
+              </div>
+              <div className="banner-card-body">
+                <div className="banner-card-title">{CASE_STUDY_LABELS[c.id] ?? c.id}</div>
+                <div className="banner-card-actions">
+                  <label className="action" style={{ cursor: "pointer" }}>
+                    {caseBusyId === c.id ? "Uploading..." : c.imageUrl ? "Replace photo" : "Upload photo"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      disabled={caseBusyId === c.id}
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        handleCaseImageChange(c.id, file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                  {c.imageUrl && (
+                    <button className="action danger" disabled={caseBusyId === c.id} onClick={() => handleCaseImageRemove(c.id)}>
+                      Remove photo
+                    </button>
+                  )}
+                </div>
+                <div className="edit-inline-form" style={{ flexWrap: "wrap", marginTop: 10 }}>
+                  <input
+                    type="text"
+                    placeholder="Button label"
+                    value={caseButtonDrafts[c.id]?.label ?? c.buttonLabel}
+                    onChange={(e) =>
+                      setCaseButtonDrafts((prev) => ({ ...prev, [c.id]: { ...prev[c.id], label: e.target.value, url: prev[c.id]?.url ?? c.buttonUrl } }))
+                    }
+                  />
+                  <input
+                    type="text"
+                    placeholder="Button link (e.g. /build)"
+                    value={caseButtonDrafts[c.id]?.url ?? c.buttonUrl}
+                    onChange={(e) =>
+                      setCaseButtonDrafts((prev) => ({ ...prev, [c.id]: { label: prev[c.id]?.label ?? c.buttonLabel, url: e.target.value } }))
+                    }
+                  />
+                  <button className="action" disabled={caseBusyId === c.id} onClick={() => handleCaseButtonSave(c.id)}>
+                    Save button
+                  </button>
                 </div>
               </div>
             </div>

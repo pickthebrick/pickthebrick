@@ -721,3 +721,16 @@ model AiDesignerBanner {
   backgroundColor String  @default("#fffcf5")
   enabled         Boolean @default(true)
 }
+
+// One fixed row per homepage "Built with PickTheBrick" case-study card (ids
+// "case-1".."case-3", matching CASE_STUDIES' order in HomeClient.tsx) -
+// marketing can swap in a real project photo and point the card's button at
+// a real link, without touching code. Tag/title/stats/rating text stay
+// hardcoded in HomeClient.tsx since only the photo + button were asked to be
+// editable here.
+model CaseStudyCard {
+  id          String  @id
+  imageUrl    String?
+  buttonLabel String  @default("View project")
+  buttonUrl   String  @default("/build")
+}

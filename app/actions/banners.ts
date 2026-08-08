@@ -85,3 +85,53 @@ export async function updateAiDesignerBanner(data: {
   revalidatePath("/admin/marketing");
   revalidatePath("/design");
 }
+
+// Homepage "Built with PickTheBrick" case-study cards (see CaseStudyCard
+// model) - photo + button only, tag/title/stats stay in HomeClient.tsx.
+export async function setCaseStudyImage(id: string, formData: FormData) {
+  await requireAdmin();
+
+  const file = formData.get("image") as File | null;
+  if (!file || file.size === 0) throw new Error("Please choose an image");
+  const ext = ALLOWED_TYPES[file.type];
+  if (!ext) throw new Error("Please upload a JPG, PNG, WEBP, or GIF image");
+
+  const existing = await prisma.caseStudyCard.findUnique({ where: { id } });
+
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const imageUrl = await uploadToStorage("case-studies", filename, buffer, file.type);
+
+  await prisma.caseStudyCard.upsert({
+    where: { id },
+    create: { id, imageUrl },
+    update: { imageUrl },
+  });
+  if (existing?.imageUrl) await deleteFromStorage(existing.imageUrl).catch(() => {});
+
+  revalidatePath("/admin/marketing");
+  revalidatePath("/");
+}
+
+export async function removeCaseStudyImage(id: string) {
+  await requireAdmin();
+  const existing = await prisma.caseStudyCard.findUnique({ where: { id } });
+  if (!existing?.imageUrl) return;
+  await prisma.caseStudyCard.update({ where: { id }, data: { imageUrl: null } });
+  await deleteFromStorage(existing.imageUrl).catch(() => {});
+  revalidatePath("/admin/marketing");
+  revalidatePath("/");
+}
+
+export async function updateCaseStudyButton(id: string, buttonLabel: string, buttonUrl: string) {
+  await requireAdmin();
+  const label = buttonLabel.trim() || "View project";
+  const url = buttonUrl.trim() || "/build";
+  await prisma.caseStudyCard.upsert({
+    where: { id },
+    create: { id, buttonLabel: label, buttonUrl: url },
+    update: { buttonLabel: label, buttonUrl: url },
+  });
+  revalidatePath("/admin/marketing");
+  revalidatePath("/");
+}
