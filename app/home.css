@@ -31,11 +31,10 @@
 .home-hero {
   position: relative;
   overflow: hidden;
-  min-height: 88vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 60px 24px 90px;
+  padding: 60px 24px 40px;
 }
 .home-hero-grid {
   position: relative;
@@ -125,32 +124,6 @@
   background: var(--accent-deep);
   color: #fff;
 }
-.home-scroll-cue {
-  position: absolute;
-  bottom: 26px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--muted);
-}
-.home-scroll-cue svg {
-  width: 16px;
-  height: 16px;
-  animation: home-bounce 1.8s ease-in-out infinite;
-}
-@keyframes home-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(6px); }
-}
-
 /* ---------- hero "building live" demo card ---------- */
 .hero-demo-card {
   position: relative;
@@ -427,17 +400,44 @@
   }
 }
 
-/* ---------- isometric office image ---------- */
+/* ---------- instant estimator + isometric image, side by side ---------- */
+.home-iso-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 460px) 1fr;
+  gap: 32px;
+  align-items: center;
+}
+.home-iso-grid .home-section-head {
+  text-align: left;
+  max-width: none;
+  margin: 0 0 24px;
+}
+.home-iso-grid .home-estimator-microcopy {
+  text-align: left;
+}
 .home-iso-section {
   display: flex;
-  justify-content: center;
-  padding: 20px 24px 0;
+  justify-content: flex-end;
 }
 .home-iso-img {
   width: 100%;
-  max-width: 980px;
+  max-width: 620px;
   height: auto;
   display: block;
+  margin-right: -24px;
+}
+
+@media (max-width: 860px) {
+  .home-iso-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-iso-section {
+    justify-content: center;
+    margin-top: 24px;
+  }
+  .home-iso-img {
+    margin-right: 0;
+  }
 }
 
 /* ---------- instant estimator ---------- */
@@ -990,12 +990,6 @@
   font-weight: 700;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .home-scroll-cue svg {
-    animation: none;
-  }
-}
-
 @media (max-width: 900px) {
   .home-split {
     grid-template-columns: 1fr;
@@ -1022,7 +1016,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
   .home-hero {
-    padding: 40px 18px 70px;
+    padding: 40px 18px 32px;
   }
   .home-section {
     padding: 60px 18px;

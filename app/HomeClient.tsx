@@ -148,23 +148,81 @@ export default function HomeClient({
 
               <HeroQuoteDemo />
             </div>
-
-            <a href="#how-it-works" className="home-scroll-cue">
-              See how it works
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </a>
           </section>
 
-          {/* ---------- isometric office image ---------- */}
-          <section className="home-iso-section">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/isometric-office.png"
-              alt="Isometric illustration of a PickTheBrick crew fitting out an office"
-              className="home-iso-img"
-            />
+          {/* ---------- instant estimator + isometric image ---------- */}
+          <section className="home-section tight">
+            <div className="home-section-inner">
+              <div className="home-iso-grid">
+                <div>
+                  <div className="home-section-head">
+                    <div className="home-section-eyebrow">Get a feel for it</div>
+                    <h2 className="home-section-title">How much, roughly?</h2>
+                    <p className="home-section-body">
+                      Move the sliders - this is a ballpark, not a quote. The real one takes about 5 minutes on
+                      Build.
+                    </p>
+                  </div>
+                  <div className="home-estimator">
+                    <div className="home-estimator-head">
+                      <div className="home-estimator-title">Instant estimate</div>
+                      <div className="home-estimator-live">
+                        <span className="hero-demo-pulse" />
+                        Live preview
+                      </div>
+                    </div>
+                    <div className="home-estimator-row">
+                      <label>
+                        Office size <span>{estSqft.toLocaleString()} sqft</span>
+                      </label>
+                      <input
+                        type="range"
+                        min={500}
+                        max={5000}
+                        step={100}
+                        value={estSqft}
+                        onChange={(e) => setEstSqft(Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="home-estimator-row">
+                      <label>
+                        Number of people <span>{estPeople}</span>
+                      </label>
+                      <input
+                        type="range"
+                        min={5}
+                        max={150}
+                        step={1}
+                        value={estPeople}
+                        onChange={(e) => setEstPeople(Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="home-estimator-result">
+                      <div>
+                        <div className="label">Estimated fit-out cost</div>
+                        <div className="range">
+                          AED {estLow.toLocaleString()} – {estHigh.toLocaleString()}
+                        </div>
+                      </div>
+                      <Link href="/build" className="home-estimator-go">
+                        Get exact quote →
+                      </Link>
+                    </div>
+                  </div>
+                  <p className="home-estimator-microcopy">
+                    No account needed for this estimate · Full itemized quote takes ~5 minutes
+                  </p>
+                </div>
+                <div className="home-iso-section">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/isometric-office.png"
+                    alt="Isometric illustration of a PickTheBrick crew fitting out an office"
+                    className="home-iso-img"
+                  />
+                </div>
+              </div>
+            </div>
           </section>
 
           {/* ---------- how it works / process ---------- */}
@@ -189,68 +247,6 @@ export default function HomeClient({
                   </Fragment>
                 ))}
               </div>
-            </div>
-          </section>
-
-          {/* ---------- instant estimator ---------- */}
-          <section className="home-section tight">
-            <div className="home-section-inner">
-              <div className="home-section-head">
-                <div className="home-section-eyebrow">Get a feel for it</div>
-                <h2 className="home-section-title">How much, roughly?</h2>
-                <p className="home-section-body">
-                  Move the sliders - this is a ballpark, not a quote. The real one takes about 5 minutes on Build.
-                </p>
-              </div>
-              <div className="home-estimator">
-                <div className="home-estimator-head">
-                  <div className="home-estimator-title">Instant estimate</div>
-                  <div className="home-estimator-live">
-                    <span className="hero-demo-pulse" />
-                    Live preview
-                  </div>
-                </div>
-                <div className="home-estimator-row">
-                  <label>
-                    Office size <span>{estSqft.toLocaleString()} sqft</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={500}
-                    max={8000}
-                    step={100}
-                    value={estSqft}
-                    onChange={(e) => setEstSqft(Number(e.target.value))}
-                  />
-                </div>
-                <div className="home-estimator-row">
-                  <label>
-                    Number of people <span>{estPeople}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={5}
-                    max={150}
-                    step={1}
-                    value={estPeople}
-                    onChange={(e) => setEstPeople(Number(e.target.value))}
-                  />
-                </div>
-                <div className="home-estimator-result">
-                  <div>
-                    <div className="label">Estimated fit-out cost</div>
-                    <div className="range">
-                      AED {estLow.toLocaleString()} – {estHigh.toLocaleString()}
-                    </div>
-                  </div>
-                  <Link href="/build" className="home-estimator-go">
-                    Get exact quote →
-                  </Link>
-                </div>
-              </div>
-              <p className="home-estimator-microcopy">
-                No account needed for this estimate · Full itemized quote takes ~5 minutes
-              </p>
             </div>
           </section>
 

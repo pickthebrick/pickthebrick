@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signUp, signIn } from "@/app/actions/auth";
 
 type Mode = "signup" | "signin";
@@ -19,6 +19,15 @@ export default function AuthGate({ context, onSuccess, onCancel }: { context?: s
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!onCancel) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onCancel!();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onCancel]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -36,41 +45,46 @@ export default function AuthGate({ context, onSuccess, onCancel }: { context?: s
   }
 
   return (
-    <div className="auth-gate">
-      {context && <div className="auth-gate-context">{context}</div>}
-      <div className="auth-gate-toggle">
-        <button type="button" className={mode === "signup" ? "selected" : ""} onClick={() => setMode("signup")}>
-          Create account
-        </button>
-        <button type="button" className={mode === "signin" ? "selected" : ""} onClick={() => setMode("signin")}>
-          Sign in
-        </button>
-      </div>
-      <form className="auth-gate-form" onSubmit={handleSubmit}>
-        {error && <p className="form-error">{error}</p>}
-        {mode === "signup" && (
-          <input type="text" placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-        )}
-        <input type="email" placeholder="Email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input
-          type="password"
-          placeholder={mode === "signup" ? "Password (min. 6 characters)" : "Password"}
-          required
-          minLength={mode === "signup" ? 6 : undefined}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <div className="auth-gate-actions">
-          {onCancel && (
-            <button type="button" className="signup-gate-cancel" disabled={busy} onClick={onCancel}>
-              Cancel
-            </button>
-          )}
-          <button type="submit" className="signup-gate-submit" disabled={busy}>
-            {busy ? "Please wait..." : mode === "signup" ? "Create account" : "Sign in"}
+    <div
+      className="auth-gate-overlay"
+      onClick={onCancel ? (e) => e.target === e.currentTarget && onCancel() : undefined}
+    >
+      <div className="auth-gate">
+        {context && <div className="auth-gate-context">{context}</div>}
+        <div className="auth-gate-toggle">
+          <button type="button" className={mode === "signup" ? "selected" : ""} onClick={() => setMode("signup")}>
+            Create account
+          </button>
+          <button type="button" className={mode === "signin" ? "selected" : ""} onClick={() => setMode("signin")}>
+            Sign in
           </button>
         </div>
-      </form>
+        <form className="auth-gate-form" onSubmit={handleSubmit}>
+          {error && <p className="form-error">{error}</p>}
+          {mode === "signup" && (
+            <input type="text" placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          )}
+          <input type="email" placeholder="Email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input
+            type="password"
+            placeholder={mode === "signup" ? "Password (min. 6 characters)" : "Password"}
+            required
+            minLength={mode === "signup" ? 6 : undefined}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <div className="auth-gate-actions">
+            {onCancel && (
+              <button type="button" className="signup-gate-cancel" disabled={busy} onClick={onCancel}>
+                Cancel
+              </button>
+            )}
+            <button type="submit" className="signup-gate-submit" disabled={busy}>
+              {busy ? "Please wait..." : mode === "signup" ? "Create account" : "Sign in"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

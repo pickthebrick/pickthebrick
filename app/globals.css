@@ -135,14 +135,29 @@ body {
    app/components/AuthGate.tsx) - shown whenever an anonymous visitor tries to
    submit their quote/request, or download/share it. Deliberately just an
    email+password sign in/sign up form, nothing else asked separately. */
+.auth-gate-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 18, 16, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
 .auth-gate {
-  flex-basis: 100%;
-  max-width: 420px;
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+  padding: 26px;
 }
 .auth-gate-context {
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 14px;
 }
 .auth-gate-toggle {
   display: flex;
@@ -150,7 +165,7 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
 }
 .auth-gate-toggle button {
   padding: 6px 14px;
@@ -167,16 +182,14 @@ body {
 }
 .auth-gate-form {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
 }
 .auth-gate-form .form-error {
-  flex-basis: 100%;
+  margin: 0;
 }
 .auth-gate-form input {
-  flex: 1;
-  min-width: 140px;
+  width: 100%;
   padding: 10px 12px;
   font-size: 13px;
   border: 1px solid var(--line);
@@ -187,7 +200,10 @@ body {
 .auth-gate-actions {
   display: flex;
   gap: 8px;
-  flex-shrink: 0;
+  margin-top: 4px;
+}
+.auth-gate-actions button {
+  flex: 1;
 }
 .signup-gate-cancel {
   padding: 10px 14px;
