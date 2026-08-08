@@ -427,33 +427,41 @@
   }
 }
 
-/* ---------- isometric office parallax (placeholder - see
-   app/components/IsometricOfficeSection.tsx) ---------- */
+/* ---------- isometric office parallax (see
+   app/components/IsometricOfficeSection.tsx) - a full-bleed image sitting
+   behind the section's heading, scrolling at its own rate. */
 .iso-section {
-  padding: 64px 24px 88px;
-  overflow: hidden;
-}
-.iso-section-inner {
-  max-width: 1080px;
-  margin: 0 auto;
-}
-.iso-graphic {
   position: relative;
-  height: 340px;
-  max-width: 720px;
-  margin: 0 auto;
+  overflow: hidden;
+  min-height: 460px;
+  display: flex;
+  align-items: center;
+  padding: 64px 24px;
 }
-.iso-layer {
+.iso-bg-layer {
   position: absolute;
-  inset: 0;
+  /* Extends past the section's own edges so the scroll-parallax translate
+     never scrolls empty space into view at the top/bottom. */
+  inset: -80px 0;
+  z-index: 0;
+  background: #fff;
   will-change: transform;
 }
-.iso-layer svg {
+.iso-bg-layer img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  object-position: center;
 }
-.iso-layer-boxes {
-  filter: drop-shadow(0 10px 14px rgba(58, 54, 50, 0.12));
+.iso-section-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+}
+.iso-section-inner .home-section-head {
+  margin-bottom: 0;
 }
 
 /* ---------- shared section shell ---------- */
