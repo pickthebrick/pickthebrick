@@ -433,9 +433,13 @@
   color: #fff;
 }
 
-/* Joke "package" - a yellow hazard-striped banner, not a real selectable
-   tier (no PackageKey behind it). Clicking it just pokes fun at the idea
-   via an alert, never selects/starts anything. */
+/* Joke "package" - not a real selectable tier (no PackageKey behind it).
+   Clicking it just pokes fun at the idea via an alert, never selects/starts
+   anything. Background is admin/marketing-editable (see
+   app/admin/marketing/MarketingClient.tsx) - the color below is only the
+   fallback if that value is somehow missing. Kept deliberately subtle/quiet
+   (matches the other package cards) rather than the loud hazard-stripe
+   treatment this used to have. */
 .ptb-marketing .package-card.ai-design-banner {
   justify-content: center;
   align-items: center;
@@ -443,41 +447,28 @@
   min-height: 100%;
   padding: 30px 20px;
   cursor: not-allowed;
-  background: repeating-linear-gradient(
-    135deg,
-    var(--gold) 0px,
-    var(--gold) 18px,
-    #2a2620 18px,
-    #2a2620 22px
-  );
-  border: 1.5px solid #2a2620;
-  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 #2a2620;
+  background: var(--surface);
+  border: 1.5px dashed var(--line);
+  box-shadow: none;
 }
 .ptb-marketing .package-card.ai-design-banner:hover {
   transform: none;
 }
 .ptb-marketing .ai-design-graffiti {
   display: inline-block;
-  font-family: Impact, "Arial Black", sans-serif;
-  font-size: 32px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: #fff23c;
-  -webkit-text-stroke: 2px #1a1712;
-  text-shadow: 3px 3px 0 #1a1712, -1px -1px 0 #1a1712, 5px 5px 0 rgba(0, 0, 0, 0.25);
-  transform: rotate(-5deg);
-  margin-bottom: 14px;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  margin-bottom: 8px;
 }
 .ptb-marketing .ai-design-sub {
   display: inline-block;
-  background: #1a1712;
-  color: var(--gold);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 6px 12px;
-  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 8px;
 }
 
 .ptb-marketing .design-upsell {

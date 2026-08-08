@@ -6,13 +6,8 @@ import Link from "next/link";
 import DesignStepper from "../DesignStepper";
 import SpaceIcon from "../SpaceIcon";
 import { SPACE_QUESTIONS } from "@/lib/spaceQuestions";
-import {
-  saveDesignRequestSpaceAnswers,
-  deleteDesignRequestSpace,
-  submitDesignRequest,
-  setDesignRequestContact,
-} from "@/app/actions/design";
-import ContactCaptureForm, { type ContactMethod } from "@/app/components/ContactCaptureForm";
+import { saveDesignRequestSpaceAnswers, deleteDesignRequestSpace, submitDesignRequest } from "@/app/actions/design";
+import AuthGate from "@/app/components/AuthGate";
 import "../../marketing.css";
 
 export type SpaceInstance = {
@@ -43,8 +38,9 @@ export default function FeaturesWizard({
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [contactMethod, setContactMethod] = useState<ContactMethod>("phone");
-  const [contactValue, setContactValue] = useState("");
+  // An anonymous visitor hitting "Submit" on the last space sees AuthGate
+  // instead of submitting immediately - true while that gate is up.
+  const [awaitingAuth, setAwaitingAuth] = useState(false);
 
   const current = spaceList[index];
   const questions = SPACE_QUESTIONS[current.spaceKey] ?? [];
@@ -98,10 +94,6 @@ export default function FeaturesWizard({
   async function handleNext() {
     if (busy) return;
     const isLastSpace = index === spaceList.length - 1;
-    if (isLastSpace && isAnonymous && !contactValue.trim()) {
-      setError("Please enter a phone number or email so we can send your design request");
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
@@ -109,18 +101,30 @@ export default function FeaturesWizard({
       if (!isLastSpace) {
         setIndex(index + 1);
         setBusy(false);
-      } else {
-        if (isAnonymous) {
-          await setDesignRequestContact(
-            designRequestId,
-            contactMethod === "phone" ? { phone: contactValue.trim() } : { email: contactValue.trim() },
-          );
-        }
-        await submitDesignRequest(designRequestId);
-        router.push(`/design/handover?id=${designRequestId}`);
+        return;
       }
+      if (isAnonymous) {
+        setAwaitingAuth(true);
+        setBusy(false);
+        return;
+      }
+      await submitDesignRequest(designRequestId);
+      router.push(`/design/handover?id=${designRequestId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save your answers");
+      setBusy(false);
+    }
+  }
+
+  async function handleAuthSuccess() {
+    setAwaitingAuth(false);
+    setBusy(true);
+    setError(null);
+    try {
+      await submitDesignRequest(designRequestId);
+      router.push(`/design/handover?id=${designRequestId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not submit your design request");
       setBusy(false);
     }
   }
@@ -246,14 +250,12 @@ export default function FeaturesWizard({
           </div>
         </div>
 
-        {isAnonymous && isLast && (
+        {isAnonymous && isLast && awaitingAuth && (
           <div className="sqft-input-card compact" style={{ marginTop: 20 }}>
-            <div className="contact-capture-label">Send my design request to WhatsApp</div>
-            <ContactCaptureForm
-              method={contactMethod}
-              onMethodChange={setContactMethod}
-              value={contactValue}
-              onValueChange={setContactValue}
+            <AuthGate
+              context="Sign in to submit your design request"
+              onSuccess={handleAuthSuccess}
+              onCancel={() => setAwaitingAuth(false)}
             />
           </div>
         )}
@@ -262,14 +264,11 @@ export default function FeaturesWizard({
           <button type="button" className="survey-btn-secondary" disabled={busy} onClick={handleBack}>
             {index === 0 ? "Go back" : "Previous space"}
           </button>
-          <button
-            type="button"
-            className="survey-btn-primary"
-            disabled={busy || (isLast && isAnonymous && !contactValue.trim())}
-            onClick={handleNext}
-          >
-            {busy ? "Saving…" : isLast ? "Submit design request →" : "Next space →"}
-          </button>
+          {!(isAnonymous && isLast && awaitingAuth) && (
+            <button type="button" className="survey-btn-primary" disabled={busy} onClick={handleNext}>
+              {busy ? "Saving…" : isLast ? "Submit design request →" : "Next space →"}
+            </button>
+          )}
         </div>
       </main>
     </div>

@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   upsertCartItem,
   removeCartItem,
   submitQuote,
   setQuoteDetails,
-  setQuoteContact,
   startOverDraftQuote,
   captainUpsertCartItem,
   captainRemoveCartItem,
@@ -21,8 +21,7 @@ import { ProductThumb } from "./ProductThumb";
 import ProductModal from "./ProductModal";
 import QuoteDetailsModal from "./QuoteDetailsModal";
 import TermsSection from "./TermsSection";
-import ContactCaptureForm, { type ContactMethod } from "@/app/components/ContactCaptureForm";
-import SignupGate from "@/app/components/SignupGate";
+import AuthGate from "@/app/components/AuthGate";
 import "./build.css";
 
 const SQM_TO_SQFT = 10.7639;
@@ -105,10 +104,11 @@ export default function BuildClient({
   clientLabel?: string;
   // No session at all - see lib/actor.ts. Hides account-only chrome (the
   // "My quotes" link, which would just bounce an anonymous visitor to
-  // /login) and gates the contact-capture/account-upsell steps later in
-  // the flow.
+  // /login) and gates the submit/download/share steps later in the flow
+  // behind AuthGate instead of letting them through.
   isAnonymous?: boolean;
 }) {
+  const router = useRouter();
   const [cart, setCart] = useState<CartLine[]>(initialCart);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState(initialLocation ?? "");
@@ -133,8 +133,11 @@ export default function BuildClient({
   const [view, setView] = useState<"build" | "preview" | "success">("build");
   const [confirmingComplete, setConfirmingComplete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [contactMethod, setContactMethod] = useState<ContactMethod>("phone");
-  const [contactValue, setContactValue] = useState("");
+  // Which action an anonymous visitor was trying to take when AuthGate
+  // interrupted them - resumed automatically once they sign up/in (see
+  // handleAuthSuccess), so the gate never leaves them stranded with an
+  // extra click to re-trigger what they originally asked for.
+  const [pendingAction, setPendingAction] = useState<null | "submit" | "download" | "whatsapp">(null);
   const [modalProductId, setModalProductId] = useState<string | null>(null);
 
   const cartMap = useMemo(() => new Map(cart.map((l) => [l.productId, l])), [cart]);
@@ -276,20 +279,10 @@ export default function BuildClient({
     doRemoveCartItem(quoteId, productId).catch((e) => setError(e.message));
   }
 
-  async function handleSubmit() {
+  async function completeSubmit() {
     if (cart.length === 0) return;
-    if (isAnonymous && !contactValue.trim()) {
-      setError("Please enter a phone number or email so we can send your quote");
-      return;
-    }
     setSubmitting(true);
     try {
-      if (isAnonymous) {
-        await setQuoteContact(
-          quoteId,
-          contactMethod === "phone" ? { phone: contactValue.trim() } : { email: contactValue.trim() },
-        );
-      }
       await submitQuote(quoteId);
       setView("success");
     } catch (e) {
@@ -298,6 +291,14 @@ export default function BuildClient({
       setSubmitting(false);
       setConfirmingComplete(false);
     }
+  }
+
+  // Authenticated users submit immediately (existing two-step confirm); an
+  // anonymous visitor instead sees AuthGate in the same confirm step, with
+  // "submit" queued as the action to resume once they're signed in.
+  function handleDoneClick() {
+    setConfirmingComplete(true);
+    if (isAnonymous) setPendingAction("submit");
   }
 
   function quoteSummaryText() {
@@ -340,6 +341,18 @@ export default function BuildClient({
     doc.save("PickTheBrick-Quotation.pdf");
   }
 
+  // Fires once AuthGate reports a successful sign up/in - refreshes the
+  // server-rendered isAnonymous prop for good (so it doesn't flip back on the
+  // next render) and resumes whichever action the visitor originally clicked.
+  async function handleAuthSuccess() {
+    router.refresh();
+    const action = pendingAction;
+    setPendingAction(null);
+    if (action === "submit") await completeSubmit();
+    else if (action === "download") await downloadPdf();
+    else if (action === "whatsapp") shareViaWhatsApp();
+  }
+
   const [confirmingStartOver, setConfirmingStartOver] = useState(false);
   const [startingOver, setStartingOver] = useState(false);
 
@@ -376,6 +389,22 @@ export default function BuildClient({
           )}
         </div>
       </header>
+
+      {!editAsCaptain && (
+        <div className="install-banner">
+          <span className="install-banner-headline">Supply + Install. Always.</span>
+          <span className="install-banner-sub">
+            Every price already includes our contractor on-site — no separate labor bill later.
+          </span>
+        </div>
+      )}
+
+      {!editAsCaptain && (
+        <div className="build-intro-line">
+          <span className="build-intro-eyebrow">Ready to start?</span>
+          Already have a design and quantities ready? Add your items below and get an instant, itemized price.
+        </div>
+      )}
 
       {editAsCaptain && (
         <div style={{ padding: "8px 34px", background: "var(--accent-soft, #fff4e5)", fontSize: 12.5 }}>
@@ -506,7 +535,10 @@ export default function BuildClient({
                               <div className="pname" onClick={() => setModalProductId(p.id)}>
                                 {p.name}
                               </div>
-                              <div className="prate">AED {toDisplayRate(p.rate, p.unit, displayUnit)}/{unitLabel(p.unit, displayUnit)}</div>
+                              <div className="prate">
+                                AED {toDisplayRate(p.rate, p.unit, displayUnit)}/{unitLabel(p.unit, displayUnit)}
+                                <span className="install-badge">✓ Installed</span>
+                              </div>
                               <div className="pcontrols">
                                 <div className="qty-box">
                                   <input
@@ -573,7 +605,10 @@ export default function BuildClient({
                         />
                         <button onClick={() => changeLineQty(l.productId, 1)}>+</button>
                       </div>
-                      <div className="li-amt">AED {(l.rate * l.qty).toLocaleString()}</div>
+                      <div className="li-amt">
+                        AED {(l.rate * l.qty).toLocaleString()}
+                        <span className="install-badge">✓ Installed</span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -693,7 +728,10 @@ export default function BuildClient({
                     <td className="num">
                       {l.qty} {baseUnitLabel(l.unit)}
                     </td>
-                    <td className="num">AED {(l.rate * l.qty).toLocaleString()}</td>
+                    <td className="num">
+                      AED {(l.rate * l.qty).toLocaleString()}
+                      <span className="install-badge">✓ Installed</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -756,12 +794,27 @@ export default function BuildClient({
                       className="action-btn primary"
                       disabled={!agreedToTerms}
                       title={!agreedToTerms ? "Please agree to the Terms & Conditions first" : undefined}
-                      onClick={() => setConfirmingComplete(true)}
+                      onClick={handleDoneClick}
                     >
                       I&apos;m done
                     </button>
                     {isAnonymous ? (
-                      <SignupGate prompt="Sign up to download or share your quote" />
+                      pendingAction ? (
+                        <AuthGate
+                          context={pendingAction === "download" ? "Sign in to download your quote" : "Sign in to send your quote to WhatsApp"}
+                          onSuccess={handleAuthSuccess}
+                          onCancel={() => setPendingAction(null)}
+                        />
+                      ) : (
+                        <>
+                          <button type="button" className="share-btn" onClick={() => setPendingAction("whatsapp")}>
+                            WhatsApp
+                          </button>
+                          <button type="button" className="share-btn" onClick={() => setPendingAction("download")}>
+                            Download
+                          </button>
+                        </>
+                      )
                     ) : (
                       <>
                         <button type="button" className="icon-btn" onClick={shareViaWhatsApp} title="Share via WhatsApp" aria-label="Share via WhatsApp">
@@ -783,28 +836,25 @@ export default function BuildClient({
                       office moving — or get in touch with our team now on{" "}
                       <a href="tel:+971523142272">0523142272</a>.
                     </div>
-                    {isAnonymous && (
-                      <div style={{ flexBasis: "100%" }}>
-                        <div className="contact-capture-label">Send my quote to WhatsApp</div>
-                        <ContactCaptureForm
-                          method={contactMethod}
-                          onMethodChange={setContactMethod}
-                          value={contactValue}
-                          onValueChange={setContactValue}
-                          autoFocus
-                        />
-                      </div>
+                    {isAnonymous ? (
+                      <AuthGate
+                        context="Sign in to submit your quote"
+                        onSuccess={handleAuthSuccess}
+                        onCancel={() => {
+                          setConfirmingComplete(false);
+                          setPendingAction(null);
+                        }}
+                      />
+                    ) : (
+                      <>
+                        <button className="action-btn secondary" onClick={() => setConfirmingComplete(false)}>
+                          Cancel
+                        </button>
+                        <button className="action-btn primary" disabled={submitting} onClick={completeSubmit}>
+                          {submitting ? "Submitting..." : "Yes, I'm done"}
+                        </button>
+                      </>
                     )}
-                    <button className="action-btn secondary" onClick={() => setConfirmingComplete(false)}>
-                      Cancel
-                    </button>
-                    <button
-                      className="action-btn primary"
-                      disabled={submitting || (isAnonymous && !contactValue.trim())}
-                      onClick={handleSubmit}
-                    >
-                      {submitting ? "Submitting..." : "Yes, I'm done"}
-                    </button>
                   </div>
                 )}
               </>
@@ -818,7 +868,10 @@ export default function BuildClient({
           <div className="preview-card success-state">
             <div className="icon">&#10003;</div>
             <h2>Quote saved</h2>
-            <p>Your PickTheBrick quote is locked in. A Captain from our team will be in touch shortly to help turn this into a real fitout.</p>
+            <p>
+              Your PickTheBrick quote is locked in and a copy is on its way to your email. A Captain from our team
+              will be in touch shortly to help turn this into a real fitout.
+            </p>
             <div className="action-row" style={{ marginTop: 24 }}>
               {!isAnonymous && (
                 <a className="action-btn primary" href="/my-quotes" style={{ textDecoration: "none" }}>

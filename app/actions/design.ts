@@ -63,19 +63,6 @@ export async function startDesignRequest(packageKey: string, sqft: number) {
   return created.id;
 }
 
-// Sets the contact info an anonymous design request is submitted under - see
-// setQuoteContact() in app/actions/quotes.ts for the equivalent on Build.
-export async function setDesignRequestContact(id: string, contact: { phone?: string; email?: string }) {
-  const actor = await resolveActor();
-  await assertOwnDraftRequest(id, actor);
-
-  const phone = contact.phone?.trim() || null;
-  const email = contact.email?.trim() || null;
-  if (!phone && !email) throw new Error("Please enter a phone number or email");
-
-  await prisma.designRequest.update({ where: { id }, data: { contactPhone: phone, contactEmail: email } });
-}
-
 // Replaces the whole space list for a draft request. Simple wipe-and-recreate:
 // each spaceKey gets `quantity` DesignRequestSpace rows (one per instance),
 // which cascades away any answers already saved for the previous list. That's
@@ -152,10 +139,8 @@ export async function deleteDesignRequest(id: string) {
 
 export async function submitDesignRequest(id: string) {
   const actor = await resolveActor();
-  const request = await assertOwnDraftRequest(id, actor);
-  if (!("clientId" in actor) && !request.contactPhone && !request.contactEmail) {
-    throw new Error("Please add a phone number or email before submitting");
-  }
+  if (!("clientId" in actor)) throw new Error("Please sign in to submit your design request");
+  await assertOwnDraftRequest(id, actor);
 
   await prisma.designRequest.update({
     where: { id },

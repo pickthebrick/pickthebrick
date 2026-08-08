@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { BlobShape, FloorplanGrid, DesignPathIcon, BuildPathIcon, CategoryIcon } from "./components/HomeIllustrations";
+import { DesignPathIcon, BuildPathIcon, CategoryIcon } from "./components/HomeIllustrations";
 import HeroQuoteDemo from "./components/HeroQuoteDemo";
-import ParallaxCtaBand from "./components/ParallaxCtaBand";
 import SiteFooter from "./components/SiteFooter";
 import "./marketing.css";
 import "./home.css";
@@ -35,30 +33,6 @@ export default function HomeClient({
   isClientSession: boolean;
   categories: { key: string; label: string }[];
 }) {
-  const blob1Ref = useRef<HTMLDivElement>(null);
-  const blob2Ref = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) return;
-
-    let ticking = false;
-    function onScroll() {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const y = window.scrollY;
-        if (blob1Ref.current) blob1Ref.current.style.transform = `translate3d(0, ${y * 0.18}px, 0)`;
-        if (blob2Ref.current) blob2Ref.current.style.transform = `translate3d(0, ${y * -0.12}px, 0)`;
-        if (gridRef.current) gridRef.current.style.transform = `translate3d(-50%, ${y * 0.08}px, 0)`;
-        ticking = false;
-      });
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   return (
     <div className="ptb-marketing">
       <header>
@@ -84,18 +58,6 @@ export default function HomeClient({
         <div className="home-page">
           {/* ---------- hero ---------- */}
           <section className="home-hero">
-            <div className="home-hero-bg">
-              <div ref={blob1Ref} className="home-blob b1">
-                <BlobShape color="var(--accent)" />
-              </div>
-              <div ref={blob2Ref} className="home-blob b2">
-                <BlobShape color="var(--gold)" />
-              </div>
-              <div ref={gridRef} className="home-floorplan">
-                <FloorplanGrid />
-              </div>
-            </div>
-
             <div className="home-hero-grid">
               <div className="home-hero-content">
                 <span className="home-hero-eyebrow">Dubai&apos;s Office Fit-Out Marketplace</span>
@@ -198,7 +160,7 @@ export default function HomeClient({
           </section>
 
           {/* ---------- final CTA ---------- */}
-          <ParallaxCtaBand className="home-cta-band">
+          <section className="home-cta-band">
             <div className="home-section-inner">
               <h2 className="home-section-title">Ready to start?</h2>
               <p className="home-section-body">Pick your path - you can switch between them any time.</p>
@@ -224,7 +186,7 @@ export default function HomeClient({
                 </p>
               )}
             </div>
-          </ParallaxCtaBand>
+          </section>
         </div>
       </main>
 

@@ -131,72 +131,50 @@ body {
   border-radius: var(--radius);
   cursor: default;
 }
-/* Shared light-touch contact capture (see app/components/ContactCaptureForm.tsx)
-   - used in both Build's confirm step and Design's submit step. */
-.contact-capture {
-  display: flex;
-  gap: 8px;
-  align-items: stretch;
+/* The single account gate for anonymous Build/Design visitors (see
+   app/components/AuthGate.tsx) - shown whenever an anonymous visitor tries to
+   submit their quote/request, or download/share it. Deliberately just an
+   email+password sign in/sign up form, nothing else asked separately. */
+.auth-gate {
+  flex-basis: 100%;
+  max-width: 420px;
 }
-.contact-capture-toggle {
+.auth-gate-context {
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.auth-gate-toggle {
   display: flex;
-  flex-shrink: 0;
+  width: fit-content;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
+  margin-bottom: 8px;
 }
-.contact-capture-toggle button {
-  padding: 0 14px;
-  font-size: 12.5px;
+.auth-gate-toggle button {
+  padding: 6px 14px;
+  font-size: 12px;
   font-weight: 600;
   border: none;
   background: var(--surface);
   color: var(--muted);
   cursor: pointer;
 }
-.contact-capture-toggle button.selected {
+.auth-gate-toggle button.selected {
   background: var(--accent);
   color: #fff;
 }
-.contact-capture input {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 12px;
-  font-size: 13px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--bg);
-  color: var(--fg);
-}
-.contact-capture-label {
-  font-size: 12.5px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-/* Account-only feature gate for anonymous visitors (see
-   app/components/SignupGate.tsx) - e.g. downloading/sharing the quote PDF. */
-.signup-gate-trigger {
-  padding: 10px 14px;
-  font-size: 12.5px;
-  font-weight: 700;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--accent);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.signup-gate-form {
+.auth-gate-form {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+.auth-gate-form .form-error {
   flex-basis: 100%;
 }
-.signup-gate-form .form-error {
-  flex-basis: 100%;
-}
-.signup-gate-form input {
+.auth-gate-form input {
   flex: 1;
   min-width: 140px;
   padding: 10px 12px;
@@ -206,7 +184,7 @@ body {
   background: var(--bg);
   color: var(--fg);
 }
-.signup-gate-actions {
+.auth-gate-actions {
   display: flex;
   gap: 8px;
   flex-shrink: 0;

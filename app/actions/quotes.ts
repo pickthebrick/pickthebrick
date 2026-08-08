@@ -70,21 +70,6 @@ export async function setQuoteDetails(quoteId: string, location: string, officeS
   });
 }
 
-// Sets the contact info an anonymous quote is submitted under (no User row
-// to hold it) - collected at the "I'm done" step. A signed-in client never
-// needs this (their account already has an email), but calling it is
-// harmless either way, so BuildClient doesn't need to branch on it.
-export async function setQuoteContact(quoteId: string, contact: { phone?: string; email?: string }) {
-  const actor = await resolveActor();
-  await assertOwnDraft(quoteId, actor);
-
-  const phone = contact.phone?.trim() || null;
-  const email = contact.email?.trim() || null;
-  if (!phone && !email) throw new Error("Please enter a phone number or email");
-
-  await prisma.quote.update({ where: { id: quoteId }, data: { contactPhone: phone, contactEmail: email } });
-}
-
 export type CartLineInput = {
   productId: string;
   name: string;
@@ -317,9 +302,7 @@ export async function submitQuote(quoteId: string) {
   if (!quote || !actorOwns(actor, quote)) throw new Error("Quote not found");
   if (quote.status !== QuoteStatus.draft) throw new Error("Quote is not in draft status");
   if (quote.items.length === 0) throw new Error("Cannot submit an empty quote");
-  if (!quote.client && !quote.contactPhone && !quote.contactEmail) {
-    throw new Error("Please add a phone number or email before submitting");
-  }
+  if (!("clientId" in actor)) throw new Error("Please sign in to submit your quote");
 
   await recalcTotals(quoteId);
   const referenceNumber = await generateReferenceNumber();

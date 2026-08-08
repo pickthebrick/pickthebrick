@@ -13,7 +13,7 @@ type Banner = {
   active: boolean;
 };
 
-type AiDesignerBanner = { headline: string; subText: string; popupMessage: string; enabled: boolean };
+type AiDesignerBanner = { headline: string; subText: string; popupMessage: string; backgroundColor: string; enabled: boolean };
 
 export default function MarketingClient({ banners, aiDesignerBanner }: { banners: Banner[]; aiDesignerBanner: AiDesignerBanner }) {
   const router = useRouter();
@@ -25,6 +25,7 @@ export default function MarketingClient({ banners, aiDesignerBanner }: { banners
   const [aiHeadline, setAiHeadline] = useState(aiDesignerBanner.headline);
   const [aiSubText, setAiSubText] = useState(aiDesignerBanner.subText);
   const [aiPopup, setAiPopup] = useState(aiDesignerBanner.popupMessage);
+  const [aiBackground, setAiBackground] = useState(aiDesignerBanner.backgroundColor);
   const [aiEnabled, setAiEnabled] = useState(aiDesignerBanner.enabled);
   const [aiSaving, setAiSaving] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -34,7 +35,13 @@ export default function MarketingClient({ banners, aiDesignerBanner }: { banners
     setAiSaving(true);
     setAiError(null);
     try {
-      await updateAiDesignerBanner({ headline: aiHeadline, subText: aiSubText, popupMessage: aiPopup, enabled: aiEnabled });
+      await updateAiDesignerBanner({
+        headline: aiHeadline,
+        subText: aiSubText,
+        popupMessage: aiPopup,
+        backgroundColor: aiBackground,
+        enabled: aiEnabled,
+      });
       router.refresh();
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "Could not save banner");
@@ -123,6 +130,10 @@ export default function MarketingClient({ banners, aiDesignerBanner }: { banners
           <input type="text" placeholder="Headline" value={aiHeadline} onChange={(e) => setAiHeadline(e.target.value)} />
           <input type="text" placeholder="Sub-line" value={aiSubText} onChange={(e) => setAiSubText(e.target.value)} style={{ minWidth: 320 }} />
           <input type="text" placeholder="Popup message on click" value={aiPopup} onChange={(e) => setAiPopup(e.target.value)} style={{ minWidth: 320 }} />
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+            Background
+            <input type="color" value={aiBackground} onChange={(e) => setAiBackground(e.target.value)} style={{ width: 40, height: 28, padding: 2, cursor: "pointer" }} />
+          </label>
           <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
             <input type="checkbox" checked={aiEnabled} onChange={(e) => setAiEnabled(e.target.checked)} />
             Show on /design

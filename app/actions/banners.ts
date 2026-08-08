@@ -65,15 +65,22 @@ export async function deleteBanner(id: string) {
 
 // Singleton row backing the joke "AI Designer" banner on /design - see
 // app/design/page.tsx and the AiDesignerBanner model.
-export async function updateAiDesignerBanner(data: { headline: string; subText: string; popupMessage: string; enabled: boolean }) {
+export async function updateAiDesignerBanner(data: {
+  headline: string;
+  subText: string;
+  popupMessage: string;
+  backgroundColor: string;
+  enabled: boolean;
+}) {
   await requireAdmin();
   const headline = data.headline.trim() || "AI Designer";
   const subText = data.subText.trim() || "Humans are the best.....But AI designer is coming soon!!!";
   const popupMessage = data.popupMessage.trim() || "Our human designers are still better at it.";
+  const backgroundColor = /^#[0-9a-fA-F]{6}$/.test(data.backgroundColor.trim()) ? data.backgroundColor.trim() : "#fffcf5";
   await prisma.aiDesignerBanner.upsert({
     where: { id: "ai-designer-banner" },
-    create: { id: "ai-designer-banner", headline, subText, popupMessage, enabled: data.enabled },
-    update: { headline, subText, popupMessage, enabled: data.enabled },
+    create: { id: "ai-designer-banner", headline, subText, popupMessage, backgroundColor, enabled: data.enabled },
+    update: { headline, subText, popupMessage, backgroundColor, enabled: data.enabled },
   });
   revalidatePath("/admin/marketing");
   revalidatePath("/design");

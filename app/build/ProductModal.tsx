@@ -106,6 +106,7 @@ export default function ProductModal({
           </div>
           <div className="modal-price">
             AED {product.rate}/{unitSuffix(product.unit, displayUnit)}
+            <span className="install-badge">✓ Installed</span>
           </div>
 
           {product.description && (

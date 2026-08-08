@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { startDesignRequest } from "@/app/actions/design";
 import { priceFor, type PackageKey } from "@/lib/designPricing";
-import ParallaxCtaBand from "@/app/components/ParallaxCtaBand";
 import SiteFooter from "@/app/components/SiteFooter";
 import "../marketing.css";
 import "../home.css";
@@ -64,7 +63,13 @@ const PACKAGES: {
 const SQM_TO_SQFT = 10.7639;
 const MAX_SQFT = 10000;
 
-export type AiDesignerBannerData = { headline: string; subText: string; popupMessage: string; enabled: boolean };
+export type AiDesignerBannerData = {
+  headline: string;
+  subText: string;
+  popupMessage: string;
+  backgroundColor: string;
+  enabled: boolean;
+};
 
 export default function DesignPageClient({
   banner,
@@ -218,6 +223,7 @@ export default function DesignPageClient({
               role="button"
               tabIndex={0}
               aria-disabled="true"
+              style={{ background: banner.backgroundColor }}
               onClick={() => alert(banner.popupMessage)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") alert(banner.popupMessage);
@@ -255,14 +261,6 @@ export default function DesignPageClient({
           </>
         )}
       </main>
-
-      <ParallaxCtaBand>
-        <h2>Ready to start?</h2>
-        <p>Know exactly what you need instead? Skip the survey and price it product-by-product.</p>
-        <Link href="/build" className="home-hero-cta-primary">
-          Build My Quote →
-        </Link>
-      </ParallaxCtaBand>
 
       <SiteFooter categories={categories} />
     </div>

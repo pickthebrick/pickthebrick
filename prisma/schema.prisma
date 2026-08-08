@@ -261,15 +261,18 @@ model ProductDownload {
 
 model Quote {
   id             String      @id @default(cuid())
-  // Nullable so an anonymous visitor can build/submit a quote with no
-  // account at all - anonymousSessionId identifies them instead (see
+  // Nullable so an anonymous visitor can build a quote with no account at
+  // all before submitting - anonymousSessionId identifies them instead (see
   // lib/anonSession.ts). Exactly one of clientId/anonymousSessionId is set
-  // until claimAnonymousSession() re-parents the row onto a real account.
+  // until reparentAnonymousSession() (app/actions/auth.ts) re-parents the
+  // row onto a real account at sign up/in - required before submission, so
+  // a submitted quote always has a clientId.
   clientId       String?
   client         User?       @relation("ClientQuotes", fields: [clientId], references: [id])
   anonymousSessionId String?
-  // Captured at the "I'm done" step for a quote with no clientId, since
-  // there's no User row to hold a contact address - see setQuoteContact().
+  // Not currently written anywhere (submission requires a real account) -
+  // kept for a future OTP-verified WhatsApp capture step and as a display
+  // fallback (see lib/contactLabel.ts) in case that ever changes.
   contactPhone   String?
   contactEmail   String?
   status         QuoteStatus @default(draft)
@@ -708,9 +711,10 @@ model JobApplication {
 // Designer" banner on /design - editable from the admin Marketing tab so
 // marketing can change its copy or turn it off without a code change.
 model AiDesignerBanner {
-  id           String  @id @default("ai-designer-banner")
-  headline     String  @default("AI Designer")
-  subText      String  @default("Humans are the best.....But AI designer is coming soon!!!")
-  popupMessage String  @default("Our human designers are still better at it.")
-  enabled      Boolean @default(true)
+  id              String  @id @default("ai-designer-banner")
+  headline        String  @default("AI Designer")
+  subText         String  @default("Humans are the best.....But AI designer is coming soon!!!")
+  popupMessage    String  @default("Our human designers are still better at it.")
+  backgroundColor String  @default("#fffcf5")
+  enabled         Boolean @default(true)
 }

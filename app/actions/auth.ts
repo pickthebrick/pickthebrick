@@ -7,6 +7,27 @@ import { Role } from "@/app/generated/prisma/enums";
 
 export type AuthResult = { success: true } | { error: string };
 
+// Re-parents every Quote/DesignRequest tagged with this browser's ptb_anon
+// cookie onto a just-authenticated client account, so signing up or signing
+// in mid-Build/Design never loses what was already built anonymously - see
+// lib/actor.ts. A no-op if there's no anon cookie (the common case for a
+// normal login unrelated to Build/Design). Only wired for client accounts:
+// a contractor/designer applicant signing up has no reason to inherit an
+// unrelated anonymous quote.
+async function reparentAnonymousSession(clientId: string) {
+  const anonId = await getAnonSessionId();
+  if (!anonId) return;
+  await prisma.quote.updateMany({
+    where: { anonymousSessionId: anonId },
+    data: { clientId, anonymousSessionId: null },
+  });
+  await prisma.designRequest.updateMany({
+    where: { anonymousSessionId: anonId },
+    data: { clientId, anonymousSessionId: null },
+  });
+  await clearAnonSessionId();
+}
+
 export async function signUp(input: {
   email: string;
   password: string;
@@ -41,50 +62,7 @@ export async function signUp(input: {
   // session can't be client-only - see the isPendingApplicant note in
   // signIn() below for the matching rule on subsequent sign-ins.
   await createSession(user.id, role !== Role.client);
-  return { success: true as const };
-}
-
-// Turns an anonymous Build/Design visitor into a real client account without
-// losing what they already built - used to unlock the download/share PDF
-// controls on the Build review screen, which are deliberately account-only
-// (unlike the phone/email contact capture at submit, which stays password-free
-// per the anonymous-flow design). Re-parents every Quote/DesignRequest tagged
-// with this browser's ptb_anon cookie (draft or already submitted) onto the
-// new account, then signs them in exactly like a normal signUp.
-export async function claimAnonymousSession(input: {
-  email: string;
-  password: string;
-  fullName?: string;
-}): Promise<AuthResult> {
-  const email = input.email.trim().toLowerCase();
-  if (!email || !input.password || input.password.length < 6) {
-    return { error: "Enter a valid email and a password of at least 6 characters." };
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return { error: "An account with that email already exists - try signing in instead." };
-  }
-
-  const passwordHash = await hashPassword(input.password);
-  const user = await prisma.user.create({
-    data: { email, passwordHash, fullName: input.fullName?.trim() || null, role: Role.client },
-  });
-
-  const anonId = await getAnonSessionId();
-  if (anonId) {
-    await prisma.quote.updateMany({
-      where: { anonymousSessionId: anonId },
-      data: { clientId: user.id, anonymousSessionId: null },
-    });
-    await prisma.designRequest.updateMany({
-      where: { anonymousSessionId: anonId },
-      data: { clientId: user.id, anonymousSessionId: null },
-    });
-  }
-
-  await createSession(user.id, false);
-  await clearAnonSessionId();
+  if (role === Role.client) await reparentAnonymousSession(user.id);
   return { success: true as const };
 }
 
@@ -111,6 +89,7 @@ export async function signIn(input: { email: string; password: string; viaStaffL
     (user.role === Role.designer && user.designerApplication?.status !== "approved");
 
   await createSession(user.id, input.viaStaffLogin === true || isPendingApplicant);
+  if (user.role === Role.client) await reparentAnonymousSession(user.id);
   return { success: true as const };
 }
 
