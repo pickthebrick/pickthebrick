@@ -2,18 +2,18 @@
 
 import { useEffect, useRef } from "react";
 
-// Full-bleed isometric office image as its own parallax section (the user's
-// own render - an isometric cutaway of a PickTheBrick fit-out crew at work),
-// scrolling at a different rate than the page around it. No text overlay -
-// the image is the whole section. Drop the file at public/isometric-office.png
-// (or change IMAGE_SRC below) - everything else here is already wired for it.
+// Full-bleed isometric office image (the user's own render - an isometric
+// cutaway of a PickTheBrick fit-out crew at work) as the section's only
+// element - object-fit:cover fills the whole box on its own, so there's no
+// backing layer/color ever visible behind it. Drop the file at
+// public/isometric-office.png (or change IMAGE_SRC below) to swap it.
 const IMAGE_SRC = "/isometric-office.png";
 
 export default function IsometricOfficeSection() {
-  const layerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    const section = layerRef.current?.closest(".iso-section") as HTMLElement | null;
+    const section = imgRef.current?.closest(".iso-section") as HTMLElement | null;
     if (!section) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -28,9 +28,7 @@ export default function IsometricOfficeSection() {
         // is centered, so the image sits at its resting position when the
         // section is in the middle of the screen.
         const progress = Math.max(-1, Math.min(1, 1 - (rect.top + rect.height / 2) / (window.innerHeight / 2)));
-        // Kept well inside the img's own scale(1.1) overscan (see home.css)
-        // so this translate never scrolls empty space into view.
-        if (layerRef.current) layerRef.current.style.transform = `translate3d(0, ${progress * -30}px, 0)`;
+        if (imgRef.current) imgRef.current.style.transform = `translate3d(0, ${progress * -30}px, 0)`;
         ticking = false;
       });
     }
@@ -41,10 +39,13 @@ export default function IsometricOfficeSection() {
 
   return (
     <section className="iso-section">
-      <div ref={layerRef} className="iso-bg-layer">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={IMAGE_SRC} alt="Isometric cutaway of a PickTheBrick office fit-out in progress" />
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={imgRef}
+        className="iso-bg-img"
+        src={IMAGE_SRC}
+        alt="Isometric cutaway of a PickTheBrick office fit-out in progress"
+      />
     </section>
   );
 }

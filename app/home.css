@@ -428,41 +428,24 @@
 }
 
 /* ---------- isometric office parallax (see
-   app/components/IsometricOfficeSection.tsx) - a full-bleed image, no text
-   overlay (space is reserved on the left for future copy), scrolling at its
-   own rate as the page passes it. */
+   app/components/IsometricOfficeSection.tsx) - the image itself is the only
+   element, object-fit:cover fills the section completely so there's never
+   any backing color/pattern showing through. */
 .iso-section {
   position: relative;
   overflow: hidden;
-  /* Tall enough that object-fit:contain never needs to crop the image's
-     top/bottom edge - the box is height-constrained on any viewport wide
-     enough to be full-bleed, so this is effectively the image's own
-     rendered height. */
-  min-height: 820px;
-  /* A warmer, more saturated tan than the page's own --bg, with the same
-     dot motif as the hero - reads as a distinct section instead of the
-     near-white fill from before, without going as dark as a plain
-     multiply blend did. */
-  background-color: var(--line);
-  background-image: radial-gradient(rgba(58, 54, 50, 0.22) 1.5px, transparent 1.5px);
-  background-size: 26px 26px;
+  min-height: 560px;
 }
-.iso-bg-layer {
+.iso-bg-img {
   position: absolute;
-  inset: 0;
-  z-index: 0;
-  will-change: transform;
-}
-.iso-bg-layer img {
+  /* Small overscan so the scroll-parallax translate below never reveals an
+     edge of the image. */
+  inset: -20px 0;
   width: 100%;
-  height: 100%;
-  object-fit: contain;
-  /* Shifted right so the dotted backing shows on the left as room for
-     copy later - see the section's own comment above. */
-  object-position: 78% center;
-  /* Small overscan so the scroll-parallax translate on .iso-bg-layer never
-     reveals the image's own edge. */
-  transform: scale(1.1);
+  height: calc(100% + 40px);
+  object-fit: cover;
+  object-position: top;
+  will-change: transform;
 }
 
 /* ---------- shared section shell ---------- */
