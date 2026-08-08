@@ -2,14 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import {
-  BlobShape,
-  FloorplanGrid,
-  OfficeSceneIllustration,
-  DesignPathIcon,
-  BuildPathIcon,
-  CategoryIcon,
-} from "./components/HomeIllustrations";
+import { BlobShape, FloorplanGrid, DesignPathIcon, BuildPathIcon, CategoryIcon } from "./components/HomeIllustrations";
+import HeroQuoteDemo from "./components/HeroQuoteDemo";
+import ParallaxCtaBand from "./components/ParallaxCtaBand";
 import SiteFooter from "./components/SiteFooter";
 import "./marketing.css";
 import "./home.css";
@@ -43,7 +38,6 @@ export default function HomeClient({
   const blob1Ref = useRef<HTMLDivElement>(null);
   const blob2Ref = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const illustrationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -58,7 +52,6 @@ export default function HomeClient({
         if (blob1Ref.current) blob1Ref.current.style.transform = `translate3d(0, ${y * 0.18}px, 0)`;
         if (blob2Ref.current) blob2Ref.current.style.transform = `translate3d(0, ${y * -0.12}px, 0)`;
         if (gridRef.current) gridRef.current.style.transform = `translate3d(-50%, ${y * 0.08}px, 0)`;
-        if (illustrationRef.current) illustrationRef.current.style.transform = `translate3d(0, ${y * -0.06}px, 0)`;
         ticking = false;
       });
     }
@@ -81,6 +74,9 @@ export default function HomeClient({
               Partner with us
             </a>
           )}
+          <Link href="/build" className="home-header-cta">
+            Build My Quote
+          </Link>
         </nav>
       </header>
 
@@ -100,21 +96,28 @@ export default function HomeClient({
               </div>
             </div>
 
-            <div className="home-hero-content">
-              <span className="home-hero-eyebrow">Dubai Office Fit-Outs</span>
-              <h1 className="home-hero-title">
-                Office fitouts.
-                <br />
-                Done once, <span className="accent">done right.</span>
-              </h1>
-              <p className="home-hero-sub">
-                Design a concept or build your quote product-by-product - every price is supply-and-install, and one
-                dedicated Project Manager manages everything for you, from first sketch to move-in day.
-              </p>
-            </div>
+            <div className="home-hero-grid">
+              <div className="home-hero-content">
+                <span className="home-hero-eyebrow">Dubai&apos;s Office Fit-Out Marketplace</span>
+                <h1 className="home-hero-title">
+                  Price your entire office fit-out — <span className="accent">instantly.</span>
+                </h1>
+                <p className="home-hero-sub">
+                  Partitions, flooring, ceilings, electrical, and more. Pick your products, get a live itemized
+                  quote, and a dedicated Project Manager takes it from there.
+                </p>
+                <div className="home-hero-cta-row">
+                  <Link href="/build" className="home-hero-cta-primary">
+                    Build My Quote →
+                  </Link>
+                  <Link href="/design" className="home-hero-cta-secondary">
+                    Not sure where to start? Get a design concept
+                  </Link>
+                </div>
+                <p className="home-hero-microcopy">No account needed to get a price · 10 trades, one platform</p>
+              </div>
 
-            <div ref={illustrationRef} className="home-hero-illustration">
-              <OfficeSceneIllustration />
+              <HeroQuoteDemo />
             </div>
 
             <a href="#how-it-works" className="home-scroll-cue">
@@ -195,7 +198,7 @@ export default function HomeClient({
           </section>
 
           {/* ---------- final CTA ---------- */}
-          <section className="home-cta-band">
+          <ParallaxCtaBand className="home-cta-band">
             <div className="home-section-inner">
               <h2 className="home-section-title">Ready to start?</h2>
               <p className="home-section-body">Pick your path - you can switch between them any time.</p>
@@ -221,7 +224,7 @@ export default function HomeClient({
                 </p>
               )}
             </div>
-          </section>
+          </ParallaxCtaBand>
         </div>
       </main>
 

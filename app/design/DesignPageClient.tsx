@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { startDesignRequest } from "@/app/actions/design";
 import { priceFor, type PackageKey } from "@/lib/designPricing";
+import ParallaxCtaBand from "@/app/components/ParallaxCtaBand";
+import SiteFooter from "@/app/components/SiteFooter";
 import "../marketing.css";
+import "../home.css";
 
 const ESSENTIAL_FEATURES = [
   "Concept layout",
@@ -63,7 +66,13 @@ const MAX_SQFT = 10000;
 
 export type AiDesignerBannerData = { headline: string; subText: string; popupMessage: string; enabled: boolean };
 
-export default function DesignPageClient({ banner }: { banner: AiDesignerBannerData }) {
+export default function DesignPageClient({
+  banner,
+  categories,
+}: {
+  banner: AiDesignerBannerData;
+  categories: { key: string; label: string }[];
+}) {
   const router = useRouter();
   const [displayUnit, setDisplayUnit] = useState<"sqft" | "sqm">("sqft");
   const [sizeInput, setSizeInput] = useState("");
@@ -246,6 +255,16 @@ export default function DesignPageClient({ banner }: { banner: AiDesignerBannerD
           </>
         )}
       </main>
+
+      <ParallaxCtaBand>
+        <h2>Ready to start?</h2>
+        <p>Know exactly what you need instead? Skip the survey and price it product-by-product.</p>
+        <Link href="/build" className="home-hero-cta-primary">
+          Build My Quote →
+        </Link>
+      </ParallaxCtaBand>
+
+      <SiteFooter categories={categories} />
     </div>
   );
 }
