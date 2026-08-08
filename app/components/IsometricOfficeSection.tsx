@@ -2,12 +2,11 @@
 
 import { useEffect, useRef } from "react";
 
-// Full-bleed isometric office image as a background parallax layer (the
-// user's own render - an isometric cutaway of a PickTheBrick fit-out crew at
-// work), styled after workspace.ae's homepage: one large image sitting
-// behind the section's text, scrolling at a different rate than the page
-// around it. Drop the file at public/isometric-office.png (or change
-// IMAGE_SRC below) - everything else here is already wired for it.
+// Full-bleed isometric office image as its own parallax section (the user's
+// own render - an isometric cutaway of a PickTheBrick fit-out crew at work),
+// scrolling at a different rate than the page around it. No text overlay -
+// the image is the whole section. Drop the file at public/isometric-office.png
+// (or change IMAGE_SRC below) - everything else here is already wired for it.
 const IMAGE_SRC = "/isometric-office.png";
 
 export default function IsometricOfficeSection() {
@@ -43,12 +42,6 @@ export default function IsometricOfficeSection() {
       <div ref={layerRef} className="iso-bg-layer">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={IMAGE_SRC} alt="Isometric cutaway of a PickTheBrick office fit-out in progress" />
-      </div>
-      <div className="iso-section-inner">
-        <div className="home-section-head">
-          <div className="home-section-eyebrow">Your Space, Mapped Out</div>
-          <h2 className="home-section-title">See it before it&apos;s built</h2>
-        </div>
       </div>
     </section>
   );
