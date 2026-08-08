@@ -26,7 +26,12 @@ export const SPACE_QUESTIONS: Record<string, SpaceQuestion[]> = {
     { key: "breakoutSeating", label: "Breakout seating nearby", type: "boolean" },
   ],
   closedWorkstation: [
-    { key: "deskCount", label: "How many desks?", type: "choice", options: ["1", "2", "3", "4"] },
+    {
+      key: "deskCount",
+      label: "How many desks?",
+      type: "choice",
+      options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+    },
     { key: "glassPartition", label: "Glass partition walls", type: "boolean" },
     { key: "storageUnit", label: "Built-in storage unit", type: "boolean" },
   ],
