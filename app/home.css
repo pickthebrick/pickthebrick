@@ -31,10 +31,11 @@
 .home-hero {
   position: relative;
   overflow: hidden;
+  min-height: 92vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 60px 24px 40px;
+  padding: 60px 24px 64px;
 }
 .home-hero-grid {
   position: relative;
@@ -1016,7 +1017,8 @@
     grid-template-columns: repeat(2, 1fr);
   }
   .home-hero {
-    padding: 40px 18px 32px;
+    min-height: auto;
+    padding: 40px 18px 48px;
   }
   .home-section {
     padding: 60px 18px;
