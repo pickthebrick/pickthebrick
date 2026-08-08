@@ -6,10 +6,27 @@ import { isAdminRole } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { findSwapIndex } from "@/lib/reorder";
 import { Role, type Unit } from "@/app/generated/prisma/enums";
+import { uploadToStorage, deleteFromStorage } from "@/lib/storage";
+
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
 
 async function requireAdmin() {
   const session = await getSession();
   if (!session || !isAdminRole(session.role)) throw new Error("Admin only");
+  return session;
+}
+
+// Category image tiles are shown on the homepage but managed from the
+// marketer's dashboard (admin/marketing), so marketing needs write access
+// here alongside the regular admin roles - same pattern as banners.ts.
+async function requireAdminOrMarketing() {
+  const session = await getSession();
+  if (!session || (!isAdminRole(session.role) && session.role !== Role.marketing)) throw new Error("Admin only");
   return session;
 }
 
@@ -96,6 +113,40 @@ export async function moveCategory(categoryId: string, direction: "up" | "down")
     prisma.category.update({ where: { id: siblings[swapIdx].id }, data: { sortOrder: siblings[idx].sortOrder } }),
   ]);
   revalidateProducts();
+}
+
+// Homepage "Full Catalog" tile photo - optional, falls back to placeholder
+// art (CategoryArt.tsx) on the client when unset.
+export async function setCategoryImage(categoryId: string, formData: FormData) {
+  await requireAdminOrMarketing();
+
+  const file = formData.get("image") as File | null;
+  if (!file || file.size === 0) throw new Error("Please choose an image");
+  const ext = ALLOWED_IMAGE_TYPES[file.type];
+  if (!ext) throw new Error("Please upload a JPG, PNG, WEBP, or GIF image");
+
+  const category = await prisma.category.findUnique({ where: { id: categoryId } });
+  if (!category) throw new Error("Category not found");
+
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const imageUrl = await uploadToStorage("categories", filename, buffer, file.type);
+
+  await prisma.category.update({ where: { id: categoryId }, data: { imageUrl } });
+  if (category.imageUrl) await deleteFromStorage(category.imageUrl).catch(() => {});
+
+  revalidatePath("/admin/marketing");
+  revalidatePath("/");
+}
+
+export async function removeCategoryImage(categoryId: string) {
+  await requireAdminOrMarketing();
+  const category = await prisma.category.findUnique({ where: { id: categoryId } });
+  if (!category) return;
+  await prisma.category.update({ where: { id: categoryId }, data: { imageUrl: null } });
+  if (category.imageUrl) await deleteFromStorage(category.imageUrl).catch(() => {});
+  revalidatePath("/admin/marketing");
+  revalidatePath("/");
 }
 
 // ---------- types ----------

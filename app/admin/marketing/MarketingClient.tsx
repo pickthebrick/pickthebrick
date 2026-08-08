@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createBanner, toggleBannerActive, deleteBanner, updateAiDesignerBanner } from "@/app/actions/banners";
+import { setCategoryImage, removeCategoryImage } from "@/app/actions/catalog";
 import AdminPanel from "../AdminPanel";
 
 type Banner = {
@@ -15,7 +16,17 @@ type Banner = {
 
 type AiDesignerBanner = { headline: string; subText: string; popupMessage: string; backgroundColor: string; enabled: boolean };
 
-export default function MarketingClient({ banners, aiDesignerBanner }: { banners: Banner[]; aiDesignerBanner: AiDesignerBanner }) {
+type CategoryRow = { id: string; key: string; label: string; imageUrl: string | null };
+
+export default function MarketingClient({
+  banners,
+  aiDesignerBanner,
+  categories,
+}: {
+  banners: Banner[];
+  aiDesignerBanner: AiDesignerBanner;
+  categories: CategoryRow[];
+}) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +81,32 @@ export default function MarketingClient({ banners, aiDesignerBanner }: { banners
     await toggleBannerActive(id);
     router.refresh();
     setBusyId(null);
+  }
+
+  const [catBusyId, setCatBusyId] = useState<string | null>(null);
+  const [catError, setCatError] = useState<string | null>(null);
+
+  async function handleCategoryImageChange(categoryId: string, file: File | null) {
+    if (!file) return;
+    setCatBusyId(categoryId);
+    setCatError(null);
+    const formData = new FormData();
+    formData.set("image", file);
+    try {
+      await setCategoryImage(categoryId, formData);
+      router.refresh();
+    } catch (err) {
+      setCatError(err instanceof Error ? err.message : "Could not upload image");
+    } finally {
+      setCatBusyId(null);
+    }
+  }
+
+  async function handleCategoryImageRemove(categoryId: string) {
+    setCatBusyId(categoryId);
+    await removeCategoryImage(categoryId);
+    router.refresh();
+    setCatBusyId(null);
   }
 
   async function handleDelete(id: string) {
@@ -143,6 +180,54 @@ export default function MarketingClient({ banners, aiDesignerBanner }: { banners
             {aiSaving ? "Saving..." : "Save"}
           </button>
         </form>
+      </AdminPanel>
+
+      <AdminPanel title="Category tile images (homepage Full Catalog)" count={categories.length}>
+        <p className="empty" style={{ padding: "0 0 12px" }}>
+          Each tile on the homepage catalog grid shows this photo with the category name over it. Categories without
+          a photo yet fall back to placeholder art.
+        </p>
+        {catError && <p style={{ color: "#b91c1c", fontSize: 13, marginBottom: 10 }}>{catError}</p>}
+        <div className="banner-grid">
+          {categories.map((c) => (
+            <div key={c.id} className="banner-card">
+              <div className="banner-card-img-wrap">
+                {c.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.imageUrl} alt={c.label} />
+                ) : (
+                  <div className="empty" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                    No image - using placeholder art
+                  </div>
+                )}
+              </div>
+              <div className="banner-card-body">
+                <div className="banner-card-title">{c.label}</div>
+                <div className="banner-card-actions">
+                  <label className="action" style={{ cursor: "pointer" }}>
+                    {catBusyId === c.id ? "Uploading..." : c.imageUrl ? "Replace" : "Upload"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      disabled={catBusyId === c.id}
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        handleCategoryImageChange(c.id, file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                  {c.imageUrl && (
+                    <button className="action danger" disabled={catBusyId === c.id} onClick={() => handleCategoryImageRemove(c.id)}>
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </AdminPanel>
     </>
   );

@@ -2,9 +2,10 @@
 
 import { Fragment, useState } from "react";
 import Link from "next/link";
-import { DesignPathIcon, BuildPathIcon, CategoryIcon } from "./components/HomeIllustrations";
+import { DesignPathIcon, BuildPathIcon } from "./components/HomeIllustrations";
 import HeroQuoteDemo from "./components/HeroQuoteDemo";
 import ParallaxCtaBand from "./components/ParallaxCtaBand";
+import CategoryArt from "./components/CategoryArt";
 import SiteFooter from "./components/SiteFooter";
 import "./marketing.css";
 import "./home.css";
@@ -78,8 +79,9 @@ const CASE_STUDIES = [
 ];
 
 function estimateRange(sqft: number, people: number) {
-  const low = Math.round((sqft * 260 + people * 1800) / 1000) * 1000;
-  const high = Math.round((sqft * 340 + people * 2600) / 1000) * 1000;
+  const base = sqft * 210 + people * 2500;
+  const low = Math.round((base * 0.92) / 1000) * 1000;
+  const high = Math.round((base * 1.15) / 1000) * 1000;
   return { low, high };
 }
 
@@ -88,10 +90,10 @@ export default function HomeClient({
   categories,
 }: {
   isClientSession: boolean;
-  categories: { key: string; label: string }[];
+  categories: { key: string; label: string; imageUrl: string | null }[];
 }) {
-  const [estSqft, setEstSqft] = useState(2500);
-  const [estPeople, setEstPeople] = useState(35);
+  const [estSqft, setEstSqft] = useState(1000);
+  const [estPeople, setEstPeople] = useState(12);
   const { low: estLow, high: estHigh } = estimateRange(estSqft, estPeople);
 
   return (
@@ -151,6 +153,41 @@ export default function HomeClient({
             </a>
           </section>
 
+          {/* ---------- isometric office image ---------- */}
+          <section className="home-iso-section">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/isometric-office.png"
+              alt="Isometric illustration of a PickTheBrick crew fitting out an office"
+              className="home-iso-img"
+            />
+          </section>
+
+          {/* ---------- how it works / process ---------- */}
+          <section className="home-section tight" id="how-it-works">
+            <div className="home-section-inner">
+              <div className="home-section-head">
+                <div className="home-section-eyebrow">How it works</div>
+                <h2 className="home-section-title">Design → Price → Build</h2>
+                <p className="home-section-body">
+                  One platform, guided end to end - not six phone calls to six different contractors.
+                </p>
+              </div>
+              <div className="home-process-flow">
+                {PROCESS_STEPS.map((step, i) => (
+                  <Fragment key={step.title}>
+                    <div className="home-proc-step">
+                      <div className="home-proc-num">{i + 1}</div>
+                      <div className="home-proc-title">{step.title}</div>
+                      <div className="home-proc-body">{step.body}</div>
+                    </div>
+                    {i < PROCESS_STEPS.length - 1 && <div className="home-proc-arrow">→</div>}
+                  </Fragment>
+                ))}
+              </div>
+            </div>
+          </section>
+
           {/* ---------- instant estimator ---------- */}
           <section className="home-section tight">
             <div className="home-section-inner">
@@ -190,7 +227,7 @@ export default function HomeClient({
                     type="range"
                     min={5}
                     max={150}
-                    step={5}
+                    step={1}
                     value={estPeople}
                     onChange={(e) => setEstPeople(Number(e.target.value))}
                   />
@@ -210,31 +247,6 @@ export default function HomeClient({
               <p className="home-estimator-microcopy">
                 No account needed for this estimate · Full itemized quote takes ~5 minutes
               </p>
-            </div>
-          </section>
-
-          {/* ---------- process ---------- */}
-          <section className="home-section tight">
-            <div className="home-section-inner">
-              <div className="home-section-head">
-                <div className="home-section-eyebrow">How it works</div>
-                <h2 className="home-section-title">Design → Price → Build</h2>
-                <p className="home-section-body">
-                  One platform, guided end to end - not six phone calls to six different contractors.
-                </p>
-              </div>
-              <div className="home-process-flow">
-                {PROCESS_STEPS.map((step, i) => (
-                  <Fragment key={step.title}>
-                    <div className="home-proc-step">
-                      <div className="home-proc-num">{i + 1}</div>
-                      <div className="home-proc-title">{step.title}</div>
-                      <div className="home-proc-body">{step.body}</div>
-                    </div>
-                    {i < PROCESS_STEPS.length - 1 && <div className="home-proc-arrow">→</div>}
-                  </Fragment>
-                ))}
-              </div>
             </div>
           </section>
 
@@ -321,17 +333,8 @@ export default function HomeClient({
             </div>
           </section>
 
-          {/* ---------- priced today, built next ---------- */}
-          <ParallaxCtaBand className="home-build-cta">
-            <h2>Your office, priced today. Built next.</h2>
-            <p>Ten trades, one platform, one dedicated Project Manager - from first click to move-in.</p>
-            <Link href="/build" className="home-hero-cta-primary">
-              Start Designing →
-            </Link>
-          </ParallaxCtaBand>
-
-          {/* ---------- how it works ---------- */}
-          <section className="home-section" id="how-it-works">
+          {/* ---------- two ways to start ---------- */}
+          <section className="home-section">
             <div className="home-section-inner">
               <div className="home-section-head">
                 <div className="home-section-eyebrow">Two ways to start</div>
@@ -371,15 +374,31 @@ export default function HomeClient({
                 <h2 className="home-section-title">Every trade, one place</h2>
               </div>
               <div className="home-categories">
-                {categories.map((c) => (
+                {categories.map((c, i) => (
                   <Link key={c.key} href={`/landing/${c.key}`} className="home-cat-card">
-                    <CategoryIcon categoryKey={c.key} />
-                    <span>{c.label}</span>
+                    <div className="home-cat-card-art">
+                      {c.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.imageUrl} alt="" />
+                      ) : (
+                        <CategoryArt categoryKey={c.key} index={i} />
+                      )}
+                    </div>
+                    <span className="home-cat-card-label">{c.label}</span>
                   </Link>
                 ))}
               </div>
             </div>
           </section>
+
+          {/* ---------- priced today, built next ---------- */}
+          <ParallaxCtaBand className="home-build-cta">
+            <h2>Your office, priced today. Built next.</h2>
+            <p>Ten trades, one platform, one dedicated Project Manager - from first click to move-in.</p>
+            <Link href="/build" className="home-hero-cta-primary">
+              Start Designing →
+            </Link>
+          </ParallaxCtaBand>
 
           {/* ---------- value props ---------- */}
           <section className="home-section tight">

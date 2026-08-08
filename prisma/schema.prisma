@@ -133,6 +133,9 @@ model Category {
   key       String  @unique
   label     String
   subtitle  String?
+  // Marketer-managed hero image for the homepage "Full Catalog" tile - falls
+  // back to on-brand placeholder art (see CategoryArt.tsx) until set.
+  imageUrl  String?
   unit      Unit
   highlight String?
   enabled   Boolean @default(true)

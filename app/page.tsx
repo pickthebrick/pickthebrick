@@ -10,7 +10,7 @@ import "./marketing.css";
 export default async function Home() {
   const [session, categories] = await Promise.all([
     getSession(),
-    prisma.category.findMany({ where: { enabled: true }, orderBy: { sortOrder: "asc" }, select: { key: true, label: true } }),
+    prisma.category.findMany({ where: { enabled: true }, orderBy: { sortOrder: "asc" }, select: { key: true, label: true, imageUrl: true } }),
   ]);
 
   return (
