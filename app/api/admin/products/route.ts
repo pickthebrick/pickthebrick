@@ -41,3 +41,26 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ products: results });
 }
+
+// Bulk delete, for cleaning up scripted/duplicate imports. Body: { productIds: string[] }.
+export async function DELETE(request: NextRequest) {
+  const expectedKey = process.env.PRODUCTS_IMPORT_API_KEY;
+  const givenKey = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  if (!expectedKey || givenKey !== expectedKey) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: { productIds?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  if (!Array.isArray(body.productIds) || body.productIds.some((id) => typeof id !== "string")) {
+    return NextResponse.json({ error: 'Body must be { "productIds": string[] }' }, { status: 400 });
+  }
+  const productIds = body.productIds as string[];
+
+  const { count } = await prisma.product.deleteMany({ where: { id: { in: productIds } } });
+  return NextResponse.json({ requested: productIds.length, deleted: count });
+}
