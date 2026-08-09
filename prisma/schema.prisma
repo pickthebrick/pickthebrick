@@ -305,6 +305,37 @@ model Quote {
   paymentClaims PaymentClaim[]
   projectContractors ProjectContractor[]
   timelineItems ProjectTimelineItem[]
+  aiAssistSessions AiAssistSession[]
+}
+
+// One row per AI Assist run on the Build page (see app/actions/aiAssist.ts) -
+// the intake + what was suggested + what the client actually kept, snapshotted
+// as JSON strings rather than live product FKs. Snapshotting matters here
+// specifically because the catalog is expected to churn heavily in the first
+// running month (products uploaded now are placeholders) - a log row must
+// still read sensibly after the product it referenced is gone, so this is
+// the "learning as an asset" trail (lib/aiAssist.ts formulas + prompt can be
+// tuned against these later) rather than a live relation.
+model AiAssistSession {
+  id                 String   @id @default(cuid())
+  quoteId            String?
+  quote              Quote?   @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  clientId           String?
+  anonymousSessionId String?
+  officeSize         Float?
+  spacesJson         String
+  style              String?
+  tier               String?
+  // "manual" (typed into the intake form) or "designSurvey" (pulled from an
+  // existing DesignRequest + StyleFinderResult) - which reuse path was used.
+  source             String
+  // Whether the live Claude call ran or the deterministic no-API-key
+  // fallback did - lets a later analysis separate "AI picked this" accuracy
+  // from "we just picked the featured product" accuracy.
+  usedAi             Boolean  @default(false)
+  suggestionsJson    String
+  acceptedJson       String?
+  createdAt          DateTime @default(now())
 }
 
 model QuoteItem {
@@ -452,6 +483,38 @@ model DesignRequestSpaceAnswer {
   value                String
 
   @@unique([designRequestSpaceId, questionKey])
+}
+
+// One per client/anonymous session - the swipe-quiz result from the Style
+// Finder widget (see lib/styleFinder.ts, app/design/style-finder/). Keyed on
+// the actor (clientId or anonymousSessionId), NOT a specific DesignRequest -
+// it's a property of the person, not any one survey, so it's takeable
+// before/during/without a design request and applies to all of a client's
+// requests. Same nullable-dual-actor pattern as DesignRequest/Quote above
+// (see lib/actor.ts); claimAnonymousSession() re-parents anonymousSessionId
+// -> clientId on signup/signin, same as it does for Quote/DesignRequest.
+// Retaking the quiz replaces this row and its stats rather than keeping
+// history. Visible read-only to a designer via the client on their assigned
+// request (see app/designer/DesignerClient.tsx).
+model StyleFinderResult {
+  id                 String  @id @default(cuid())
+  clientId           String? @unique
+  anonymousSessionId String? @unique
+  // Denormalized winner style key (or null if no confident pick) - same
+  // snapshot reasoning as DesignRequest.packagePrice above.
+  topStyle    String?
+  completedAt DateTime @default(now())
+
+  stats StyleFinderStat[]
+}
+
+model StyleFinderStat {
+  id                  String            @id @default(cuid())
+  styleFinderResultId String
+  styleFinderResult   StyleFinderResult @relation(fields: [styleFinderResultId], references: [id], onDelete: Cascade)
+  styleKey            String
+  shown               Int
+  liked               Int
 }
 
 // Marketing banners, managed by Admin, shown on the Client build page.
@@ -752,4 +815,30 @@ model SpaceLayerImage {
   imageUrl String
 
   @@unique([spaceKey, slot])
+}
+
+enum PackageTier {
+  essential
+  advanced
+  premium
+}
+
+// One row per feature line shown in the package cards on /design (see
+// lib/packageFeatures.ts for the default seed list and the
+// featureItemsForTier() filter). `minTier` is the lowest package that
+// includes this item - Advanced shows every essential+advanced item,
+// Premium shows all three tiers - mirroring the old hardcoded
+// ESSENTIAL_FEATURES/ADVANCED_FEATURES/PREMIUM_FEATURES arrays this
+// replaced. `description` is shown as a hover tooltip; `sampleImageUrl`
+// gates the client-facing "Sample" button - both are optional and editable
+// from the admin/marketing Design package features panel.
+model PackageFeatureItem {
+  id             String      @id @default(cuid())
+  label          String
+  description    String?
+  minTier        PackageTier
+  sortOrder      Int         @default(0)
+  sampleImageUrl String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 }

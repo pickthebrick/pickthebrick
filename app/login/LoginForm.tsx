@@ -46,7 +46,12 @@ export default function LoginForm() {
         return;
       }
       const next = searchParams.get("next");
-      window.location.href = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+      // Falls back to /my-quotes (not "/") when there's no explicit next -
+      // that's where a resumable draft design/quote now shows up (see
+      // draftDesignRequests in MyQuotesClient.tsx), and it already bounces
+      // non-client roles to their own dashboard, so it's a safe default
+      // regardless of who just signed in.
+      window.location.href = next && next.startsWith("/") && !next.startsWith("//") ? next : "/my-quotes";
     } finally {
       setLoading(false);
     }

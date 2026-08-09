@@ -48,6 +48,325 @@
   font-size: 12.5px;
   opacity: 0.92;
 }
+/* Entry strip for the AI Assist feature - dashed border keeps it visually
+   distinct from the solid-filled install banner above it, sits right under
+   it at the top of the build layout. */
+.ai-assist-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 32px;
+  background: var(--surface);
+  border-bottom: 1.5px dashed var(--accent);
+  font-size: 12.5px;
+  color: var(--fg);
+  text-align: center;
+  flex-shrink: 0;
+}
+.ai-assist-spark {
+  font-size: 14px;
+}
+.ai-assist-trigger-btn {
+  border: 1.5px solid var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.ai-assist-trigger-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* AI Assist modal - intake form + generated-suggestions review, opened from
+   .ai-assist-trigger-btn above (see AiAssistPanel.tsx). */
+.ai-assist-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 60;
+}
+.ai-assist-modal {
+  background: var(--bg);
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.ai-assist-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.ai-assist-modal-title {
+  font-size: 15px;
+  font-weight: 800;
+}
+.ai-assist-close {
+  border: none;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px;
+}
+.ai-assist-body {
+  padding: 18px 20px 20px;
+  overflow-y: auto;
+}
+.ai-assist-lede {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0 0 14px;
+}
+.ai-assist-survey-btn {
+  width: 100%;
+  border: 1.5px dashed var(--accent);
+  background: none;
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+.ai-assist-survey-note {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.ai-assist-field {
+  display: block;
+  margin-bottom: 14px;
+}
+.ai-assist-field > span {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.ai-assist-field input[type="number"],
+.ai-assist-field input[type="text"],
+.ai-assist-field select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--fg);
+}
+.ai-assist-space-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+}
+.ai-assist-space-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 0;
+}
+.ai-assist-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ai-assist-stepper button {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+.ai-assist-stepper span {
+  min-width: 14px;
+  text-align: center;
+  font-weight: 700;
+}
+.ai-assist-error {
+  font-size: 12px;
+  color: #b91c1c;
+  margin-bottom: 10px;
+}
+.ai-assist-generate-btn {
+  width: 100%;
+  border: none;
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 800;
+  font-size: 13.5px;
+  padding: 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.ai-assist-generate-btn:hover {
+  background: var(--accent);
+}
+.ai-assist-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.ai-assist-spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: ai-assist-spin 0.8s linear infinite;
+}
+@keyframes ai-assist-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.ai-assist-notice {
+  font-size: 11.5px;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+.ai-assist-suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-assist-suggestion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.ai-assist-suggestion.excluded {
+  opacity: 0.45;
+}
+.ai-assist-suggestion-check {
+  padding-top: 2px;
+}
+.ai-assist-suggestion-main {
+  flex: 1;
+  min-width: 0;
+}
+.ai-assist-suggestion-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+.ai-assist-suggestion-cat {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-deep);
+}
+.ai-assist-suggestion-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+.ai-assist-suggestion-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.ai-assist-suggestion-rationale {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.ai-assist-swap-btn {
+  border: none;
+  background: none;
+  color: var(--accent-deep);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: right;
+  max-width: 120px;
+  padding: 0;
+}
+.ai-assist-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  margin: 16px -20px -20px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ai-assist-footer-total {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.ai-assist-footer-actions {
+  display: flex;
+  gap: 10px;
+}
+.ai-assist-back-btn {
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.ai-assist-add-btn {
+  border: none;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 12.5px;
+  font-weight: 800;
+  padding: 9px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.ai-assist-add-btn:hover:not(:disabled) {
+  background: var(--accent);
+}
+.ai-assist-add-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 /* Small persistent "included" marker next to every price in the Build flow -
    product cards, cart line items, the preview table, and the product modal. */
 .install-badge {

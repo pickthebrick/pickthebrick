@@ -178,6 +178,20 @@ export default function HandoverClient({
           )}
         </div>
 
+        <div className="sqft-input-card" style={{ maxWidth: 480, textAlign: "center" }}>
+          <h3 style={{ marginTop: 0 }}>Help your designer nail your style</h3>
+          <p className="sub" style={{ marginBottom: 12 }}>
+            Take the 2-minute Style Finder - swipe through office looks you love, and we&apos;ll pass your style
+            profile straight to your designer. Optional, and you can do it later from your dashboard too.
+          </p>
+          <Link
+            href={`/design/style-finder?return=${encodeURIComponent(`/design/handover?id=${designRequestId}`)}`}
+            className="package-cta"
+          >
+            Take the Style Finder →
+          </Link>
+        </div>
+
         <div style={{ maxWidth: 480, margin: "24px auto 0" }}>
           <button
             className="design-start-btn"

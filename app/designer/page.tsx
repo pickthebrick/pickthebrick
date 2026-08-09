@@ -6,6 +6,7 @@ import { ROLE_HOME } from "@/lib/roles";
 import DesignerShell from "./DesignerShell";
 import DesignerClient from "./DesignerClient";
 import "../dashboard.css";
+import "../marketing.css";
 
 export default async function DesignerPage() {
   const session = await getSession();
@@ -32,6 +33,7 @@ export default async function DesignerPage() {
       lastRevisionAt: true,
       contactPhone: true,
       contactEmail: true,
+      clientId: true,
       client: { select: { fullName: true, email: true, company: true } },
       files: { orderBy: { sortOrder: "asc" }, select: { id: true, label: true, filePath: true, createdAt: true } },
       spaceEntries: {
@@ -46,11 +48,28 @@ export default async function DesignerPage() {
     orderBy: { submittedAt: "asc" },
   });
 
+  // StyleFinderResult is keyed on the client (see app/actions/styleFinder.ts),
+  // not on any one DesignRequest - look it up per distinct client and attach
+  // it below, rather than a direct relation.
+  const clientIds = [...new Set(requests.map((r) => r.clientId).filter((id): id is string => id !== null))];
+  const styleFinderResults = clientIds.length
+    ? await prisma.styleFinderResult.findMany({
+        where: { clientId: { in: clientIds } },
+        select: { clientId: true, topStyle: true, stats: { select: { styleKey: true, shown: true, liked: true } } },
+      })
+    : [];
+  const styleFinderByClientId = new Map(styleFinderResults.map((r) => [r.clientId, r]));
+
+  const requestsWithStyle = requests.map((r) => ({
+    ...r,
+    styleFinderResult: r.clientId ? (styleFinderByClientId.get(r.clientId) ?? null) : null,
+  }));
+
   return (
     <DesignerShell active="requests">
       <h1>Design requests</h1>
       <p className="sub">Claim new requests and deliver design submittals to clients.</p>
-      <DesignerClient requests={requests} />
+      <DesignerClient requests={requestsWithStyle} />
     </DesignerShell>
   );
 }

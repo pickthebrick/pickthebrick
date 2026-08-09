@@ -109,6 +109,28 @@
   line-height: 1.6;
 }
 
+/* A deliberately low-key optional detour, not another step in the flow -
+   small dashed pill, not a full card, so it doesn't compete with the actual
+   package-selection journey below it (see app/design/DesignPageClient.tsx). */
+.ptb-marketing .design-side-quest {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1.5px dashed var(--accent);
+  background: rgba(239, 123, 87, 0.07);
+  color: var(--accent-deep);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+.ptb-marketing .design-side-quest:hover {
+  background: rgba(239, 123, 87, 0.14);
+}
+
 .ptb-marketing .choice-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -364,6 +386,162 @@
   color: var(--accent-deep);
   font-size: 9.5px;
   font-weight: 700;
+}
+
+/* Hover-to-reveal description, fed from PackageFeatureItem.description via
+   the admin/marketing "Design package features" panel - a plain CSS popover
+   rather than the native title attribute so it matches the rest of the
+   theme. */
+.ptb-marketing .pkgfeat-label {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-bottom: 1px dotted var(--muted);
+  cursor: help;
+}
+.ptb-marketing .pkgfeat-tooltip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  width: max-content;
+  max-width: 220px;
+  background: var(--fg);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--accent-deep);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+}
+.ptb-marketing .pkgfeat-label:hover .pkgfeat-tooltip,
+.ptb-marketing .pkgfeat-label:focus .pkgfeat-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Only rendered client-side when PackageFeatureItem.sampleImageUrl is set -
+   same circular-badge treatment as the .check bullet so it reads as part of
+   the theme rather than a stray emoji. */
+.ptb-marketing .pkgfeat-sample-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(239, 123, 87, 0.15);
+  color: var(--accent-deep);
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, transform 0.12s;
+}
+.ptb-marketing .pkgfeat-sample-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.ptb-marketing .pkgfeat-lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(58, 54, 50, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.ptb-marketing .pkgfeat-lightbox {
+  position: relative;
+  max-width: min(560px, 90vw);
+  max-height: 85vh;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--fg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.ptb-marketing .pkgfeat-lightbox img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: calc(var(--radius) - 2px);
+  object-fit: contain;
+}
+.ptb-marketing .pkgfeat-lightbox-caption {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+  text-align: center;
+}
+.ptb-marketing .pkgfeat-lightbox-close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--fg);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0 var(--fg);
+}
+
+.ptb-marketing .package-size-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.ptb-marketing .package-size-row input {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 6px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+}
+.ptb-marketing .package-size-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(239, 123, 87, 0.18);
+}
+.ptb-marketing .package-size-row input[type="number"]::-webkit-inner-spin-button,
+.ptb-marketing .package-size-row input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ptb-marketing .package-size-row input[type="number"] {
+  -moz-appearance: textfield;
+}
+.ptb-marketing .sqft-unit-toggle.small {
+  flex-shrink: 0;
+}
+.ptb-marketing .sqft-unit-toggle.small button {
+  padding: 0 8px;
+  font-size: 10.5px;
 }
 .ptb-marketing .package-price-slot {
   margin-bottom: 16px;
@@ -1799,4 +1977,247 @@
 }
 .staff-login-link:hover {
   opacity: 1;
+}
+
+/* Style Finder swipe deck - adapted from the reference mockup
+   (pickthebrick-style-finder-page.html), mapped onto this app's real theme
+   tokens instead of the mockup's own hardcoded palette. --sf-good/--sf-bad
+   have no existing equivalent elsewhere in this app, so they're kept as
+   small local constants scoped to this feature only. */
+.sf-wrap {
+  max-width: 400px;
+  width: 100%;
+  margin: 24px auto 0;
+  --sf-good: #3e8e5a;
+  --sf-bad: #c05a4a;
+}
+.sf-head {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.sf-eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-deep);
+  background: rgba(217, 114, 74, 0.12);
+  padding: 5px 13px;
+  border-radius: 16px;
+  margin-bottom: 10px;
+}
+.sf-head h1 {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.sf-head p {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.sf-progress {
+  display: flex;
+  gap: 5px;
+  margin: 16px 0 20px;
+}
+.sf-progress-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.sf-progress-seg.done {
+  background: var(--accent);
+}
+
+.sf-deck {
+  position: relative;
+  height: 460px;
+  margin-bottom: 20px;
+}
+.sf-card {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+  touch-action: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.sf-card:active {
+  cursor: grabbing;
+}
+.sf-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sf-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(46, 44, 41, 0.85) 0%, rgba(46, 44, 41, 0.1) 45%, rgba(46, 44, 41, 0) 65%);
+}
+.sf-card-info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20px;
+  color: #fff;
+}
+.sf-style-name {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.sf-style-desc {
+  font-size: 12px;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+.sf-stamp {
+  position: absolute;
+  top: 26px;
+  padding: 8px 16px;
+  border: 3px solid;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: rotate(-18deg);
+  z-index: 5;
+  pointer-events: none;
+}
+.sf-stamp.like {
+  right: 20px;
+  color: var(--sf-good);
+  border-color: var(--sf-good);
+}
+.sf-stamp.nope {
+  left: 20px;
+  color: var(--sf-bad);
+  border-color: var(--sf-bad);
+  transform: rotate(18deg);
+}
+
+.sf-controls {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  margin-bottom: 8px;
+}
+.sf-ctrl-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+  cursor: pointer;
+}
+.sf-ctrl-btn.nope {
+  color: var(--sf-bad);
+}
+.sf-ctrl-btn.like {
+  color: var(--sf-good);
+}
+.sf-microcopy {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.sf-result {
+  text-align: center;
+}
+.sf-result-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0 auto 16px;
+}
+.sf-result h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.sf-result p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+.sf-tally {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  margin-bottom: 22px;
+}
+.sf-tally-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.sf-tally-lowsample {
+  font-weight: 500;
+  color: var(--muted);
+}
+.sf-tally-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+.sf-tally-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+}
+.sf-go {
+  display: inline-block;
+  padding: 13px 24px;
+  background: var(--fg);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13.5px;
+  border-radius: var(--radius);
+  text-decoration: none;
+}
+.sf-restart {
+  display: block;
+  margin-top: 14px;
+  font-size: 11.5px;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Compact read-only tally reused in the client "My design" tab and the
+   designer dashboard's Details panel - same bar/row styling as .sf-tally
+   above but without the swipe-deck chrome around it. */
+.sf-tally-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0 4px;
 }

@@ -1,0 +1,49 @@
+// Style catalog for the Style Finder swipe quiz (see app/design/style-finder/
+// and app/actions/styleFinder.ts). Ported from the reference mockup
+// (pickthebrick-style-finder-page.html) - image pool is placeholder photos
+// via picsum.photos until real licensed/commissioned photography is sourced
+// per style, same structure either way.
+export type StyleFinderStyle = { key: string; name: string; desc: string; hex: string };
+
+export const STYLE_FINDER_STYLES: StyleFinderStyle[] = [
+  { key: "modern-minimalist", name: "Modern Minimalist", desc: "Clean lines, neutral palette, glass, negative space.", hex: "D6D2C4" },
+  { key: "industrial", name: "Industrial", desc: "Exposed ceilings, black steel, concrete floors, Edison bulbs.", hex: "4A4A4A" },
+  { key: "biophilic", name: "Biophilic", desc: "Living walls, natural wood and stone, abundant greenery.", hex: "7A9B6E" },
+  { key: "scandinavian", name: "Scandinavian", desc: "Light wood, white walls, soft textiles, airy and functional.", hex: "E8E2D0" },
+  { key: "mid-century-modern", name: "Mid-Century Modern", desc: "Warm wood tones, tan leather, brass, retro geometry.", hex: "B5794A" },
+  { key: "japandi", name: "Japandi", desc: "Japanese x Scandinavian — low furniture, quiet minimalism.", hex: "C9BBA5" },
+  { key: "contemporary-arabic", name: "Contemporary Arabic", desc: "Mashrabiya screens, brass, rich textiles, regional prestige.", hex: "6E4A2E" },
+  { key: "bold-playful", name: "Bold & Playful", desc: "Vibrant color, expressive furniture, brand-forward energy.", hex: "D9724A" },
+];
+
+export const IMAGES_PER_STYLE = 5;
+export const DECK_SIZE = 20;
+// A style needs this many images shown before its % is trusted as the "top pick".
+export const MIN_SHOWN_FOR_CONFIDENT_PICK = 3;
+
+export function imagePoolForStyle(style: StyleFinderStyle): string[] {
+  return Array.from({ length: IMAGES_PER_STYLE }, (_, i) => `https://picsum.photos/seed/${style.key}-${i + 1}/500/650`);
+}
+
+export function styleFinderStyleByKey(key: string): StyleFinderStyle | undefined {
+  return STYLE_FINDER_STYLES.find((s) => s.key === key);
+}
+
+export type RankedStyleFinderStat = { key: string; name: string; shown: number; liked: number; pct: number };
+
+// Shared by the client and designer dashboards to render a completed
+// result's tally - the quiz itself (StyleFinderClient.tsx) keeps its own
+// copy since it ranks live in-memory {shown,liked} state during play rather
+// than already-persisted rows.
+export function rankStyleFinderStats(stats: { styleKey: string; shown: number; liked: number }[]): RankedStyleFinderStat[] {
+  return stats
+    .filter((s) => s.shown > 0)
+    .map((s) => ({
+      key: s.styleKey,
+      name: styleFinderStyleByKey(s.styleKey)?.name ?? s.styleKey,
+      shown: s.shown,
+      liked: s.liked,
+      pct: Math.round((s.liked / s.shown) * 100),
+    }))
+    .sort((a, b) => b.pct - a.pct || b.liked - a.liked);
+}

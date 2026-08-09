@@ -136,14 +136,17 @@ export default function HomeClient({
                   quote, and a dedicated Project Manager takes it from there.
                 </p>
                 <div className="home-hero-cta-row">
+                  <Link href="/design" className="home-hero-cta-secondary">
+                    Get a Design Concept
+                  </Link>
                   <Link href="/build" className="home-hero-cta-primary">
                     Build My Quote →
                   </Link>
-                  <Link href="/design" className="home-hero-cta-secondary">
-                    Not sure where to start? Get a design concept
-                  </Link>
                 </div>
-                <p className="home-hero-microcopy">No account needed to get a price · 10 trades, one platform</p>
+                <p className="home-hero-cta-caption">
+                  Not sure where to start? Design gives you a layout and quantities first — Build goes straight to
+                  pricing.
+                </p>
               </div>
 
               <HeroQuoteDemo />

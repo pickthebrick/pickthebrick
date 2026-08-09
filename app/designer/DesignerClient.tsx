@@ -8,6 +8,7 @@ import { PACKAGE_LABELS, groupSpaceEntries } from "@/lib/spaces";
 import { MAX_REVISIONS, type PackageKey } from "@/lib/designPricing";
 import SpaceRequirements from "./SpaceRequirements";
 import DesignRequestModal from "./DesignRequestModal";
+import StyleProfileSummary from "@/app/components/StyleProfileSummary";
 
 export type DesignRequestFile = { id: string; label: string; filePath: string; createdAt: Date };
 export type DesignRequestSpaceAnswer = { questionKey: string; value: string };
@@ -30,6 +31,10 @@ export type DesignRequestRow = {
   files: DesignRequestFile[];
   spaceEntries: DesignRequestSpaceRow[];
   revisionComments: RevisionComment[];
+  styleFinderResult: {
+    topStyle: string | null;
+    stats: { styleKey: string; shown: number; liked: number }[];
+  } | null;
 };
 
 const CLIENT_UPLOAD_PREFIX = "Client layout upload:";
@@ -79,6 +84,13 @@ function DetailsPanel({ request }: { request: DesignRequestRow }) {
 
       <div className="modal-section-label">Space requirements</div>
       <SpaceRequirements spaceEntries={request.spaceEntries} />
+
+      <div className="modal-section-label">Style profile</div>
+      {request.styleFinderResult ? (
+        <StyleProfileSummary topStyle={request.styleFinderResult.topStyle} stats={request.styleFinderResult.stats} />
+      ) : (
+        <div style={{ fontSize: 12, padding: "4px 0" }}>Client hasn&apos;t taken the Style Finder yet.</div>
+      )}
     </div>
   );
 }

@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { QuoteStatus, DesignRequestStatus, Unit } from "@/app/generated/prisma/enums";
 import { deleteQuote, duplicateQuote } from "@/app/actions/quotes";
 import { deleteDesignRequest, addDesignRequestRevisionComment } from "@/app/actions/design";
 import { PACKAGE_LABELS, groupSpaceEntries } from "@/lib/spaces";
 import PdfDownloadButton from "./PdfDownloadButton";
+import StyleProfileSummary from "@/app/components/StyleProfileSummary";
 
 const STATUS_LABEL: Record<QuoteStatus, string> = {
   draft: "Draft",
@@ -142,10 +144,12 @@ export default function MyQuotesClient({
   quotes,
   designRequests,
   clientLabel,
+  styleFinderResult,
 }: {
   quotes: Quote[];
   designRequests: DesignRequest[];
   clientLabel: string | null;
+  styleFinderResult: { topStyle: string | null; stats: { styleKey: string; shown: number; liked: number }[] } | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>("quotes");
@@ -200,6 +204,12 @@ export default function MyQuotesClient({
 
   const submittedQuotes = quotes.filter((q) => q.status !== "draft");
   const submittedDesignRequests = designRequests.filter((r) => r.status !== "draft");
+  // Not-yet-submitted requests, most recent first - surfaced with a Continue
+  // link so a visitor bounced off the survey mid-way (session hiccup, stray
+  // navigation) can always find and resume their answers instead of losing
+  // them. startDesignRequest() resumes the same row rather than creating a
+  // new one, so there's normally at most one of these per client.
+  const draftDesignRequests = designRequests.filter((r) => r.status === "draft");
   const projectQuotes = quotes.filter((q) => q.status === "captain_confirmed" || q.status === "admin_approved" || q.status === "paid");
   const allInspections = quotes.flatMap((q) => q.inspections.map((i) => ({ ...i, quote: q })));
   const allPaymentClaims = quotes.flatMap((q) => q.paymentClaims.map((c) => ({ ...c, quote: q })));
@@ -272,6 +282,51 @@ export default function MyQuotesClient({
 
       {tab === "design" && (
         <>
+          <div className="contractor-project-card" style={{ marginBottom: 20 }}>
+            <div className="modal-section-label" style={{ marginTop: 0 }}>
+              Style profile
+            </div>
+            {styleFinderResult ? (
+              <>
+                <StyleProfileSummary topStyle={styleFinderResult.topStyle} stats={styleFinderResult.stats} />
+                <Link href="/design/style-finder" className="sf-restart" style={{ display: "inline-block" }}>
+                  Retake the Style Finder
+                </Link>
+              </>
+            ) : (
+              <div className="edit-inline-form">
+                <span className="sub" style={{ marginBottom: 0 }}>
+                  Help your designer nail your style - a 2-minute swipe quiz.
+                </span>
+                <Link href="/design/style-finder" className="action" style={{ marginLeft: "auto" }}>
+                  Take the Style Finder
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {draftDesignRequests.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              {draftDesignRequests.map((r) => (
+                <div key={r.id} className="contractor-project-card">
+                  <div className="contractor-project-head">
+                    <div>
+                      <span className="status-badge draft">Draft - not submitted</span>
+                      <span className="sub" style={{ marginBottom: 0, marginLeft: 10 }}>
+                        {PACKAGE_LABELS[r.packageKey] ?? r.packageKey} package
+                        {groupSpaceEntries(r.spaceEntries) ? ` · ${groupSpaceEntries(r.spaceEntries)}` : ""}
+                      </span>
+                    </div>
+                    <DeleteButton label="Delete" onConfirm={() => handleDeleteDesignRequest(r.id)} />
+                  </div>
+                  <Link href={`/design/spaces?id=${r.id}`} className="action">
+                    Continue this design →
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+
           {submittedDesignRequests.length === 0 ? (
             <div className="empty">No design requests yet.</div>
           ) : (

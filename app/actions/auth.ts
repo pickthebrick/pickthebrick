@@ -25,6 +25,33 @@ async function reparentAnonymousSession(clientId: string) {
     where: { anonymousSessionId: anonId },
     data: { clientId, anonymousSessionId: null },
   });
+
+  // StyleFinderResult is one-per-actor (@unique on both clientId and
+  // anonymousSessionId - see schema.prisma), so a plain updateMany could
+  // collide if this account already has its own result from a previous
+  // session. Keep whichever is more recent, same "retaking overwrites" rule
+  // submitStyleFinderResult() itself uses, rather than merging the two.
+  const anonStyleResult = await prisma.styleFinderResult.findUnique({ where: { anonymousSessionId: anonId } });
+  if (anonStyleResult) {
+    const existingClientResult = await prisma.styleFinderResult.findUnique({ where: { clientId } });
+    if (existingClientResult) {
+      if (anonStyleResult.completedAt > existingClientResult.completedAt) {
+        await prisma.styleFinderResult.delete({ where: { id: existingClientResult.id } });
+        await prisma.styleFinderResult.update({
+          where: { id: anonStyleResult.id },
+          data: { clientId, anonymousSessionId: null },
+        });
+      } else {
+        await prisma.styleFinderResult.delete({ where: { id: anonStyleResult.id } });
+      }
+    } else {
+      await prisma.styleFinderResult.update({
+        where: { id: anonStyleResult.id },
+        data: { clientId, anonymousSessionId: null },
+      });
+    }
+  }
+
   await clearAnonSessionId();
 }
 

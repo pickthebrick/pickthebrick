@@ -20,12 +20,17 @@ export default function QuoteDetailsModal({
   initialOfficeSize,
   onSave,
   onClose,
+  onSkip,
   dismissable,
 }: {
   initialLocation: string;
   initialOfficeSize: string;
   onSave: (location: string, officeSize: string) => Promise<void>;
   onClose: () => void;
+  // Only passed when this modal opened because "Review my quote" needed it
+  // first (see BuildClient's pendingReview) - lets the client go straight to
+  // review without filling this in now, rather than being stuck here.
+  onSkip?: () => void;
   dismissable: boolean;
 }) {
   const [location, setLocation] = useState(initialLocation);
@@ -130,6 +135,24 @@ export default function QuoteDetailsModal({
             <button type="submit" className="modal-addbtn" style={{ marginTop: 6 }} disabled={saving}>
               {saving ? "Saving..." : "Continue"}
             </button>
+            {onSkip && (
+              <button
+                type="button"
+                onClick={onSkip}
+                disabled={saving}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted)",
+                  fontSize: 12.5,
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                Skip for later
+              </button>
+            )}
           </form>
         </div>
       </div>

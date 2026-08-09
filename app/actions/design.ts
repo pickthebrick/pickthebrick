@@ -52,11 +52,29 @@ async function assertOwnDraftRequest(id: string, actor: Actor) {
 // package + sqft are known immediately, spaces get filled in on the next
 // step. Works for a signed-in client or an anonymous visitor alike, exactly
 // like getOrCreateDraftQuote() in app/actions/quotes.ts.
+//
+// Resumes an existing draft for this actor rather than always creating a new
+// one - if a visitor gets bounced off the survey (session hiccup, stray
+// navigation, whatever) and lands back on the package page, clicking "Start
+// Design" again must not silently orphan whatever spaces/features they'd
+// already entered on a previous draft.
 export async function startDesignRequest(packageKey: string, sqft: number) {
   const actor = await resolveActor();
   if (!Number.isFinite(sqft) || sqft <= 0) throw new Error("Invalid office size");
 
   const packagePrice = priceFor(packageKey as PackageKey, sqft);
+  const existingDraft = await prisma.designRequest.findFirst({
+    where: { ...actor, status: DesignRequestStatus.draft },
+    orderBy: { createdAt: "desc" },
+  });
+  if (existingDraft) {
+    const updated = await prisma.designRequest.update({
+      where: { id: existingDraft.id },
+      data: { packageKey, sqft, packagePrice },
+    });
+    return updated.id;
+  }
+
   const created = await prisma.designRequest.create({
     data: { ...actor, packageKey, sqft, packagePrice },
   });

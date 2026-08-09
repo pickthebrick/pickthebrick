@@ -14,6 +14,7 @@ import {
 import { setCategoryImage, removeCategoryImage } from "@/app/actions/catalog";
 import AdminPanel from "../AdminPanel";
 import DesignLayersClient from "./DesignLayersClient";
+import PackageFeaturesClient, { type PackageFeatureItemRow } from "./PackageFeaturesClient";
 
 type Banner = {
   id: string;
@@ -41,12 +42,14 @@ export default function MarketingClient({
   categories,
   caseStudyCards,
   spaceLayerImages,
+  packageFeatureItems,
 }: {
   banners: Banner[];
   aiDesignerBanner: AiDesignerBanner;
   categories: CategoryRow[];
   caseStudyCards: CaseStudyCard[];
   spaceLayerImages: { spaceKey: string; slot: string; imageUrl: string }[];
+  packageFeatureItems: PackageFeatureItemRow[];
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -365,6 +368,10 @@ export default function MarketingClient({
 
       <AdminPanel title="Design space layer images" count={spaceLayerImages.length} defaultOpen={false}>
         <DesignLayersClient images={spaceLayerImages} />
+      </AdminPanel>
+
+      <AdminPanel title="Design package features" count={packageFeatureItems.length} defaultOpen={false}>
+        <PackageFeaturesClient items={packageFeatureItems} />
       </AdminPanel>
     </>
   );

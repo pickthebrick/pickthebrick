@@ -6,13 +6,14 @@ import { ROLE_HOME } from "@/lib/roles";
 import BrandMark from "@/app/components/BrandMark";
 import MyQuotesClient from "./MyQuotesClient";
 import "../dashboard.css";
+import "../marketing.css";
 
 export default async function MyQuotesPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.role !== Role.client) redirect(ROLE_HOME[session.role]);
 
-  const [quotes, designRequests, client] = await Promise.all([
+  const [quotes, designRequests, client, styleFinderResult] = await Promise.all([
     prisma.quote.findMany({
       where: { clientId: session.id },
       include: {
@@ -54,6 +55,11 @@ export default async function MyQuotesPage() {
       orderBy: { createdAt: "desc" },
     }),
     prisma.user.findUnique({ where: { id: session.id }, select: { fullName: true, company: true, email: true } }),
+    // Client-level, not per-request - see app/actions/styleFinder.ts.
+    prisma.styleFinderResult.findUnique({
+      where: { clientId: session.id },
+      select: { topStyle: true, stats: { select: { styleKey: true, shown: true, liked: true } } },
+    }),
   ]);
 
   const clientLabel = client?.company
@@ -71,7 +77,12 @@ export default async function MyQuotesPage() {
       <main>
         <h1>My dashboard</h1>
         <p className="sub">Everything about your quotes, projects, and payments in one place.</p>
-        <MyQuotesClient quotes={quotes} designRequests={designRequests} clientLabel={clientLabel} />
+        <MyQuotesClient
+          quotes={quotes}
+          designRequests={designRequests}
+          clientLabel={clientLabel}
+          styleFinderResult={styleFinderResult}
+        />
       </main>
     </div>
   );

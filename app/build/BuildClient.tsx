@@ -21,6 +21,7 @@ import { ProductThumb } from "./ProductThumb";
 import ProductModal from "./ProductModal";
 import QuoteDetailsModal from "./QuoteDetailsModal";
 import TermsSection from "./TermsSection";
+import AiAssistPanel from "./AiAssistPanel";
 import AuthGate from "@/app/components/AuthGate";
 import "./build.css";
 
@@ -89,7 +90,12 @@ export default function BuildClient({
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState(initialLocation ?? "");
   const [officeSize, setOfficeSize] = useState(initialOfficeSize ?? "");
+  // Auto-opens once on page load when these are still missing, same as
+  // before - but now it's never a hard block: "Skip for later" (see
+  // QuoteDetailsModal's onSkip) always lets the client dismiss it and fill
+  // this in any time before checkout instead of being forced to right away.
   const [showDetailsModal, setShowDetailsModal] = useState(!editAsCaptain && (!initialLocation || !initialOfficeSize));
+  const [pendingReview, setPendingReview] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // A Captain editing a client's already-confirmed quote uses a parallel set
@@ -115,6 +121,7 @@ export default function BuildClient({
   // extra click to re-submit.
   const [pendingAction, setPendingAction] = useState<null | "submit">(null);
   const [modalProductId, setModalProductId] = useState<string | null>(null);
+  const [showAiAssist, setShowAiAssist] = useState(false);
 
   const cartMap = useMemo(() => new Map(cart.map((l) => [l.productId, l])), [cart]);
   // Flat id -> product lookup so the cart/preview thumbnails (which only
@@ -164,11 +171,49 @@ export default function BuildClient({
   }, []);
 
 
-  async function handleSaveDetails(loc: string, size: string) {
+  // Shared by the details modal and AI Assist (see AiAssistPanel's
+  // onSaveDetails) so location/office size is saved to the same place either
+  // way - filling it in through one doesn't leave the other blank.
+  async function saveQuoteDetails(loc: string, size: string) {
     await doSetQuoteDetails(quoteId, loc, size);
     setLocation(loc);
     setOfficeSize(size);
+  }
+
+  async function handleSaveDetails(loc: string, size: string) {
+    await saveQuoteDetails(loc, size);
     setShowDetailsModal(false);
+    if (pendingReview) {
+      setPendingReview(false);
+      setView("preview");
+    }
+  }
+
+  // Lets the client bypass the details modal entirely and go straight to
+  // review without saving a location/size yet - "Skip for later" on the
+  // modal (see QuoteDetailsModal's onSkip).
+  function handleSkipDetails() {
+    setShowDetailsModal(false);
+    // Only jump to preview if that's what they were on their way to (see
+    // handleReviewClick/pendingReview) - if the modal was just the on-load
+    // popup, skipping should leave them right where they were, browsing.
+    if (pendingReview) {
+      setPendingReview(false);
+      setView("preview");
+    }
+  }
+
+  // "Review my quote" needs a location + office size (the Captain scopes the
+  // fitout from them) - if they're still missing, opens the details modal
+  // instead of proceeding, and handleSaveDetails carries the visitor through
+  // to the preview once they've saved it, rather than jumping straight there.
+  function handleReviewClick() {
+    if (!location || !officeSize) {
+      setPendingReview(true);
+      setShowDetailsModal(true);
+      return;
+    }
+    setView("preview");
   }
 
   const categoryMeta = selectedCategory ? catalog.categoryMeta[selectedCategory] ?? null : null;
@@ -253,6 +298,17 @@ export default function BuildClient({
   function removeLine(productId: string) {
     setCart((prev) => prev.filter((l) => l.productId !== productId));
     doRemoveCartItem(quoteId, productId).catch((e) => setError(e.message));
+  }
+
+  function handleAiAssistAddLines(lines: CartLine[]) {
+    setCart((prev) => {
+      const map = new Map(prev.map((l) => [l.productId, l]));
+      for (const line of lines) map.set(line.productId, line);
+      return Array.from(map.values());
+    });
+    for (const line of lines) {
+      doUpsertCartItem(quoteId, line).catch((e) => setError(e.message));
+    }
   }
 
   async function completeSubmit() {
@@ -365,15 +421,6 @@ export default function BuildClient({
         </div>
       </header>
 
-      {!editAsCaptain && (
-        <div className="install-banner">
-          <span className="install-banner-headline">Supply + Install. Always.</span>
-          <span className="install-banner-sub">
-            Every price already includes our contractor on-site — no separate labor bill later.
-          </span>
-        </div>
-      )}
-
       {editAsCaptain && (
         <div style={{ padding: "8px 34px", background: "var(--accent-soft, #fff4e5)", fontSize: 12.5 }}>
           You&apos;re editing this quote on the client&apos;s behalf. Changes save immediately and are reflected on
@@ -383,7 +430,7 @@ export default function BuildClient({
 
       {error && <div style={{ padding: "8px 34px", color: "#b91c1c", fontSize: 13 }}>{error}</div>}
 
-      {location && officeSize && (
+      {location && officeSize ? (
         <div className="quote-meta" style={{ margin: "0 34px", borderTop: "none" }}>
           <span>
             📍 <b>{location}</b>
@@ -395,6 +442,15 @@ export default function BuildClient({
             Edit
           </span>
         </div>
+      ) : (
+        !editAsCaptain && (
+          <div className="quote-meta" style={{ margin: "0 34px", borderTop: "none" }}>
+            <span style={{ color: "var(--muted)" }}>No location or office size added yet</span>
+            <span className="edit-link" onClick={() => setShowDetailsModal(true)}>
+              Add details
+            </span>
+          </div>
+        )
       )}
 
       {showDetailsModal && (
@@ -402,13 +458,25 @@ export default function BuildClient({
           initialLocation={location}
           initialOfficeSize={officeSize}
           onSave={handleSaveDetails}
-          onClose={() => setShowDetailsModal(false)}
-          dismissable={editAsCaptain || !!(location && officeSize)}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setPendingReview(false);
+          }}
+          onSkip={handleSkipDetails}
+          dismissable
         />
       )}
 
       {view === "build" && (
-        <div className="layout">
+        <>
+          <div className="ai-assist-strip">
+            <span className="ai-assist-spark">✨</span>
+            <span>Let AI Assist draft a starting quote from the catalog for you</span>
+            <button type="button" className="ai-assist-trigger-btn" onClick={() => setShowAiAssist(true)}>
+              Try it →
+            </button>
+          </div>
+          <div className="layout">
           <div className="rail">
             {Object.entries(catalog.categoryMeta).map(([key, meta]) => {
               const enabled = catalog.enabledCategories.includes(key);
@@ -590,7 +658,7 @@ export default function BuildClient({
               </div>
             </div>
 
-            <button className="nextbtn" disabled={cart.length === 0} onClick={() => setView("preview")}>
+            <button className="nextbtn" disabled={cart.length === 0} onClick={handleReviewClick}>
               Review my quote &rarr;
             </button>
 
@@ -635,7 +703,8 @@ export default function BuildClient({
               </div>
             )}
           </div>
-        </div>
+          </div>
+        </>
       )}
 
       {view === "preview" && (
@@ -892,6 +961,17 @@ export default function BuildClient({
             />
           );
         })()}
+
+      {showAiAssist && (
+        <AiAssistPanel
+          quoteId={quoteId}
+          quoteLocation={location}
+          quoteOfficeSize={officeSize}
+          onSaveDetails={saveQuoteDetails}
+          onAddLines={handleAiAssistAddLines}
+          onClose={() => setShowAiAssist(false)}
+        />
+      )}
     </div>
   );
 }
