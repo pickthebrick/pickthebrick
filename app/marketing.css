@@ -1981,15 +1981,13 @@
 
 /* Style Finder swipe deck - adapted from the reference mockup
    (pickthebrick-style-finder-page.html), mapped onto this app's real theme
-   tokens instead of the mockup's own hardcoded palette. --sf-good/--sf-bad
-   have no existing equivalent elsewhere in this app, so they're kept as
-   small local constants scoped to this feature only. */
+   tokens (--accent/--fg) throughout, including the like/nope controls -
+   no separate good/bad colors, so it reads as on-brand rather than a
+   generic red/green swipe-app affordance. */
 .sf-wrap {
   max-width: 400px;
   width: 100%;
   margin: 24px auto 0;
-  --sf-good: #3e8e5a;
-  --sf-bad: #c05a4a;
 }
 .sf-head {
   text-align: center;
@@ -2097,13 +2095,13 @@
 }
 .sf-stamp.like {
   right: 20px;
-  color: var(--sf-good);
-  border-color: var(--sf-good);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .sf-stamp.nope {
   left: 20px;
-  color: var(--sf-bad);
-  border-color: var(--sf-bad);
+  color: var(--fg);
+  border-color: var(--fg);
   transform: rotate(18deg);
 }
 
@@ -2117,20 +2115,25 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--surface);
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--fg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--fg);
   cursor: pointer;
 }
+.sf-ctrl-btn svg {
+  width: 22px;
+  height: 22px;
+}
 .sf-ctrl-btn.nope {
-  color: var(--sf-bad);
+  background: var(--surface);
+  color: var(--fg);
 }
 .sf-ctrl-btn.like {
-  color: var(--sf-good);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 .sf-microcopy {
   text-align: center;

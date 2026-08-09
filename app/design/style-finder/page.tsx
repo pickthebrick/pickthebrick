@@ -1,5 +1,6 @@
 import StyleFinderClient from "./StyleFinderClient";
 import { resolveActor } from "@/lib/actor";
+import { prisma } from "@/lib/prisma";
 
 // No ?id= needed - the quiz result is keyed on the actor (client/anon
 // session), not any one DesignRequest, so it's reachable standalone (e.g.
@@ -12,5 +13,6 @@ export default async function StyleFinderPage({ searchParams }: { searchParams: 
   const { return: returnParam } = await searchParams;
   const actor = await resolveActor();
   const returnTo = returnParam && returnParam.startsWith("/") && !returnParam.startsWith("//") ? returnParam : null;
-  return <StyleFinderClient isAnonymous={!("clientId" in actor)} returnTo={returnTo} />;
+  const images = await prisma.styleFinderImage.findMany({ select: { styleKey: true, slot: true, imageUrl: true } });
+  return <StyleFinderClient isAnonymous={!("clientId" in actor)} returnTo={returnTo} images={images} />;
 }

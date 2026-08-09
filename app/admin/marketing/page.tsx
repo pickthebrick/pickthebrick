@@ -13,7 +13,7 @@ export default async function MarketingPage() {
   if (!session) redirect("/login");
   if (!isAdminRole(session.role) && session.role !== Role.marketing) redirect(ROLE_HOME[session.role]);
 
-  const [banners, aiDesignerBanner, categories, caseStudyCards, spaceLayerImages] = await Promise.all([
+  const [banners, aiDesignerBanner, categories, caseStudyCards, spaceLayerImages, styleFinderImages] = await Promise.all([
     prisma.banner.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.aiDesignerBanner.upsert({
       where: { id: "ai-designer-banner" },
@@ -27,6 +27,7 @@ export default async function MarketingPage() {
       )
     ),
     prisma.spaceLayerImage.findMany({ select: { spaceKey: true, slot: true, imageUrl: true } }),
+    prisma.styleFinderImage.findMany({ select: { styleKey: true, slot: true, imageUrl: true } }),
   ]);
 
   // Ensure the default feature rows exist (same fixed-id upsert pattern as
@@ -54,6 +55,7 @@ export default async function MarketingPage() {
         categories={categories}
         caseStudyCards={caseStudyCards}
         spaceLayerImages={spaceLayerImages}
+        styleFinderImages={styleFinderImages}
         packageFeatureItems={packageFeatureItems}
       />
     </AdminShell>

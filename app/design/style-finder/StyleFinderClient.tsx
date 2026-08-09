@@ -7,7 +7,7 @@ import {
   STYLE_FINDER_STYLES,
   DECK_SIZE,
   MIN_SHOWN_FOR_CONFIDENT_PICK,
-  imagePoolForStyle,
+  resolveStyleImages,
 } from "@/lib/styleFinder";
 import { submitStyleFinderResult } from "@/app/actions/styleFinder";
 import AuthGate from "@/app/components/AuthGate";
@@ -15,18 +15,29 @@ import "../../marketing.css";
 
 type PoolImage = { styleKey: string; name: string; desc: string; url: string };
 type StyleStat = { shown: number; liked: number };
+type StyleImageRow = { styleKey: string; slot: number; imageUrl: string };
 
-const IMAGE_POOL: PoolImage[] = STYLE_FINDER_STYLES.flatMap((s) =>
-  imagePoolForStyle(s).map((url) => ({ styleKey: s.key, name: s.name, desc: s.desc, url })),
-);
-
-function shuffledDeck(): PoolImage[] {
-  const pool = [...IMAGE_POOL];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+// Marketer-uploaded photos (see lib/styleFinder.ts's resolveStyleImages) take
+// over from the picsum placeholder pool slot by slot - deterministic given
+// `images`, so this is safe to compute outside the post-mount effect that
+// handles the actually-random deck order below.
+function buildImagePool(images: StyleImageRow[]): PoolImage[] {
+  const byStyle: Record<string, Record<number, string>> = {};
+  for (const row of images) {
+    (byStyle[row.styleKey] ??= {})[row.slot] = row.imageUrl;
   }
-  return pool.slice(0, Math.min(DECK_SIZE, pool.length));
+  return STYLE_FINDER_STYLES.flatMap((s) =>
+    resolveStyleImages(s, byStyle[s.key] ?? {}).map((url) => ({ styleKey: s.key, name: s.name, desc: s.desc, url })),
+  );
+}
+
+function shuffledDeck(pool: PoolImage[]): PoolImage[] {
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, Math.min(DECK_SIZE, shuffled.length));
 }
 
 function emptyStats(): Record<string, StyleStat> {
@@ -43,11 +54,16 @@ function rankStats(stats: Record<string, StyleStat>) {
 export default function StyleFinderClient({
   isAnonymous,
   returnTo,
+  images,
 }: {
   isAnonymous: boolean;
   returnTo: string | null;
+  // Marketer-uploaded photos per (style, slot) - see app/design/style-finder/
+  // page.tsx and the "Style Finder photos" panel in the marketing dashboard.
+  images: StyleImageRow[];
 }) {
   const router = useRouter();
+  const imagePool = buildImagePool(images);
   // Shuffle order depends on Math.random(), which must never run during SSR
   // (the server and the client's hydration pass would pick different
   // orders, tripping a hydration mismatch) - start empty and populate only
@@ -58,7 +74,8 @@ export default function StyleFinderClient({
     // the SSR hydration mismatch Math.random() would otherwise cause, not
     // something to restructure away (see the comment above deckImages).
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDeckImages(shuffledDeck());
+    setDeckImages(shuffledDeck(imagePool));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [current, setCurrent] = useState(0);
   const [stats, setStats] = useState<Record<string, StyleStat>>(emptyStats);
@@ -146,7 +163,7 @@ export default function StyleFinderClient({
   }
 
   function restart() {
-    setDeckImages(shuffledDeck());
+    setDeckImages(shuffledDeck(imagePool));
     setCurrent(0);
     setStats(emptyStats());
     setDone(false);
@@ -236,10 +253,14 @@ export default function StyleFinderClient({
 
               <div className="sf-controls">
                 <button type="button" className="sf-ctrl-btn nope" onClick={() => swipe(-1)} aria-label="Nope">
-                  ✕
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
                 </button>
                 <button type="button" className="sf-ctrl-btn like" onClick={() => swipe(1)} aria-label="Like">
-                  ♥
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12l5 5L20 6" />
+                  </svg>
                 </button>
               </div>
               <div className="sf-microcopy">Drag the card, or use the buttons</div>

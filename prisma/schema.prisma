@@ -517,6 +517,19 @@ model StyleFinderStat {
   liked               Int
 }
 
+// Marketer-uploaded photography for the Style Finder swipe deck (see
+// lib/styleFinder.ts) - one row per (style, slot 0..IMAGES_PER_STYLE-1).
+// Any slot left empty falls back to a picsum.photos placeholder, same
+// per-slot-optional pattern as SpaceLayerImage above.
+model StyleFinderImage {
+  id       String @id @default(cuid())
+  styleKey String
+  slot     Int
+  imageUrl String
+
+  @@unique([styleKey, slot])
+}
+
 // Marketing banners, managed by Admin, shown on the Client build page.
 model Banner {
   id        String   @id @default(cuid())

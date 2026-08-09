@@ -25,6 +25,16 @@ export function imagePoolForStyle(style: StyleFinderStyle): string[] {
   return Array.from({ length: IMAGES_PER_STYLE }, (_, i) => `https://picsum.photos/seed/${style.key}-${i + 1}/500/650`);
 }
 
+// Merges marketer-uploaded photography (see StyleFinderImage in
+// prisma/schema.prisma and app/actions/styleFinderImages.ts) over the
+// picsum placeholder pool, slot by slot - any style with no uploads yet (or
+// only some slots filled) still renders a full deck, so the quiz never
+// breaks while real photography is still being sourced.
+export function resolveStyleImages(style: StyleFinderStyle, uploaded: Record<number, string>): string[] {
+  const placeholders = imagePoolForStyle(style);
+  return placeholders.map((fallback, i) => uploaded[i] ?? fallback);
+}
+
 export function styleFinderStyleByKey(key: string): StyleFinderStyle | undefined {
   return STYLE_FINDER_STYLES.find((s) => s.key === key);
 }
