@@ -102,22 +102,27 @@ export default function HomeClient({
 
   return (
     <div className="ptb-marketing">
-      <header>
+      <header className="home-header">
         <Link href="/" className="brand-mark">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="PickTheBrick" />
         </Link>
+        <div className="home-header-ctas">
+          <Link href="/design" className="home-header-cta home-header-cta-secondary">
+            Get a Design Concept
+          </Link>
+          <Link href="/build" className="home-header-cta">
+            Build My Quote
+          </Link>
+        </div>
         <nav>
           <a href="#how-it-works">How it works</a>
-          <a href="#categories">Categories</a>
+          <a href="#categories">Products</a>
           {!isClientSession && (
             <a href="#partner" className="nav-partner-btn">
               Partner with us
             </a>
           )}
-          <Link href="/build" className="home-header-cta">
-            Build My Quote
-          </Link>
         </nav>
       </header>
 

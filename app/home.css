@@ -131,6 +131,27 @@
   font-size: 12px;
   color: var(--muted);
 }
+/* Home page only - a 3-column grid (logo | centered CTAs | text nav) so the
+   two CTA buttons sit dead-center of the header regardless of how wide the
+   logo or nav links are, instead of the shared .ptb-marketing header's
+   default flex space-between. Selector is deliberately more specific than
+   the shared rule so it doesn't leak onto other pages using marketing.css. */
+.ptb-marketing header.home-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+.home-header .brand-mark {
+  justify-self: start;
+}
+.home-header > nav {
+  justify-self: end;
+}
+.home-header-ctas {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: center;
+}
 .home-header-cta {
   padding: 8px 16px;
   border-radius: 20px;
@@ -143,6 +164,26 @@
 .home-header-cta:hover {
   background: var(--accent-deep);
   color: #fff;
+}
+.home-header-cta-secondary {
+  background: transparent;
+  border: 1.5px solid var(--fg);
+  color: var(--fg);
+}
+.home-header-cta-secondary:hover {
+  background: var(--fg);
+  color: #fff;
+}
+@media (max-width: 700px) {
+  .ptb-marketing header.home-header {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .home-header-ctas {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 /* ---------- hero "building live" demo card ---------- */
 .hero-demo-card {

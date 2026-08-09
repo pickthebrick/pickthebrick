@@ -7,6 +7,7 @@ import { startDesignRequest } from "@/app/actions/design";
 import { priceFor, type PackageKey } from "@/lib/designPricing";
 import { featureItemsForTier } from "@/lib/packageFeatures";
 import SiteFooter from "@/app/components/SiteFooter";
+import SignInBar from "@/app/components/SignInBar";
 import "../marketing.css";
 import "../home.css";
 
@@ -63,10 +64,12 @@ export default function DesignPageClient({
   banner,
   categories,
   featureItems,
+  isAnonymous,
 }: {
   banner: AiDesignerBannerData;
   categories: { key: string; label: string }[];
   featureItems: PackageFeatureItemData[];
+  isAnonymous: boolean;
 }) {
   const router = useRouter();
   const [displayUnit, setDisplayUnit] = useState<"sqft" | "sqm">("sqft");
@@ -114,6 +117,7 @@ export default function DesignPageClient({
 
   return (
     <div className="ptb-marketing">
+      {isAnonymous && <SignInBar />}
       <header>
         <Link href="/" className="brand-mark">
           {/* eslint-disable-next-line @next/next/no-img-element */}

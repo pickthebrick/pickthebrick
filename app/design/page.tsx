@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 import DesignPageClient from "./DesignPageClient";
 
 export default async function DesignPage() {
+  const session = await getSession();
   const [banner, categories, featureItems] = await Promise.all([
     prisma.aiDesignerBanner.upsert({
       where: { id: "ai-designer-banner" },
@@ -15,5 +17,5 @@ export default async function DesignPage() {
     }),
   ]);
 
-  return <DesignPageClient banner={banner} categories={categories} featureItems={featureItems} />;
+  return <DesignPageClient banner={banner} categories={categories} featureItems={featureItems} isAnonymous={!session} />;
 }

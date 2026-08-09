@@ -23,6 +23,7 @@ import QuoteDetailsModal from "./QuoteDetailsModal";
 import TermsSection from "./TermsSection";
 import AiAssistPanel from "./AiAssistPanel";
 import AuthGate from "@/app/components/AuthGate";
+import SignInBar from "@/app/components/SignInBar";
 import "./build.css";
 
 const SQM_TO_SQFT = 10.7639;
@@ -401,6 +402,7 @@ export default function BuildClient({
 
   return (
     <div className="ptb-build">
+      {isAnonymous && <SignInBar />}
       <header>
         <Link href="/" className="brand-mark">
           {/* eslint-disable-next-line @next/next/no-img-element */}
