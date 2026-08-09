@@ -13,7 +13,7 @@ export default function AccountBar({ dashboardHref }: { dashboardHref: string })
   async function handleSignOut() {
     setBusy(true);
     await signOutAction();
-    window.location.href = "/login";
+    window.location.href = "/";
   }
 
   return (
