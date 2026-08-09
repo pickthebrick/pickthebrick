@@ -16,6 +16,7 @@ const IMAGE_CONTENT_TYPES: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
+  "image/avif": "avif",
 };
 
 // Maps the request's `type` field to this app's real vocabulary: the
