@@ -1,0 +1,125 @@
+{
+  "categories": [
+    {
+      "label": "Flooring",
+      "unit": "sqm",
+      "types": [
+        {
+          "label": "Laminate",
+          "subtypes": [
+            {
+              "label": "Standard Laminate",
+              "products": [
+                { "name": "47KN63 Pettersson Oak Beige — Floor Land", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/47KN63-Pettersson-Oak-Beige.jpg"] },
+                { "name": "40KN792 Adaja Oak — Floor Land", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/40KN792-Adaja-Oak.jpg"] },
+                { "name": "40KN782 Gante Oak — Floor Land", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/40KN782-Gante-Oak.jpg"] },
+                { "name": "Kashmir Oak Silver D40332 — Floor Land", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/Kashmir-Oak-Silver-D40332.jpg"] },
+                { "name": "Luxor Oak Silver D6000 — Floor Land", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/Luxor-Oak-Silver-D6000.jpg"] }
+              ]
+            },
+            {
+              "label": "Waterproof Laminate",
+              "products": [
+                { "name": "60KN10 Elba Oak Black — Floor Land (Waterproof)", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/60KN10-Elba-Oak-Black.jpg"] },
+                { "name": "Elba Oak Brown D40382 — Floor Land (Waterproof)", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/Elba-Oak-Brown-D40382.jpg"] },
+                { "name": "Elba Oak Platin D40372 — Floor Land (Waterproof)", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/Elba-Oak-Platin-D40372.jpg"] },
+                { "name": "Kashmir Oak White D40322 — Floor Land (Waterproof)", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/Kashmir-Oak-White-D40322.jpg"] },
+                { "name": "Metz Oak D3766 — Floor Land (Waterproof)", "rate": 84, "images": ["https://floorland.ae/wp-content/uploads/2024/09/Metz-Oak-D3766.jpg"] }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Vinyl",
+          "subtypes": [
+            {
+              "label": "Vinyl Sheet",
+              "products": [
+                { "name": "Oak Charm Vinyl — AM-1001 (Floor Land)", "rate": 100, "images": ["https://floorland.ae/wp-content/uploads/2026/04/AM-1001-1-1.webp"] },
+                { "name": "Vinyl Tan Grand — AM-1002 (Floor Land)", "rate": 95, "images": ["https://floorland.ae/wp-content/uploads/2026/04/AM-1002-2.webp"] },
+                { "name": "Luxe Grey Plank — AM-1003 (Floor Land)", "rate": 95, "images": ["https://floorland.ae/wp-content/uploads/2026/04/AM-1003-2.webp"] },
+                { "name": "Umber Urban Vinyl — AM-1004 (Floor Land)", "rate": 100, "images": ["https://floorland.ae/wp-content/uploads/2026/04/AM-1004-2.webp"] },
+                { "name": "Vinyl Grey Wood — AM-1005 (Floor Land)", "rate": 90, "images": ["https://floorland.ae/wp-content/uploads/2026/04/AM-1005-2.webp"] }
+              ]
+            },
+            {
+              "label": "LVT",
+              "products": [
+                { "name": "Rustic Plank Vinyl — AS Callisto 531-09 (Floor Land)", "rate": 65, "images": ["https://floorland.ae/wp-content/uploads/2025/12/AS-CALLISTO-511-14-1-1024x599.webp"] },
+                { "name": "Smoked Oak Parquet — AS Feelings 999D (Floor Land)", "rate": 110, "images": ["https://floorland.ae/wp-content/uploads/2025/12/AS-Feelings-999D-1024x577.webp"] },
+                { "name": "Timber LVT — AS Proxima 694D (Floor Land)", "rate": 100, "images": ["https://floorland.ae/wp-content/uploads/2025/12/AS-PROXIMA-694D-1024x589.webp"] },
+                { "name": "Rustic Grey Oak — AS Ultima Hunter Oak S92 (Floor Land)", "rate": 120, "images": ["https://floorland.ae/wp-content/uploads/2025/12/AS-ULTIMA-Hunter-Oak-S92-1-1024x577.webp"] },
+                { "name": "LVT Farmhouse — AS Maxima Plus 570-05 (Floor Land)", "rate": 95, "images": ["https://floorland.ae/wp-content/uploads/2025/12/AS-MAXIMA-PLUS-570-05-1024x581.webp"] }
+              ]
+            },
+            {
+              "label": "SPC (Rigid Core)",
+              "products": [
+                { "name": "Rich Walnut SPC — DD Dmax 201 (Floor Land)", "rate": 60, "images": ["https://floorland.ae/wp-content/uploads/2025/12/DD-Dmax-201-300x232.jpg"] },
+                { "name": "SPC Pale Oak Style — DD Dmax 202 (Floor Land)", "rate": 55, "images": ["https://floorland.ae/wp-content/uploads/2025/12/DD-Dmax-202-300x233.jpg"] },
+                { "name": "Herringbone SPC — DD Dmax 208 (Floor Land)", "rate": 65, "images": ["https://floorland.ae/wp-content/uploads/2025/12/DD-Dmax-208-300x232.jpg"] },
+                { "name": "Driftwood Style SPC — DD Dmax 212 (Floor Land)", "rate": 80, "images": ["https://floorland.ae/wp-content/uploads/2025/12/DD-Dmax-212-300x232.jpg"] },
+                { "name": "Natural Oak SPC — DD Staro 703 (Floor Land)", "rate": 90, "images": ["https://floorland.ae/wp-content/uploads/2025/12/DD-Staro-703-300x233.jpg"] }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Carpet",
+          "subtypes": [
+            {
+              "label": "Carpet Tiles",
+              "products": [
+                { "name": "ASF – Moon (Carpet Tile, Floor Land)", "rate": 95, "images": ["https://floorland.ae/wp-content/uploads/2025/12/ASF-Moon-Br.avif"] },
+                { "name": "ASF – Pera (Carpet Tile, Floor Land)", "rate": 100, "images": ["https://floorland.ae/wp-content/uploads/2025/12/ASF-Pera-Beige.avif"] },
+                { "name": "ASF – Romantic (Carpet Tile, Floor Land)", "rate": 110, "images": ["https://floorland.ae/wp-content/uploads/2025/12/ASF-Romantic.avif"] },
+                { "name": "ASF – Earth (Carpet Tile, Floor Land)", "rate": 120, "images": ["https://floorland.ae/wp-content/uploads/2025/12/ASF-Earth-Gray.avif"] },
+                { "name": "ASF – Colormix (Carpet Tile, Floor Land)", "rate": 100, "images": ["https://floorland.ae/wp-content/uploads/2025/12/ASF-Colormix.avif"] }
+              ]
+            },
+            {
+              "label": "Broadloom",
+              "products": [
+                { "name": "Bronze Grand Carpet — MS AW Atticus Aragon 80 (Floor Land, Wall-to-Wall)", "rate": 250, "images": ["https://floorland.ae/wp-content/uploads/2026/02/MS-AW-Atticus-Aragon-80.avif"] },
+                { "name": "Blue Premium Carpet — MS AW Sirius 75 (Floor Land, Wall-to-Wall)", "rate": 260, "images": ["https://floorland.ae/wp-content/uploads/2026/02/MS-AW-Sirius-75.avif"] },
+                { "name": "Dune Royal Carpet — Floor Land (Wall-to-Wall)", "rate": 240, "images": ["https://floorland.ae/wp-content/uploads/2026/02/MS-Creatuft-Titan-Beige-35.avif"] },
+                { "name": "Pearl Grand Carpet — MS Teksol Dorothy Ivory 112 (Floor Land, Wall-to-Wall)", "rate": 250, "images": ["https://floorland.ae/wp-content/uploads/2026/02/MS-Teksol-Dorothy-Ivory-112.avif"] },
+                { "name": "Silver Elite Flooring — MS Teksol Antibies Suolk Stone (Floor Land, Wall-to-Wall)", "rate": 270, "images": ["https://floorland.ae/wp-content/uploads/2026/02/MS-Teksol-Antibies-Su_olk-Stone-150305.avif"] }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Outdoor Decking",
+          "subtypes": [
+            {
+              "label": "WPC Deck Tiles",
+              "products": [
+                { "name": "Golden Acacia Deck Tile — Floor Land (30x30cm)", "rate": 250, "images": ["https://floorland.ae/wp-content/uploads/2026/07/zs-Acacia-30x30-Golden-Oak.webp"] },
+                { "name": "Light Teak Patio Deck — Floor Land (Hollow Round)", "rate": 270, "images": ["https://floorland.ae/wp-content/uploads/2026/07/zs-Teak-wpc-hollow-round.webp"] },
+                { "name": "Wood Brown WPC Deck — Floor Land (Hollow Square)", "rate": 280, "images": ["https://floorland.ae/wp-content/uploads/2026/07/zs-Maple-wood-grains-Hollow-square.webp"] },
+                { "name": "Caramel Teak Deck — Floor Land (Co-Extrusion Solid)", "rate": 280, "images": ["https://floorland.ae/wp-content/uploads/2026/07/zs-Solid-classily-teak-Wpc-Co-Extrusion-Solid.webp"] },
+                { "name": "Light Teak Wood Deck — Floor Land (Hollow Square Ancient)", "rate": 275, "images": ["https://floorland.ae/wp-content/uploads/2026/07/zs-teak-wpc-hollow-square-ancient.webp"] }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Rubber",
+          "subtypes": [
+            {
+              "label": "Interlocking Rubber Tiles",
+              "products": [
+                { "name": "Grey Robust Flooring — Floor Land (60x60cm)", "rate": 120, "images": ["https://floorland.ae/wp-content/uploads/2026/04/zs-coin-tile-60x60-black.webp"] },
+                { "name": "Crimson Tough Rubber Tile — Floor Land (20mm)", "rate": 95, "images": ["https://floorland.ae/wp-content/uploads/2026/04/zs-rubber-tile-plain-red-20mm.webp"] },
+                { "name": "Ash Urban Rubber Tile — Floor Land (20mm)", "rate": 90, "images": ["https://floorland.ae/wp-content/uploads/2026/04/zs-rubber-tile-plain-Grey-20mm.webp"] },
+                { "name": "Black Classic Interlock — Floor Land (60x60cm)", "rate": 115, "images": ["https://floorland.ae/wp-content/uploads/2026/04/zs-coin-tile-60x60-black.webp"] },
+                { "name": "Green Vibrant Rubber Tile — Floor Land (20mm)", "rate": 110, "images": ["https://floorland.ae/wp-content/uploads/2026/04/zs-rubber-lock-green-20mm.webp"] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

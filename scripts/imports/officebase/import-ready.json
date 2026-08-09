@@ -1,0 +1,160 @@
+{
+  "categories": [
+    {
+      "label": "Furniture",
+      "unit": "count",
+      "types": [
+        {
+          "label": "Workstations",
+          "subtypes": [
+            {
+              "label": "Single Desk",
+              "products": [
+                { "name": "IOSTA Solo Workstation Desk | Premium Colors", "rate": 480, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/9925028261.webp"] },
+                { "name": "IOSTA Solo Workstation Desk | Standard Colors", "rate": 438, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/7708303737.webp"] },
+                { "name": "IOSTA Solo Workstation Desk | Concrete Colors", "rate": 480, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/973619008.webp"] },
+                { "name": "MENSA Workstation Desk | Premium Colors", "rate": 578, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/5421308689.webp"] },
+                { "name": "MENSA Workstation Desk | Concrete Colors", "rate": 588, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/1649643786.webp"] }
+              ]
+            },
+            {
+              "label": "Cluster / Bench Desk",
+              "products": [
+                { "name": "DUO Lateral Workstations with Return | Premium Colors", "rate": 2415, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/695375817.webp"] },
+                { "name": "DUO Lateral Workstations with Return | Standard Colors", "rate": 2285, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/8899488009.webp"] },
+                { "name": "TERNIO 3 PAX Workstation | Premium Colors", "rate": 4152, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/4511041658.webp"] },
+                { "name": "TERNIO 3 PAX Workstation | Standard Colors", "rate": 3890, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/3220633442.webp"] },
+                { "name": "OPERA 6 PAX Face to Face Workstations | Premium Colors", "rate": 3686, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/551081082.webp"] }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Office Chairs",
+          "subtypes": [
+            {
+              "label": "Task Chair",
+              "products": [
+                { "name": "Essentia White Frame Task Chair", "rate": 299, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/5436822797.webp"] },
+                { "name": "TaskPro Mid Back Mesh Chair", "rate": 309, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/7386060555.webp"] },
+                { "name": "Obsidian Mid Back Mesh Chair", "rate": 319, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/3712119215.webp"] },
+                { "name": "Serene Mid Back Mesh Chair", "rate": 379, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/5407991133.webp"] },
+                { "name": "Voxel Mid Back Mesh Chair", "rate": 409, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/5047579119.webp"] }
+              ]
+            },
+            {
+              "label": "Visitor / Meeting Chair",
+              "products": [
+                { "name": "Nova Nest Mid Back Visitors Chair", "rate": 259, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/2735675119.jpg"] },
+                { "name": "Aeris Mid Back Visitors Chair", "rate": 279, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/8904602079.webp"] },
+                { "name": "Lyra Mid Back Visitors Chair", "rate": 319, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/4440210188.webp"] },
+                { "name": "Verve Mid Back Visitors Chair", "rate": 399, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/5862349958.webp"] },
+                { "name": "Supreme Mid Back Visitors Chair", "rate": 429, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/7811338519.webp"] }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Meeting Tables",
+          "subtypes": [
+            {
+              "label": "Small Meeting (4-6 person)",
+              "products": [
+                { "name": "PROFESSIO Meeting Table | Standard Colors", "rate": 1561, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/2796293402.webp"] },
+                { "name": "PROFESSIO Meeting Table | Solid Colors", "rate": 1585, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/2068665355.webp"] },
+                { "name": "PERITUM Meeting Table | Standard Colors", "rate": 1382, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/3742777028.webp"] },
+                { "name": "PERITUM Meeting Table | Solid Colors", "rate": 1404, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/7221443662.webp"] },
+                { "name": "PERITUM Meeting Table | Premium Colors", "rate": 1452, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/4482732630.webp"] }
+              ]
+            },
+            {
+              "label": "Boardroom (8+ person)",
+              "products": [
+                { "name": "LUSSO Meeting Table | Premium Colors", "rate": 5509, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/5635619600.webp"] },
+                { "name": "LUSSO Meeting Table | Standard Colors", "rate": 5269, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/4372834464.webp"] },
+                { "name": "OPUS Meeting Table | Premium Colors", "rate": 4539, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/3702941588.webp"] },
+                { "name": "OPUS Meeting Table | Standard Colors", "rate": 4369, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/1752624122.webp"] },
+                { "name": "BONUM Meeting Table | Premium Colors", "rate": 3879, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/1940274201.webp"] }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Storage / Cabinets",
+          "subtypes": [
+            {
+              "label": "Pedestals & Lockers",
+              "products": [
+                { "name": "CREPIDO Classic Pedestal | Type 1 | Premium Colors", "rate": 844, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/2279299267.jpg"] },
+                { "name": "CREPIDO Table Height Pedestals | Standard Colors", "rate": 983, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/3377268308.jpg"] },
+                { "name": "CAPSA Lockers | 4 Doors | Premium Colors", "rate": 1558, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/Lockers-1-W43.6XD46.8XH180-H3309-ST28-Sand-Glad-Stone-Oak.jpg"] },
+                { "name": "CAPSA Lockers | 3 Doors | Type 1 | Standard Colors", "rate": 1011, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/8536058157.jpg"] },
+                { "name": "CAPSA Lockers | 2 Doors | Premium Colors", "rate": 1304, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/Lockers-4-W43.6XD46.8XH180-H3309-ST28-Sand-Glad-Stone-Oak.jpg"] }
+              ]
+            },
+            {
+              "label": "Cabinets & Shelving",
+              "products": [
+                { "name": "FILO Filing Cabinet | W600MM | Premium Colors", "rate": 1499, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/6784285120.webp"] },
+                { "name": "FILO Filing Cabinet | W900MM | Standard Colors", "rate": 1369, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/5148314226.webp"] },
+                { "name": "PEGMA Bookcase | Open | 5 files per shelf | Premium Colors", "rate": 956, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/Bookcase-10-W421XD395XH1865-H3154-ST36-Dark-Brown-Charleston-Oak.jpg"] },
+                { "name": "PEGMA Bookcase | Open | 10 files per shelf | Premium Colors", "rate": 1368, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/Bookcase-1-W806XD395XH1858-H1176-ST37-White-Halifax-Oak.jpg"] },
+                { "name": "PEGMA Bookcase | Open | 10 files per shelf | Concrete Colors", "rate": 976, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/pegma_50_file_light_grey_chicago_concrete.jpg"] }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Reception Desks",
+          "subtypes": [
+            {
+              "label": "Standard Reception",
+              "products": [
+                { "name": "ADITUS Reception Desk | Premium Colors", "rate": 1623, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/Reception-Counter-7-W2000-X-D700-X-H1100-H1346-ST32-Anthracite-Sherman-Oak.jpg"] },
+                { "name": "PORTA Reception Desk | Standard Colors", "rate": 1455, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/2174149650.webp"] },
+                { "name": "THECA Reception Desk | Solid Colors", "rate": 1328, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/Reception-Counter-9-W1800-X-D700-X-H1100-MF-141-pure-black.jpg"] },
+                { "name": "CISTA Reception Desk | Concrete Colors", "rate": 1317, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/Reception-Counter-8-W2000-X-D700-X-H1100-MF-111-perfect-white.jpg"] },
+                { "name": "ADITUS Reception Desk | Concrete Colors", "rate": 1470, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/aditus_reception_counter_dark_grey_chicago_concrete.webp"] }
+              ]
+            },
+            {
+              "label": "Custom Feature Reception",
+              "products": [
+                { "name": "XYLO Designer Reception Counter", "rate": 12438, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/9987541316.jpg"] },
+                { "name": "ALTIOR Designer Reception Counter", "rate": 8190, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/2841338694.jpg"] },
+                { "name": "ARTE Designer Reception Counter", "rate": 4918, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/665457935.jpg"] },
+                { "name": "MAGNUS Designer Reception Counter", "rate": 4898, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/3889685054.jpg"] },
+                { "name": "NEXUS Designer Reception Counter", "rate": 4498, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/3001120680.jpg"] }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Soft Seating / Lounge",
+          "subtypes": [
+            {
+              "label": "Sofas & Armchairs",
+              "products": [
+                { "name": "LENIS 3 Seat Sofa", "rate": 4169, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/5910765935.webp"] },
+                { "name": "LENIS Single Seat Armchair", "rate": 1899, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/3706782120.jpg"] },
+                { "name": "FLORIDUS 3 Seat Sofa", "rate": 3554, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/5905172904.webp"] },
+                { "name": "FLORIDUS Single Seat Armchair", "rate": 2172, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/Algard-sofa-single-W900XD800XH760-FUCHSIA-DAZZLE-9053.jpg"] },
+                { "name": "BELLUS 2 Seat Sofa", "rate": 2056, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/sofa-version-2-2-seats-W1500XD700XH710-DAZZLE-9052.jpg"] }
+              ]
+            },
+            {
+              "label": "Breakout / Pod Seating",
+              "products": [
+                { "name": "Smoky Glide Breakout Lounge Chair", "rate": 829, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/6324356076.webp"] },
+                { "name": "Otton Breakout Visitor Chair", "rate": 949, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/9745353041.jpg"] },
+                { "name": "Graystone Cradle Lounge Chair", "rate": 959, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/6202060034.webp"] },
+                { "name": "Graystone Cradle Lounge Chair (With Wheels)", "rate": 989, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/3853692123.webp"] },
+                { "name": "THE POD | Small Acoustic Meeting Pod", "rate": 17969, "images": ["https://officebaseuae.b-cdn.net/assets/images/image-data/1-front-s-config-2-230709.jpg"] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
