@@ -13,7 +13,7 @@ export default async function VerifyPhonePage({ searchParams }: { searchParams: 
   const { next } = await searchParams;
   const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/my-quotes";
 
-  if (session.whatsappVerifiedAt) redirect(dest);
+  if (session.whatsappVerifiedAt || session.whatsappSkippedAt) redirect(dest);
 
   return <VerifyPhoneClient dest={dest} />;
 }

@@ -25,6 +25,7 @@ export default function FeaturesWizard({
   instances: initialInstances,
   isAnonymous = false,
   hasVerifiedWhatsapp = true,
+  hasSkippedWhatsapp = true,
   initialPhone,
   layerImages = {},
 }: {
@@ -35,6 +36,9 @@ export default function FeaturesWizard({
   // WhatsApp OTP step (see PhoneVerifyStep) - mirrors BuildClient.tsx's
   // prop of the same name/purpose.
   hasVerifiedWhatsapp?: boolean;
+  // Whether the client already chose "Verify later" in a previous session -
+  // mirrors BuildClient.tsx's prop of the same name/purpose.
+  hasSkippedWhatsapp?: boolean;
   // A number already on file but unverified (client skipped at signup) -
   // pre-fills PhoneVerifyStep here instead of asking from scratch.
   initialPhone?: string;
@@ -57,10 +61,8 @@ export default function FeaturesWizard({
   // Same idea for the once-ever WhatsApp OTP step - see BuildClient.tsx's
   // identical pair of state variables for the reasoning.
   const [locallyVerifiedWhatsapp, setLocallyVerifiedWhatsapp] = useState(hasVerifiedWhatsapp);
+  const [locallySkippedWhatsapp, setLocallySkippedWhatsapp] = useState(hasSkippedWhatsapp);
   const [awaitingPhoneVerify, setAwaitingPhoneVerify] = useState(false);
-  // True only for the immediate post-signup phone step (justSignedUp) - see
-  // BuildClient.tsx's identical flag for the reasoning.
-  const [phoneVerifySkippable, setPhoneVerifySkippable] = useState(false);
 
   const current = spaceList[index];
   const questions = SPACE_QUESTIONS[current.spaceKey] ?? [];
@@ -143,8 +145,7 @@ export default function FeaturesWizard({
         return;
       }
       // Asked once, ever - see PhoneVerifyStep/handlePhoneVerified below.
-      if (!locallyVerifiedWhatsapp) {
-        setPhoneVerifySkippable(false);
+      if (!locallyVerifiedWhatsapp && !locallySkippedWhatsapp) {
         setAwaitingPhoneVerify(true);
         setBusy(false);
         return;
@@ -156,18 +157,17 @@ export default function FeaturesWizard({
     }
   }
 
-  // A brand-new signup always sees the mandatory-but-skippable phone step
-  // next (driven by justSignedUp, not locallyVerifiedWhatsapp - that
-  // defaults true for an anonymous visitor, since it's only meaningful for
-  // an already-signed-in client, so it'd otherwise let a fresh signup skip
-  // the phone step entirely). Signing into an existing account instead
-  // resumes straight to submit if that account already verified earlier.
+  // A brand-new signup always sees the phone step next (driven by
+  // justSignedUp, not locallyVerifiedWhatsapp - that defaults true for an
+  // anonymous visitor, since it's only meaningful for an already-signed-in
+  // client, so it'd otherwise let a fresh signup skip the phone step
+  // entirely). Signing into an existing account instead resumes straight to
+  // submit if that account already verified or skipped earlier.
   async function handleAuthSuccess(justSignedUp: boolean) {
     setAwaitingAuth(false);
     setBusy(true);
     setError(null);
-    if (justSignedUp || !locallyVerifiedWhatsapp) {
-      setPhoneVerifySkippable(justSignedUp);
+    if (justSignedUp || (!locallyVerifiedWhatsapp && !locallySkippedWhatsapp)) {
       setAwaitingPhoneVerify(true);
       setBusy(false);
       return;
@@ -183,11 +183,11 @@ export default function FeaturesWizard({
     doSubmit();
   }
 
-  // Only reachable when phoneVerifySkippable is true (the immediate
-  // post-signup step) - the number itself was already saved unverified by
-  // PhoneVerifyStep's own handleSkip before this fires.
+  // The number itself was already saved unverified by PhoneVerifyStep's own
+  // handleSkip before this fires.
   function handlePhoneSkipped() {
     setAwaitingPhoneVerify(false);
+    setLocallySkippedWhatsapp(true);
     setBusy(true);
     setError(null);
     doSubmit();
@@ -338,12 +338,7 @@ export default function FeaturesWizard({
 
         {isLast && awaitingPhoneVerify && (
           <div className="sqft-input-card compact" style={{ marginTop: 20 }}>
-            <PhoneVerifyStep
-              onSuccess={handlePhoneVerified}
-              onCancel={phoneVerifySkippable ? undefined : () => setAwaitingPhoneVerify(false)}
-              onSkip={phoneVerifySkippable ? handlePhoneSkipped : undefined}
-              initialPhone={initialPhone}
-            />
+            <PhoneVerifyStep onSuccess={handlePhoneVerified} onSkip={handlePhoneSkipped} initialPhone={initialPhone} />
           </div>
         )}
 

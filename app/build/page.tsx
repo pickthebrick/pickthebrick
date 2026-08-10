@@ -95,6 +95,7 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
       clientLabel={clientLabel ?? undefined}
       isAnonymous={!session}
       hasVerifiedWhatsapp={!!session?.whatsappVerifiedAt}
+      hasSkippedWhatsapp={!!session?.whatsappSkippedAt}
       initialPhone={client?.whatsappNumber ?? client?.phone ?? undefined}
     />
   );

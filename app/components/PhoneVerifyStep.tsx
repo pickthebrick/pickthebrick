@@ -6,10 +6,12 @@ import { requestPhoneCodeAction, confirmPhoneCodeAction, saveUnverifiedPhoneActi
 // The once-ever WhatsApp OTP capture step, shown right after signup
 // (LoginForm.tsx/AuthGate.tsx/VerifyPhoneClient.tsx) and again before a
 // signed-in client's first quote/design-request submission
-// (BuildClient.tsx/FeaturesWizard.tsx) if they skipped verifying earlier -
-// skipped silently on every submission once session.whatsappVerifiedAt is
-// set. Mirrors AuthGate's overlay shape/CSS classes (app/globals.css) since
-// it's the same kind of one-time blocking step in the same flows.
+// (BuildClient.tsx/FeaturesWizard.tsx) if they haven't verified OR skipped
+// yet - skipped silently once session.whatsappVerifiedAt or
+// whatsappSkippedAt is set, so this is never shown as a mandatory,
+// unskippable gate: onSkip is always offered wherever this step can appear
+// at all. Mirrors AuthGate's overlay shape/CSS classes (app/globals.css)
+// since it's the same kind of one-time blocking step in the same flows.
 export default function PhoneVerifyStep({
   onSuccess,
   onCancel,
@@ -107,7 +109,7 @@ export default function PhoneVerifyStep({
             <div className="auth-gate-actions">
               {onSkip ? (
                 <button type="button" className="signup-gate-cancel" disabled={busy} onClick={handleSkip}>
-                  {busy ? "Saving..." : "Skip for now"}
+                  {busy ? "Saving..." : "Verify later"}
                 </button>
               ) : (
                 onCancel && (
@@ -138,6 +140,15 @@ export default function PhoneVerifyStep({
               <button type="button" className="signup-gate-cancel" disabled={busy} onClick={() => setStep("phone")}>
                 Back
               </button>
+              {/* If the code never arrives (e.g. WhatsApp delivery fails),
+                  "Back" alone left the client stuck re-sending into the same
+                  void - this gives a direct way out from right here instead
+                  of forcing a detour through the phone step first. */}
+              {onSkip && (
+                <button type="button" className="signup-gate-cancel" disabled={busy} onClick={handleSkip}>
+                  {busy ? "Saving..." : "Verify later"}
+                </button>
+              )}
               <button type="submit" className="signup-gate-submit" disabled={busy}>
                 {busy ? "Verifying..." : "Verify"}
               </button>

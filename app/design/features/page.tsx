@@ -34,10 +34,11 @@ export default async function DesignFeaturesPage({ searchParams }: { searchParam
     "clientId" in actor
       ? await prisma.user.findUnique({
           where: { id: actor.clientId },
-          select: { whatsappVerifiedAt: true, phone: true, whatsappNumber: true },
+          select: { whatsappVerifiedAt: true, whatsappSkippedAt: true, phone: true, whatsappNumber: true },
         })
       : null;
   const hasVerifiedWhatsapp = "clientId" in actor ? Boolean(clientPhoneRow?.whatsappVerifiedAt) : true;
+  const hasSkippedWhatsapp = "clientId" in actor ? Boolean(clientPhoneRow?.whatsappSkippedAt) : true;
   const initialPhone = clientPhoneRow?.whatsappNumber ?? clientPhoneRow?.phone ?? undefined;
 
   if (request.status !== DesignRequestStatus.draft) {
@@ -100,6 +101,7 @@ export default async function DesignFeaturesPage({ searchParams }: { searchParam
       instances={instances}
       isAnonymous={!("clientId" in actor)}
       hasVerifiedWhatsapp={hasVerifiedWhatsapp}
+      hasSkippedWhatsapp={hasSkippedWhatsapp}
       initialPhone={initialPhone}
       layerImages={layerImages}
     />

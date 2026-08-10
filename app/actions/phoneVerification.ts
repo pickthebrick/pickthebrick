@@ -25,13 +25,14 @@ export async function confirmPhoneCodeAction(phone: string, code: string): Promi
   return { verified: ok };
 }
 
-// Saves the number a client typed at signup without verifying it - used by
-// the "Skip for now" option on the once-ever post-signup phone step (see
-// PhoneVerifyStep's onSkip prop). whatsappVerifiedAt stays unset, so the
-// existing Build/Design submit-time gate (BuildClient.tsx/FeaturesWizard.tsx)
-// still catches an unverified number before the client's first quote/design
-// request goes out - this only saves the number so that later prompt can be
-// pre-filled instead of asking from scratch.
+// Saves the number a client typed without verifying it - used by the
+// "Verify later" option on PhoneVerifyStep (see its onSkip prop).
+// whatsappVerifiedAt stays unset, but whatsappSkippedAt is now set, which is
+// what stops the Build/Design submit-time gate (BuildClient.tsx/
+// FeaturesWizard.tsx) from re-showing this step on every future submission -
+// the client already made their choice once, this is a "verify later" not a
+// "ask me again every time." The number itself is saved so a later voluntary
+// verify attempt (Profile page) starts pre-filled instead of from scratch.
 export async function saveUnverifiedPhoneAction(phone: string): Promise<void> {
   const session = await getSession();
   if (!session) throw new Error("Not signed in");
@@ -41,6 +42,6 @@ export async function saveUnverifiedPhoneAction(phone: string): Promise<void> {
 
   await prisma.user.update({
     where: { id: session.id },
-    data: { phone: normalized, whatsappNumber: normalized },
+    data: { phone: normalized, whatsappNumber: normalized, whatsappSkippedAt: new Date() },
   });
 }

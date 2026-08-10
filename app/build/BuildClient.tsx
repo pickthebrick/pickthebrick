@@ -73,6 +73,7 @@ export default function BuildClient({
   clientLabel,
   isAnonymous = false,
   hasVerifiedWhatsapp = true,
+  hasSkippedWhatsapp = true,
   initialPhone,
 }: {
   catalog: Catalog;
@@ -93,6 +94,11 @@ export default function BuildClient({
   // editAsCaptain path (which never passes this prop, and never calls
   // completeSubmit anyway) can't accidentally trigger it.
   hasVerifiedWhatsapp?: boolean;
+  // Whether the client already chose "Verify later" in a previous session -
+  // checked alongside hasVerifiedWhatsapp so that choice sticks forever
+  // instead of re-showing this step on every future submission. Same safe
+  // default as hasVerifiedWhatsapp.
+  hasSkippedWhatsapp?: boolean;
   // A number already on file but unverified (client skipped at signup) -
   // pre-fills PhoneVerifyStep here instead of asking from scratch.
   initialPhone?: string;
@@ -137,16 +143,13 @@ export default function BuildClient({
   // (a Server Action setting the session cookie auto-refreshes it) and would
   // otherwise unmount AuthGate itself out from under an in-progress signup.
   const [showAuthGate, setShowAuthGate] = useState(false);
-  // Local, optimistic mirror of hasVerifiedWhatsapp - PhoneVerifyStep flips
-  // this the instant it succeeds, rather than waiting on a router.refresh()
-  // round-trip to update the server-rendered prop.
+  // Local, optimistic mirrors of hasVerifiedWhatsapp/hasSkippedWhatsapp -
+  // PhoneVerifyStep flips these the instant it succeeds/is skipped, rather
+  // than waiting on a router.refresh() round-trip to update the
+  // server-rendered props.
   const [locallyVerifiedWhatsapp, setLocallyVerifiedWhatsapp] = useState(hasVerifiedWhatsapp);
+  const [locallySkippedWhatsapp, setLocallySkippedWhatsapp] = useState(hasSkippedWhatsapp);
   const [awaitingPhoneVerify, setAwaitingPhoneVerify] = useState(false);
-  // True only for the immediate post-signup phone step (justSignedUp) - a
-  // later "you still haven't verified" gate for an already-signed-in client
-  // (see completeSubmit) stays verify-or-cancel, matching PhoneVerifyStep's
-  // own doc comment on when onSkip is meant to be offered.
-  const [phoneVerifySkippable, setPhoneVerifySkippable] = useState(false);
   const [modalProductId, setModalProductId] = useState<string | null>(null);
   const [showAiAssist, setShowAiAssist] = useState(false);
 
@@ -353,14 +356,13 @@ export default function BuildClient({
 
   async function completeSubmit() {
     if (cart.length === 0) return;
-    // Asked once, ever: a signed-in client without a verified WhatsApp number
+    // Asked once, ever: a signed-in client who hasn't verified OR skipped
     // yet sees PhoneVerifyStep here instead of submitting immediately -
-    // handlePhoneVerified() below calls doSubmitQuote() directly (not this
-    // function) once they're done, since locallyVerifiedWhatsapp set just
-    // beforehand isn't visible yet on this same synchronous pass - React
-    // state updates aren't applied until the next render.
-    if (!isAnonymous && !locallyVerifiedWhatsapp) {
-      setPhoneVerifySkippable(false);
+    // handlePhoneVerified()/handlePhoneSkipped() below call doSubmitQuote()
+    // directly (not this function) once they're done, since the local state
+    // set just beforehand isn't visible yet on this same synchronous pass -
+    // React state updates aren't applied until the next render.
+    if (!isAnonymous && !locallyVerifiedWhatsapp && !locallySkippedWhatsapp) {
       setAwaitingPhoneVerify(true);
       return;
     }
@@ -373,11 +375,11 @@ export default function BuildClient({
     doSubmitQuote();
   }
 
-  // Only reachable when phoneVerifySkippable is true (the immediate
-  // post-signup step) - the number itself was already saved unverified by
-  // PhoneVerifyStep's own handleSkip before this fires.
+  // The number itself was already saved unverified by PhoneVerifyStep's own
+  // handleSkip before this fires.
   function handlePhoneSkipped() {
     setAwaitingPhoneVerify(false);
+    setLocallySkippedWhatsapp(true);
     doSubmitQuote();
   }
 
@@ -435,18 +437,16 @@ export default function BuildClient({
   // Fires once AuthGate reports a successful sign up/in - refreshes the
   // server-rendered isAnonymous prop for good (so it doesn't flip back on the
   // next render, and unlocks the WhatsApp/Download buttons). A brand-new
-  // signup always sees the mandatory-but-skippable phone step next (driven
-  // by justSignedUp, not the hasVerifiedWhatsapp/locallyVerifiedWhatsapp
-  // pair below - those default true for an anonymous visitor, since they're
-  // only meaningful for an already-signed-in client, so they'd otherwise let
-  // a fresh signup skip the phone step entirely). Signing into an existing
-  // account instead resumes the submit the visitor originally clicked "I'm
-  // done" for.
+  // signup always sees the phone step next (driven by justSignedUp, not the
+  // hasVerifiedWhatsapp/locallyVerifiedWhatsapp pair below - those default
+  // true for an anonymous visitor, since they're only meaningful for an
+  // already-signed-in client, so they'd otherwise let a fresh signup skip
+  // the phone step entirely). Signing into an existing account instead
+  // resumes the submit the visitor originally clicked "I'm done" for.
   async function handleAuthSuccess(justSignedUp: boolean) {
     setShowAuthGate(false);
     router.refresh();
     if (justSignedUp) {
-      setPhoneVerifySkippable(true);
       setAwaitingPhoneVerify(true);
       return;
     }
@@ -951,8 +951,7 @@ export default function BuildClient({
                     ) : awaitingPhoneVerify ? (
                       <PhoneVerifyStep
                         onSuccess={handlePhoneVerified}
-                        onCancel={phoneVerifySkippable ? undefined : () => setAwaitingPhoneVerify(false)}
-                        onSkip={phoneVerifySkippable ? handlePhoneSkipped : undefined}
+                        onSkip={handlePhoneSkipped}
                         initialPhone={initialPhone}
                       />
                     ) : (

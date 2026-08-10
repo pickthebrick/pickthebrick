@@ -105,6 +105,14 @@ model User {
   // (lib/phoneVerification.ts) - asked once, at first quote/design-request
   // submission (see submitQuote/submitDesignRequest), never again while set.
   whatsappVerifiedAt DateTime?
+  // Set when the client chooses "Verify later" instead of completing the OTP
+  // step (saveUnverifiedPhoneAction) - checked alongside whatsappVerifiedAt
+  // so a client who's already decided not to verify right now is never
+  // re-asked on a later quote/design submission (BuildClient.tsx/
+  // FeaturesWizard.tsx used to re-show a mandatory, unskippable version of
+  // this step every time, with no way out once WhatsApp OTP delivery failed
+  // - this field is what makes the skip decision stick).
+  whatsappSkippedAt DateTime?
   role         Role     @default(client)
   createdAt    DateTime @default(now())
 

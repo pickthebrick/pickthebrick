@@ -21,6 +21,10 @@ export type SessionUser = {
   // the Build/Features submit gates (PhoneVerifyStep) check this to ask for
   // verification once, ever, rather than on every quote/design request.
   whatsappVerifiedAt: Date | null;
+  // Set once the client has chosen "Verify later" instead - checked
+  // alongside whatsappVerifiedAt so a skip decision also sticks forever,
+  // same as an actual verification would.
+  whatsappSkippedAt: Date | null;
 };
 
 export async function hashPassword(password: string) {
@@ -69,6 +73,7 @@ export async function getSession(): Promise<SessionUser | null> {
     role: effectiveRole(session.user.role, session.viaStaffLogin),
     fullName: session.user.fullName,
     whatsappVerifiedAt: session.user.whatsappVerifiedAt,
+    whatsappSkippedAt: session.user.whatsappSkippedAt,
   };
 }
 
