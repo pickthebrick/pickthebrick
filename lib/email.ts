@@ -183,6 +183,12 @@ export async function sendPaymentClaimResolvedEmail(to: string, quoteId: string,
   await sendTemplatedEmail("payment_claim_resolved", to, { quoteId, status });
 }
 
+// ---------- passwordReset.ts ----------
+
+export async function sendPasswordResetEmail(to: string, resetUrl: string) {
+  await sendTemplatedEmail("password_reset", to, { resetUrl });
+}
+
 // ---------- careers.ts ----------
 
 // Internal ops notification, not client-facing marketing copy, so this

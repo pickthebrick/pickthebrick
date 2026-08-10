@@ -191,6 +191,12 @@ export default function LoginForm() {
             />
           )}
 
+          {mode === "signin" && (
+            <Link href="/forgot-password" className="-mt-1 text-right text-xs font-medium text-[var(--muted)] hover:text-[var(--fg)]">
+              Forgot password?
+            </Link>
+          )}
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button

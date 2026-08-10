@@ -109,6 +109,7 @@ model User {
   createdAt    DateTime @default(now())
 
   sessions           Session[]
+  passwordResets     PasswordReset[]
   quotesAsClient     Quote[]              @relation("ClientQuotes")
   quotesAsCaptain    Quote[]              @relation("CaptainQuotes")
   quotesAsContractor Quote[]              @relation("ContractorQuotes")
@@ -137,6 +138,25 @@ model Session {
   // of that session (see getSession() in lib/auth.ts and proxy.ts) - the same
   // credentials only unlock the role's actual dashboard via /staff-login.
   viaStaffLogin Boolean @default(false)
+}
+
+// A pending "forgot password" link - deleted the moment it's used or
+// superseded by a newer request (see requestPasswordReset in
+// lib/passwordReset.ts), so a row existing at all means it's still live
+// (still checked against expiresAt regardless).
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // sha256 hash of the raw token that appears only in the emailed link -
+  // sha256 rather than PhoneVerification's bcrypt, since this token is a
+  // high-entropy random value (not a guessable 6-digit code), so a fast
+  // hash with a unique index is enough and keeps the lookup a single query.
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // A pending WhatsApp OTP challenge - keyed by phone (E.164), not by user,

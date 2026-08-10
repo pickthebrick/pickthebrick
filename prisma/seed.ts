@@ -321,6 +321,14 @@ const NOTIFICATION_TEMPLATES: { key: string; label: string; emailSubject: string
     emailBody: "Your payment claim for project {{quoteId}} is now: {{status}}.",
     whatsappBody: "Your payment claim for project {{quoteId}} is now: {{status}}.",
   },
+  {
+    key: "password_reset",
+    label: "Password reset requested",
+    emailSubject: "Reset your PickTheBrick password",
+    emailBody:
+      "We received a request to reset your password. Click the link below to choose a new one - it expires in 1 hour and can only be used once.\n\n{{resetUrl}}\n\nIf you didn't request this, you can safely ignore this email.",
+    whatsappBody: "Reset your PickTheBrick password (expires in 1 hour): {{resetUrl}}",
+  },
 ];
 
 async function seedNotificationTemplates() {
