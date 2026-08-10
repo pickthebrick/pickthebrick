@@ -119,9 +119,18 @@ export default function HomeClient({
           <a href="#how-it-works">How it works</a>
           <a href="#categories">Products</a>
           {!isClientSession && (
-            <a href="#partner" className="nav-partner-btn">
-              Partner with us
-            </a>
+            <>
+              <a href="#partner" className="nav-partner-btn">
+                Partner with us
+              </a>
+              <Link href="/login" className="signin-bar-btn nav-signin-btn">
+                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <circle cx="10" cy="6.7" r="3.2" />
+                  <path d="M3.5 17c.9-3.4 3.7-5.2 6.5-5.2s5.6 1.8 6.5 5.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Sign in
+              </Link>
+            </>
           )}
         </nav>
       </header>

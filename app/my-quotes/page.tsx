@@ -65,6 +65,9 @@ export default async function MyQuotesPage() {
   const clientLabel = client?.company
     ? `${client.fullName ?? client.email} · ${client.company}`
     : (client?.fullName ?? client?.email ?? null);
+  // First name only, for the "Hi X" greeting - falls back to the email's
+  // local part for accounts that never set a full name.
+  const firstName = client?.fullName?.trim().split(/\s+/)[0] ?? client?.email?.split("@")[0] ?? null;
 
   return (
     <div className="ptb-dash">
@@ -75,12 +78,11 @@ export default async function MyQuotesPage() {
         </a>
       </header>
       <main>
-        <h1>My dashboard</h1>
-        <p className="sub">Everything about your quotes, projects, and payments in one place.</p>
         <MyQuotesClient
           quotes={quotes}
           designRequests={designRequests}
           clientLabel={clientLabel}
+          firstName={firstName}
           styleFinderResult={styleFinderResult}
         />
       </main>

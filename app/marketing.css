@@ -54,6 +54,12 @@
   border-radius: var(--radius);
   color: var(--fg);
 }
+.ptb-marketing nav a.nav-signin-btn {
+  color: #fff;
+}
+.ptb-marketing nav a.nav-signin-btn:hover {
+  color: #fff;
+}
 .ptb-marketing nav a.nav-partner-btn:hover {
   background: var(--fg);
   color: #fff;

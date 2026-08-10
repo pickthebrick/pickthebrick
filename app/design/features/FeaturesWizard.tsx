@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import DesignStepper from "../DesignStepper";
 import SpaceIcon from "../SpaceIcon";
@@ -45,6 +45,7 @@ export default function FeaturesWizard({
   layerImages?: Record<string, Record<string, string>>;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [spaceList, setSpaceList] = useState(initialInstances);
   const [index, setIndex] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>(() =>
@@ -63,6 +64,26 @@ export default function FeaturesWizard({
   const [locallyVerifiedWhatsapp, setLocallyVerifiedWhatsapp] = useState(hasVerifiedWhatsapp);
   const [locallySkippedWhatsapp, setLocallySkippedWhatsapp] = useState(hasSkippedWhatsapp);
   const [awaitingPhoneVerify, setAwaitingPhoneVerify] = useState(false);
+
+  // Resumes the submit step after a Google OAuth round-trip - see
+  // BuildClient.tsx's identical effect for why this is needed (a full-page
+  // navigation away and back loses every bit of in-memory state, including
+  // which space was being viewed).
+  useEffect(() => {
+    if (searchParams.get("resume") !== "submit") return;
+    router.replace(`/design/features?id=${designRequestId}`, { scroll: false });
+    // Gated on the one-time ?resume=submit marker above - see
+    // BuildClient.tsx's identical effect/comment for why this is exempt.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIndex(initialInstances.length - 1);
+    if (!isAnonymous) {
+      setBusy(true);
+      doSubmit();
+    } else {
+      setAwaitingAuth(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const current = spaceList[index];
   const questions = SPACE_QUESTIONS[current.spaceKey] ?? [];
@@ -331,6 +352,7 @@ export default function FeaturesWizard({
             <AuthGate
               context="Sign in to submit your design request"
               onSuccess={handleAuthSuccess}
+              googleNext={`/design/features?id=${designRequestId}&resume=submit`}
               onCancel={() => setAwaitingAuth(false)}
             />
           </div>

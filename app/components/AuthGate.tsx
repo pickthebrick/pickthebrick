@@ -29,10 +29,18 @@ export default function AuthGate({
   context,
   onSuccess,
   onCancel,
+  googleNext,
 }: {
   context?: string;
   onSuccess: (justSignedUp: boolean) => void;
   onCancel?: () => void;
+  // Overrides the "next" URL the Google OAuth round-trip returns to -
+  // defaults to the current pathname+search. Callers that show this gate
+  // mid-flow (e.g. BuildClient's "I'm done" confirm step) pass a URL that
+  // carries a resume marker, since the full-page navigation Google requires
+  // wipes any in-memory React state (confirmingComplete, pendingAction) that
+  // would otherwise be lost on the way back.
+  googleNext?: string;
 }) {
   const [mode, setMode] = useState<Mode>("signup");
   const [fullName, setFullName] = useState("");
@@ -79,7 +87,7 @@ export default function AuthGate({
       <div className="auth-gate">
         {context && <div className="auth-gate-context">{context}</div>}
         <a
-          href={`/api/auth/google?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/")}`}
+          href={`/api/auth/google?next=${encodeURIComponent(googleNext ?? (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/"))}`}
           className="auth-gate-google"
         >
           <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">

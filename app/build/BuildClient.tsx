@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   upsertCartItem,
   removeCartItem,
@@ -104,6 +104,7 @@ export default function BuildClient({
   initialPhone?: string;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [cart, setCart] = useState<CartLine[]>(initialCart);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState(initialLocation ?? "");
@@ -152,6 +153,36 @@ export default function BuildClient({
   const [awaitingPhoneVerify, setAwaitingPhoneVerify] = useState(false);
   const [modalProductId, setModalProductId] = useState<string | null>(null);
   const [showAiAssist, setShowAiAssist] = useState(false);
+
+  // Resumes the "I'm done" confirm step after a Google OAuth round-trip -
+  // that's a full-page navigation away and back (see AuthGate.tsx's
+  // googleNext), so confirmingComplete/pendingAction/agreedToTerms are all
+  // gone by the time this component remounts. The ?resume=submit marker
+  // (set via googleNext below) is the only thing that survives the trip.
+  useEffect(() => {
+    if (searchParams.get("resume") !== "submit") return;
+    router.replace(editAsCaptain ? `/build?editQuote=${quoteId}` : "/build", { scroll: false });
+    // Gated on the one-time ?resume=submit marker above, not on state read
+    // during render - this is a deliberate "resume after external
+    // navigation" effect, not the render-derived-state anti-pattern the rule
+    // is meant to catch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAgreedToTerms(true);
+    setView("preview");
+    setConfirmingComplete(true);
+    if (!isAnonymous) {
+      setShowAuthGate(false);
+      completeSubmit();
+    } else {
+      setPendingAction("submit");
+      setShowAuthGate(true);
+    }
+    // Only ever meant to run once, right after mount - deliberately not
+    // depending on the values it reads (isAnonymous is a prop that only
+    // matters at this instant; re-running on router/searchParams identity
+    // changes would re-trigger the resume on unrelated navigations).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const cartMap = useMemo(() => new Map(cart.map((l) => [l.productId, l])), [cart]);
   // Flat id -> product lookup so the cart/preview thumbnails (which only
@@ -942,6 +973,7 @@ export default function BuildClient({
                       <AuthGate
                         context="Sign in to submit your quote"
                         onSuccess={handleAuthSuccess}
+                        googleNext={editAsCaptain ? `/build?editQuote=${quoteId}&resume=submit` : "/build?resume=submit"}
                         onCancel={() => {
                           setConfirmingComplete(false);
                           setPendingAction(null);

@@ -140,15 +140,24 @@ function DeleteButton({ label, onConfirm }: { label: string; onConfirm: () => Pr
   );
 }
 
+function timeGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function MyQuotesClient({
   quotes,
   designRequests,
   clientLabel,
+  firstName,
   styleFinderResult,
 }: {
   quotes: Quote[];
   designRequests: DesignRequest[];
   clientLabel: string | null;
+  firstName: string | null;
   styleFinderResult: { topStyle: string | null; stats: { styleKey: string; shown: number; liked: number }[] } | null;
 }) {
   const router = useRouter();
@@ -216,9 +225,95 @@ export default function MyQuotesClient({
   const paidMethodRequests = submittedDesignRequests.filter((r) => r.paymentMethod);
   const captainQuotes = quotes.filter((q) => q.captain);
 
+  // Quick-glance numbers for the hero row - drawn from data this component
+  // already has, so no extra fetching. Sums real project value (confirmed+
+  // quotes) rather than every draft, since a pile of untouched drafts
+  // shouldn't inflate the headline number.
+  const activeProjectCount = projectQuotes.length;
+  const totalProjectValue = projectQuotes.reduce((sum, q) => sum + q.grandTotal, 0);
+  const pendingActionCount =
+    allInspections.filter((i) => i.status === "requested").length +
+    allPaymentClaims.filter((c) => c.status === "requested" || c.status === "pending").length;
+
   return (
     <>
       {error && <p style={{ color: "#b91c1c", marginBottom: 12 }}>{error}</p>}
+
+      <div className="dash-hero">
+        <div className="dash-hero-greeting">
+          <h1>
+            {timeGreeting()}
+            {firstName ? `, ${firstName}` : ""}
+          </h1>
+          <p className="sub">Everything about your quotes, projects, and payments in one place.</p>
+        </div>
+        <div className="dash-stat-row">
+          <div className="dash-stat-tile">
+            <span className="dash-stat-icon quotes">
+              <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M5.5 2.5h6l3 3v12a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-14a1 1 0 0 1 1-1Z" strokeLinejoin="round" />
+                <path d="M11.5 2.5v3h3" strokeLinejoin="round" />
+                <path d="M7 11h6M7 14h6M7 8h2" strokeLinecap="round" />
+              </svg>
+            </span>
+            <div>
+              <span className="num">{submittedQuotes.length}</span>
+              <span className="label">Quotes submitted</span>
+            </div>
+          </div>
+          <div className="dash-stat-tile">
+            <span className="dash-stat-icon design">
+              <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M13.5 2.8a1.7 1.7 0 0 1 2.4 2.4L6.5 14.6l-3.2.8.8-3.2 9.4-9.4Z" strokeLinejoin="round" strokeLinecap="round" />
+                <path d="M11.8 4.5 14.2 7" strokeLinecap="round" />
+              </svg>
+            </span>
+            <div>
+              <span className="num">{submittedDesignRequests.length}</span>
+              <span className="label">Design requests</span>
+            </div>
+          </div>
+          <div className="dash-stat-tile">
+            <span className="dash-stat-icon projects">
+              <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M3.5 17V8l5-3.5L13.5 8v9" strokeLinejoin="round" strokeLinecap="round" />
+                <path d="M13.5 17V6l3 1.5V17" strokeLinejoin="round" strokeLinecap="round" />
+                <path d="M6.5 10.5h2M6.5 13.5h2" strokeLinecap="round" />
+              </svg>
+            </span>
+            <div>
+              <span className="num">{activeProjectCount}</span>
+              <span className="label">Active projects</span>
+            </div>
+          </div>
+          <div className="dash-stat-tile">
+            <span className="dash-stat-icon value">
+              <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <circle cx="10" cy="10" r="7.2" />
+                <path d="M10 6v8M12.3 8.1c0-.9-1-1.6-2.3-1.6s-2.3.7-2.3 1.5c0 2.2 4.6 1 4.6 3.2 0 .8-1 1.5-2.3 1.5s-2.3-.7-2.3-1.6" strokeLinecap="round" />
+              </svg>
+            </span>
+            <div>
+              <span className="num">AED {totalProjectValue.toLocaleString()}</span>
+              <span className="label">Confirmed project value</span>
+            </div>
+          </div>
+          {pendingActionCount > 0 && (
+            <div className="dash-stat-tile alert">
+              <span className="dash-stat-icon pending">
+                <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <circle cx="10" cy="10" r="7.2" />
+                  <path d="M10 6v4.3l3 2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <div>
+                <span className="num">{pendingActionCount}</span>
+                <span className="label">Awaiting a reply from you</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="dash-tabs">
         {TABS.map((t) => (

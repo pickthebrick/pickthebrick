@@ -68,6 +68,39 @@ body {
   }
 }
 
+/* Anonymous-visitor sign-in pill - see app/components/SignInBar.tsx. Same
+   fixed top-right slot as .account-bar, but a filled accent pill with a
+   label so it never reads as the same control as AccountBar's icon-only
+   sign-out button. */
+.signin-bar {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1000;
+}
+.signin-bar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 8px 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 999px;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+}
+.signin-bar-btn:hover {
+  background: var(--accent-deep);
+}
+@media (max-width: 700px) {
+  .signin-bar {
+    top: auto;
+    bottom: 14px;
+  }
+}
+
 /* Floating WhatsApp/AI-chat buttons for clients who get stuck - see
    app/components/SupportChatButtons.tsx. Sits bottom-right, stacked above
    the home page's .staff-login-link. */
