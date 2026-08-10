@@ -29,7 +29,9 @@ export async function createPackageFeatureItem(input: { label: string; minTier: 
   await requireAdminOrMarketing();
   const label = input.label.trim();
   if (!label) throw new Error("Please enter a label");
-  const count = await prisma.packageFeatureItem.count();
+  // Scoped to this tier alone, not the whole table - each tier's tab
+  // manages its own append-to-end ordering independently.
+  const count = await prisma.packageFeatureItem.count({ where: { minTier: input.minTier } });
   await prisma.packageFeatureItem.create({ data: { label, minTier: input.minTier, sortOrder: count } });
   revalidatePackageFeatures();
 }
@@ -58,10 +60,16 @@ export async function deletePackageFeatureItem(id: string) {
 }
 
 // Swaps sortOrder with the previous/next item so the admin panel can offer
-// simple move-up/move-down controls without a full drag-reorder UI.
+// simple move-up/move-down controls without a full drag-reorder UI. Scoped
+// to the item's own tier - each tab's ordering is independent of the others.
 export async function movePackageFeatureItem(id: string, direction: "up" | "down") {
   await requireAdminOrMarketing();
-  const items = await prisma.packageFeatureItem.findMany({ orderBy: { sortOrder: "asc" } });
+  const current = await prisma.packageFeatureItem.findUnique({ where: { id } });
+  if (!current) return;
+  const items = await prisma.packageFeatureItem.findMany({
+    where: { minTier: current.minTier },
+    orderBy: { sortOrder: "asc" },
+  });
   const idx = items.findIndex((i) => i.id === id);
   if (idx === -1) return;
   const swapIdx = direction === "up" ? idx - 1 : idx + 1;

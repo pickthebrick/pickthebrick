@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import DesignStepper from "../DesignStepper";
 import SpaceIcon from "../SpaceIcon";
-import { SPACE_QUESTIONS } from "@/lib/spaceQuestions";
+import { mergedSpaceQuestions, type CustomQuestionRow } from "@/lib/spaceQuestions";
 import { resolveLayerImages } from "@/lib/spaceLayers";
 import { saveDesignRequestSpaceAnswers, deleteDesignRequestSpace, submitDesignRequest } from "@/app/actions/design";
 import AuthGate from "@/app/components/AuthGate";
@@ -28,6 +28,7 @@ export default function FeaturesWizard({
   hasSkippedWhatsapp = true,
   initialPhone,
   layerImages = {},
+  customQuestions = {},
 }: {
   designRequestId: string;
   instances: SpaceInstance[];
@@ -42,7 +43,12 @@ export default function FeaturesWizard({
   // A number already on file but unverified (client skipped at signup) -
   // pre-fills PhoneVerifyStep here instead of asking from scratch.
   initialPhone?: string;
-  layerImages?: Record<string, Record<string, string>>;
+  layerImages?: Record<string, Record<string, { url: string; sortOrder: number }>>;
+  // Admin-added boolean questions per space (see SpaceCustomQuestion) -
+  // merged with the hardcoded SPACE_QUESTIONS set via mergedSpaceQuestions()
+  // so a marketer's new option ("Bean bag seating") renders as a real switch
+  // here, same as any built-in one.
+  customQuestions?: Record<string, CustomQuestionRow[]>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -86,11 +92,11 @@ export default function FeaturesWizard({
   }, []);
 
   const current = spaceList[index];
-  const questions = SPACE_QUESTIONS[current.spaceKey] ?? [];
+  const questions = mergedSpaceQuestions(current.spaceKey, customQuestions[current.spaceKey] ?? []);
   const answers = drafts[current.id] ?? {};
   const notes = notesDrafts[current.id] ?? "";
   const liveFeatures = Object.fromEntries(Object.entries(answers).map(([k, v]) => [k, v === "true"]));
-  const layers = resolveLayerImages(current.spaceKey, answers, layerImages[current.spaceKey] ?? {});
+  const layers = resolveLayerImages(questions, answers, layerImages[current.spaceKey] ?? {});
 
   function setAnswer(key: string, value: string) {
     setDrafts((prev) => ({ ...prev, [current.id]: { ...prev[current.id], [key]: value } }));

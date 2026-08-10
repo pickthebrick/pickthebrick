@@ -880,12 +880,35 @@ model CaseStudyCard {
 // Every slot is optional - client-facing code falls back to the hand-drawn
 // SpaceIcon SVG for any space/slot that hasn't been uploaded yet.
 model SpaceLayerImage {
-  id       String @id @default(cuid())
-  spaceKey String
-  slot     String
-  imageUrl String
+  id        String @id @default(cuid())
+  spaceKey  String
+  slot      String
+  imageUrl  String
+  // Stacking order within a space - resolveLayerImages() renders layers in
+  // this order so a marketer can fix wrong overlapping (e.g. a rug should
+  // render under a desk, not over it) without touching code.
+  sortOrder Int    @default(0)
 
   @@unique([spaceKey, slot])
+}
+
+// Admin-added boolean question for a space, on top of the fixed set in
+// lib/spaceQuestions.ts (SPACE_QUESTIONS) - lets a marketer open up a new
+// client-selectable option (e.g. "Bean bag seating") without a code change.
+// Always boolean (a plain yes/no toggle, same shape as the hardcoded
+// questions) - merged with the hardcoded list at render time via
+// mergedSpaceQuestions() rather than replacing it. `key` is a generated
+// slug, namespaced with a "custom_" prefix so it can never collide with a
+// hardcoded question key.
+model SpaceCustomQuestion {
+  id        String   @id @default(cuid())
+  spaceKey  String
+  key       String
+  label     String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([spaceKey, key])
 }
 
 enum PackageTier {

@@ -28,9 +28,11 @@ const TIER_LABELS: Record<PackageFeatureItemRow["minTier"], string> = {
 };
 
 type Draft = { label: string; description: string; minTier: PackageFeatureItemRow["minTier"] };
+type Tier = PackageFeatureItemRow["minTier"];
 
 export default function PackageFeaturesClient({ items }: { items: PackageFeatureItemRow[] }) {
   const router = useRouter();
+  const [activeTier, setActiveTier] = useState<Tier>("essential");
   const [drafts, setDrafts] = useState<Record<string, Draft>>(() =>
     Object.fromEntries(items.map((i) => [i.id, { label: i.label, description: i.description ?? "", minTier: i.minTier }])),
   );
@@ -39,8 +41,11 @@ export default function PackageFeaturesClient({ items }: { items: PackageFeature
   const [cropTarget, setCropTarget] = useState<{ file: File; onDone: (f: File) => void } | null>(null);
 
   const [newLabel, setNewLabel] = useState("");
-  const [newTier, setNewTier] = useState<PackageFeatureItemRow["minTier"]>("essential");
   const [adding, setAdding] = useState(false);
+
+  // Each tier tab manages its own item list and ordering independently -
+  // see the tier-scoped sortOrder handling in app/actions/packageFeatures.ts.
+  const tierItems = items.filter((i) => i.minTier === activeTier);
 
   function setDraft(id: string, patch: Partial<Draft>) {
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
@@ -108,9 +113,8 @@ export default function PackageFeaturesClient({ items }: { items: PackageFeature
     setAdding(true);
     setError(null);
     try {
-      await createPackageFeatureItem({ label: newLabel, minTier: newTier });
+      await createPackageFeatureItem({ label: newLabel, minTier: activeTier });
       setNewLabel("");
-      setNewTier("essential");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add item");
@@ -122,15 +126,30 @@ export default function PackageFeaturesClient({ items }: { items: PackageFeature
   return (
     <div>
       <p className="empty" style={{ padding: "0 0 12px" }}>
-        These are the checklist items shown on each design package card. The tier a client sees them on is set by
-        &ldquo;Included from&rdquo; - Advanced also shows every Essential item, Premium shows all three. The
+        These are the checklist items shown on each design package card. Essential, Advanced, and Premium each have
+        their own separate list below - an item shown on multiple tiers needs its own row on each tier&apos;s tab,
+        so e.g. Essential can say &ldquo;2 revisions&rdquo; while Advanced says &ldquo;4 revisions&rdquo;. The
         description shows as a hover tooltip on the client page; the sample image (optional) adds a &ldquo;Sample&rdquo;
         button next to the item that opens the image in a pop-up.
       </p>
+
+      <div className="design-layers-space-picker">
+        {(Object.keys(TIER_LABELS) as Tier[]).map((tier) => (
+          <button
+            key={tier}
+            type="button"
+            className={`design-layers-space-chip ${activeTier === tier ? "selected" : ""}`}
+            onClick={() => setActiveTier(tier)}
+          >
+            {TIER_LABELS[tier]}
+          </button>
+        ))}
+      </div>
+
       {error && <p style={{ color: "#b91c1c", fontSize: 13, margin: "10px 0" }}>{error}</p>}
 
       <div className="pkgfeat-list">
-        {items.map((item, idx) => {
+        {tierItems.map((item, idx) => {
           const draft = drafts[item.id] ?? { label: item.label, description: item.description ?? "", minTier: item.minTier };
           const busy = busyId === item.id;
           return (
@@ -141,7 +160,7 @@ export default function PackageFeaturesClient({ items }: { items: PackageFeature
                 </button>
                 <button
                   type="button"
-                  disabled={busy || idx === items.length - 1}
+                  disabled={busy || idx === tierItems.length - 1}
                   onClick={() => handleMove(item.id, "down")}
                   aria-label="Move down"
                 >
@@ -163,16 +182,6 @@ export default function PackageFeaturesClient({ items }: { items: PackageFeature
                   rows={2}
                 />
                 <div className="pkgfeat-row-meta">
-                  <label>
-                    Included from
-                    <select value={draft.minTier} onChange={(e) => setDraft(item.id, { minTier: e.target.value as Draft["minTier"] })}>
-                      {(Object.keys(TIER_LABELS) as (keyof typeof TIER_LABELS)[]).map((tier) => (
-                        <option key={tier} value={tier}>
-                          {TIER_LABELS[tier]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
                   <button type="button" className="action" disabled={busy} onClick={() => handleSave(item.id)}>
                     Save
                   </button>
@@ -234,17 +243,10 @@ export default function PackageFeaturesClient({ items }: { items: PackageFeature
           type="text"
           value={newLabel}
           onChange={(e) => setNewLabel(e.target.value)}
-          placeholder="New item label"
+          placeholder={`New ${TIER_LABELS[activeTier]} item label`}
         />
-        <select value={newTier} onChange={(e) => setNewTier(e.target.value as Draft["minTier"])}>
-          {(Object.keys(TIER_LABELS) as (keyof typeof TIER_LABELS)[]).map((tier) => (
-            <option key={tier} value={tier}>
-              {TIER_LABELS[tier]}
-            </option>
-          ))}
-        </select>
         <button type="button" className="action" disabled={adding || !newLabel.trim()} onClick={handleAdd}>
-          {adding ? "Adding..." : "+ Add item"}
+          {adding ? "Adding..." : `+ Add to ${TIER_LABELS[activeTier]}`}
         </button>
       </div>
 

@@ -86,13 +86,24 @@ export default async function DesignFeaturesPage({ searchParams }: { searchParam
   }));
 
   const spaceKeys = [...new Set(instances.map((i) => i.spaceKey))];
-  const layerRows = await prisma.spaceLayerImage.findMany({
-    where: { spaceKey: { in: spaceKeys } },
-    select: { spaceKey: true, slot: true, imageUrl: true },
-  });
-  const layerImages: Record<string, Record<string, string>> = {};
+  const [layerRows, customQuestionRows] = await Promise.all([
+    prisma.spaceLayerImage.findMany({
+      where: { spaceKey: { in: spaceKeys } },
+      select: { spaceKey: true, slot: true, imageUrl: true, sortOrder: true },
+    }),
+    prisma.spaceCustomQuestion.findMany({
+      where: { spaceKey: { in: spaceKeys } },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, spaceKey: true, key: true, label: true },
+    }),
+  ]);
+  const layerImages: Record<string, Record<string, { url: string; sortOrder: number }>> = {};
   for (const row of layerRows) {
-    (layerImages[row.spaceKey] ??= {})[row.slot] = row.imageUrl;
+    (layerImages[row.spaceKey] ??= {})[row.slot] = { url: row.imageUrl, sortOrder: row.sortOrder };
+  }
+  const customQuestions: Record<string, { id: string; key: string; label: string }[]> = {};
+  for (const row of customQuestionRows) {
+    (customQuestions[row.spaceKey] ??= []).push({ id: row.id, key: row.key, label: row.label });
   }
 
   return (
@@ -104,6 +115,7 @@ export default async function DesignFeaturesPage({ searchParams }: { searchParam
       hasSkippedWhatsapp={hasSkippedWhatsapp}
       initialPhone={initialPhone}
       layerImages={layerImages}
+      customQuestions={customQuestions}
     />
   );
 }

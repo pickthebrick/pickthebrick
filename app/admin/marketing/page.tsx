@@ -13,22 +13,24 @@ export default async function MarketingPage() {
   if (!session) redirect("/login");
   if (!isAdminRole(session.role) && session.role !== Role.marketing) redirect(ROLE_HOME[session.role]);
 
-  const [banners, aiDesignerBanner, categories, caseStudyCards, spaceLayerImages, styleFinderImages] = await Promise.all([
-    prisma.banner.findMany({ orderBy: { sortOrder: "asc" } }),
-    prisma.aiDesignerBanner.upsert({
-      where: { id: "ai-designer-banner" },
-      create: { id: "ai-designer-banner" },
-      update: {},
-    }),
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, key: true, label: true, imageUrl: true } }),
-    Promise.all(
-      ["case-1", "case-2", "case-3"].map((id) =>
-        prisma.caseStudyCard.upsert({ where: { id }, create: { id }, update: {} })
-      )
-    ),
-    prisma.spaceLayerImage.findMany({ select: { spaceKey: true, slot: true, imageUrl: true } }),
-    prisma.styleFinderImage.findMany({ select: { styleKey: true, slot: true, imageUrl: true } }),
-  ]);
+  const [banners, aiDesignerBanner, categories, caseStudyCards, spaceLayerImages, spaceCustomQuestions, styleFinderImages] =
+    await Promise.all([
+      prisma.banner.findMany({ orderBy: { sortOrder: "asc" } }),
+      prisma.aiDesignerBanner.upsert({
+        where: { id: "ai-designer-banner" },
+        create: { id: "ai-designer-banner" },
+        update: {},
+      }),
+      prisma.category.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, key: true, label: true, imageUrl: true } }),
+      Promise.all(
+        ["case-1", "case-2", "case-3"].map((id) =>
+          prisma.caseStudyCard.upsert({ where: { id }, create: { id }, update: {} })
+        )
+      ),
+      prisma.spaceLayerImage.findMany({ select: { spaceKey: true, slot: true, imageUrl: true, sortOrder: true } }),
+      prisma.spaceCustomQuestion.findMany({ orderBy: { sortOrder: "asc" } }),
+      prisma.styleFinderImage.findMany({ select: { styleKey: true, slot: true, imageUrl: true } }),
+    ]);
 
   // Ensure the default feature rows exist (same fixed-id upsert pattern as
   // the case study cards above) so the panel below is never empty and
@@ -55,6 +57,7 @@ export default async function MarketingPage() {
         categories={categories}
         caseStudyCards={caseStudyCards}
         spaceLayerImages={spaceLayerImages}
+        spaceCustomQuestions={spaceCustomQuestions}
         styleFinderImages={styleFinderImages}
         packageFeatureItems={packageFeatureItems}
       />

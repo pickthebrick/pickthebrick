@@ -2,25 +2,59 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { setSpaceLayerImage, removeSpaceLayerImage } from "@/app/actions/spaceLayers";
-import { slotsForSpace } from "@/lib/spaceLayers";
+import { setSpaceLayerImage, removeSpaceLayerImage, moveSpaceLayerImage } from "@/app/actions/spaceLayers";
+import { addCustomSpaceQuestion, deleteCustomSpaceQuestion } from "@/app/actions/spaceQuestions";
+import { slotsForSpace, featureSlot } from "@/lib/spaceLayers";
+import { mergedSpaceQuestions } from "@/lib/spaceQuestions";
 import { SPACES } from "@/lib/spaces";
 import ImageCropper from "@/app/components/ImageCropper";
 
-type LayerRow = { spaceKey: string; slot: string; imageUrl: string };
+type LayerRow = { spaceKey: string; slot: string; imageUrl: string; sortOrder: number };
+type CustomQuestionRow = { id: string; spaceKey: string; key: string; label: string; sortOrder: number };
 
-export default function DesignLayersClient({ images }: { images: LayerRow[] }) {
+export default function DesignLayersClient({
+  images,
+  customQuestions,
+}: {
+  images: LayerRow[];
+  customQuestions: CustomQuestionRow[];
+}) {
   const router = useRouter();
   const [selectedSpace, setSelectedSpace] = useState(SPACES[0].key);
   const [busySlot, setBusySlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cropTarget, setCropTarget] = useState<{ file: File; onDone: (f: File) => void } | null>(null);
+  const [newOptionLabel, setNewOptionLabel] = useState("");
+  const [addingOption, setAddingOption] = useState(false);
 
-  const bySpace: Record<string, Record<string, string>> = {};
+  const bySpace: Record<string, Record<string, LayerRow>> = {};
   for (const row of images) {
-    (bySpace[row.spaceKey] ??= {})[row.slot] = row.imageUrl;
+    (bySpace[row.spaceKey] ??= {})[row.slot] = row;
   }
   const currentImages = bySpace[selectedSpace] ?? {};
+
+  const currentCustomQuestions = customQuestions.filter((q) => q.spaceKey === selectedSpace);
+  const questions = mergedSpaceQuestions(selectedSpace, currentCustomQuestions);
+  const slots = slotsForSpace(questions);
+  // Maps a feature slot back to the custom question it came from, if any -
+  // only custom options get a delete-this-option control; the hardcoded
+  // SPACE_QUESTIONS set is fixed in code and isn't removable here.
+  const customBySlot = new Map(currentCustomQuestions.map((q) => [featureSlot(q.key), q]));
+
+  // Stacking order among uploaded feature/choice layers only (button/base
+  // aren't reorderable - see moveSpaceLayerImage's comment) - used to
+  // disable the top/bottom move arrows.
+  const orderedMoveableSlots = Object.values(currentImages)
+    .filter((r) => slots.find((s) => s.slot === r.slot)?.group !== "button" && r.slot !== "base")
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((r) => r.slot);
+
+  async function handleMove(slot: string, direction: "up" | "down") {
+    setBusySlot(slot);
+    await moveSpaceLayerImage(selectedSpace, slot, direction);
+    router.refresh();
+    setBusySlot(null);
+  }
 
   async function handleChange(slot: string, file: File | null) {
     if (!file) return;
@@ -45,12 +79,37 @@ export default function DesignLayersClient({ images }: { images: LayerRow[] }) {
     setBusySlot(null);
   }
 
+  async function handleAddOption() {
+    if (!newOptionLabel.trim()) return;
+    setAddingOption(true);
+    setError(null);
+    try {
+      await addCustomSpaceQuestion(selectedSpace, newOptionLabel);
+      setNewOptionLabel("");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add option");
+    } finally {
+      setAddingOption(false);
+    }
+  }
+
+  async function handleDeleteOption(id: string, slot: string) {
+    if (!confirm("Delete this option? Clients will no longer see it, and its uploaded image (if any) will be removed."))
+      return;
+    setBusySlot(slot);
+    await deleteCustomSpaceQuestion(id);
+    router.refresh();
+    setBusySlot(null);
+  }
+
   return (
     <div>
       <p className="empty" style={{ padding: "0 0 12px" }}>
-        Each space has a button image (shown on the space picker), a base room image, and one image per switch or
-        chair/desk-count option - shown on the Features step whenever that switch is on or that option is selected.
-        Any slot left empty falls back to the built-in line-art icon.
+        Each space has a button image (shown on the space picker), a base room image (always the bottom layer), and
+        one image per switch or chair/desk-count option - shown stacked on top of the base whenever that switch is
+        on or that option is selected. Use the arrows to fix wrong overlapping between two uploaded layers. Any slot
+        left empty falls back to the built-in line-art icon.
       </p>
       <div className="design-layers-space-picker">
         {SPACES.map((s) => (
@@ -66,9 +125,13 @@ export default function DesignLayersClient({ images }: { images: LayerRow[] }) {
       </div>
       {error && <p style={{ color: "#b91c1c", fontSize: 13, margin: "10px 0" }}>{error}</p>}
       <div className="banner-grid" style={{ marginTop: 14 }}>
-        {slotsForSpace(selectedSpace).map(({ slot, label }) => {
-          const imageUrl = currentImages[slot];
+        {slots.map(({ slot, label, group }) => {
+          const row = currentImages[slot];
+          const imageUrl = row?.imageUrl;
           const busy = busySlot === slot;
+          const moveable = imageUrl && group !== "button" && slot !== "base";
+          const moveIdx = moveable ? orderedMoveableSlots.indexOf(slot) : -1;
+          const customQuestion = customBySlot.get(slot);
           return (
             <div key={slot} className="banner-card">
               <div className="banner-card-img-wrap">
@@ -82,7 +145,10 @@ export default function DesignLayersClient({ images }: { images: LayerRow[] }) {
                 )}
               </div>
               <div className="banner-card-body">
-                <div className="banner-card-title">{label}</div>
+                <div className="banner-card-title">
+                  {label}
+                  {customQuestion && <span className="status-badge" style={{ marginLeft: 6 }}>Custom</span>}
+                </div>
                 <div className="banner-card-actions">
                   <label className="action" style={{ cursor: "pointer" }}>
                     {busy ? "Uploading..." : imageUrl ? "Replace" : "Upload"}
@@ -104,11 +170,61 @@ export default function DesignLayersClient({ images }: { images: LayerRow[] }) {
                     </button>
                   )}
                 </div>
+                {moveable && (
+                  <div className="banner-card-actions" style={{ marginTop: 6 }}>
+                    <button
+                      type="button"
+                      className="action"
+                      disabled={busy || moveIdx <= 0}
+                      onClick={() => handleMove(slot, "up")}
+                      title="Move this layer up (renders later, so it sits on top of layers below it)"
+                    >
+                      ▲ Bring forward
+                    </button>
+                    <button
+                      type="button"
+                      className="action"
+                      disabled={busy || moveIdx === -1 || moveIdx >= orderedMoveableSlots.length - 1}
+                      onClick={() => handleMove(slot, "down")}
+                      title="Move this layer down (renders earlier, so it sits behind layers above it)"
+                    >
+                      ▼ Send backward
+                    </button>
+                  </div>
+                )}
+                {customQuestion && (
+                  <div className="banner-card-actions" style={{ marginTop: 6 }}>
+                    <button
+                      type="button"
+                      className="action danger"
+                      disabled={busy}
+                      onClick={() => handleDeleteOption(customQuestion.id, slot)}
+                    >
+                      Delete this option
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
+
+      <div className="pkgfeat-add-row" style={{ marginTop: 16 }}>
+        <input
+          type="text"
+          value={newOptionLabel}
+          onChange={(e) => setNewOptionLabel(e.target.value)}
+          placeholder='New option for this space (e.g. "Bean bag seating")'
+        />
+        <button type="button" className="action" disabled={addingOption || !newOptionLabel.trim()} onClick={handleAddOption}>
+          {addingOption ? "Adding..." : "+ Add option"}
+        </button>
+      </div>
+      <p className="empty" style={{ padding: "6px 0 0" }}>
+        A new option becomes a real switch clients can turn on for this space, right alongside the built-in ones -
+        upload an image for it above like any other layer.
+      </p>
 
       {cropTarget && (
         <ImageCropper

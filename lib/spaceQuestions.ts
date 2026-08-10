@@ -71,3 +71,15 @@ export const SPACE_QUESTIONS: Record<string, SpaceQuestion[]> = {
 export function booleanQuestionKeys(spaceKey: string): string[] {
   return (SPACE_QUESTIONS[spaceKey] ?? []).filter((q) => q.type === "boolean").map((q) => q.key);
 }
+
+export type CustomQuestionRow = { id: string; key: string; label: string };
+
+// Appends admin-added questions (see SpaceCustomQuestion in
+// prisma/schema.prisma) after the hardcoded set - always boolean, same shape
+// as every other feature toggle. Every consumer of a space's question list
+// (the survey, the layer-image slots, the designer's answer readout) calls
+// this instead of reading SPACE_QUESTIONS directly, so a marketer's new
+// question shows up everywhere without a code change.
+export function mergedSpaceQuestions(spaceKey: string, custom: CustomQuestionRow[] = []): SpaceQuestion[] {
+  return [...(SPACE_QUESTIONS[spaceKey] ?? []), ...custom.map((c) => ({ key: c.key, label: c.label, type: "boolean" as const }))];
+}
