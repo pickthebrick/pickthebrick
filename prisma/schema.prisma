@@ -86,7 +86,14 @@ enum TimelineItemStatus {
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
-  passwordHash String
+  // Nullable - a Google-only account (see googleId below) has no password at
+  // all until the person sets one from their Profile page.
+  passwordHash String?
+  // Set once Google OAuth completes (lib/googleAuth.ts) - the account may
+  // still also have a passwordHash if it was originally created that way and
+  // later linked (matched by email), or vice versa (password account that
+  // later signs in with Google using the same address).
+  googleId     String?  @unique
   fullName     String?
   company      String?
   phone        String?
@@ -94,6 +101,10 @@ model User {
   // forward) - kept distinct from `phone` since a WhatsApp number can differ
   // from the general contact number.
   whatsappNumber String?
+  // Set once `whatsappNumber` has been confirmed via the WhatsApp OTP step
+  // (lib/phoneVerification.ts) - asked once, at first quote/design-request
+  // submission (see submitQuote/submitDesignRequest), never again while set.
+  whatsappVerifiedAt DateTime?
   role         Role     @default(client)
   createdAt    DateTime @default(now())
 
@@ -126,6 +137,25 @@ model Session {
   // of that session (see getSession() in lib/auth.ts and proxy.ts) - the same
   // credentials only unlock the role's actual dashboard via /staff-login.
   viaStaffLogin Boolean @default(false)
+}
+
+// A pending WhatsApp OTP challenge - keyed by phone (E.164), not by user,
+// since the checkout-time capture step (app/components/PhoneVerifyStep.tsx)
+// verifies a number before it's necessarily attached to anything. Looked up
+// by lib/phoneVerification.ts; the row is deleted once successfully
+// confirmed, or simply expires (no cleanup job needed - expired/stale rows
+// are cheap and harmless to leave, checked against on every lookup anyway).
+model PhoneVerification {
+  id        String   @id @default(cuid())
+  phone     String
+  // bcrypt hash of the 6-digit code - never store the code itself.
+  codeHash  String
+  // Capped in confirmPhoneCode() to stop brute-forcing a 6-digit space.
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone])
 }
 
 model Category {

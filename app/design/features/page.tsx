@@ -30,6 +30,16 @@ export default async function DesignFeaturesPage({ searchParams }: { searchParam
   if (!request || !actorOwns(actor, request)) redirect("/design");
   if (request.spaceEntries.length === 0) redirect(`/design/spaces?id=${id}`);
 
+  const clientPhoneRow =
+    "clientId" in actor
+      ? await prisma.user.findUnique({
+          where: { id: actor.clientId },
+          select: { whatsappVerifiedAt: true, phone: true, whatsappNumber: true },
+        })
+      : null;
+  const hasVerifiedWhatsapp = "clientId" in actor ? Boolean(clientPhoneRow?.whatsappVerifiedAt) : true;
+  const initialPhone = clientPhoneRow?.whatsappNumber ?? clientPhoneRow?.phone ?? undefined;
+
   if (request.status !== DesignRequestStatus.draft) {
     return (
       <div className="ptb-marketing">
@@ -89,6 +99,8 @@ export default async function DesignFeaturesPage({ searchParams }: { searchParam
       designRequestId={id}
       instances={instances}
       isAnonymous={!("clientId" in actor)}
+      hasVerifiedWhatsapp={hasVerifiedWhatsapp}
+      initialPhone={initialPhone}
       layerImages={layerImages}
     />
   );

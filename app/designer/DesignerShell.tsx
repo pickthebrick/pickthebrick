@@ -9,6 +9,10 @@ const NAV_ITEMS: { key: DesignerSection; label: string; href: string }[] = [
   { key: "payments", label: "Payments", href: "/designer/payments" },
 ];
 
+// Profile isn't a DesignerShell-wrapped section (it's the shared /profile
+// page every role uses), so it's rendered separately from NAV_ITEMS/active
+// tracking - it never shows as "active" since no page passes that key.
+
 export default function DesignerShell({ active, children }: { active: DesignerSection; children: ReactNode }) {
   return (
     <div className="ptb-dash">
@@ -23,6 +27,7 @@ export default function DesignerShell({ active, children }: { active: DesignerSe
                 {item.label}
               </Link>
             ))}
+            <Link href="/profile">Profile</Link>
           </nav>
         </aside>
         <main className="admin-main">{children}</main>

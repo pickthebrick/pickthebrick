@@ -17,6 +17,10 @@ export type SessionUser = {
   // else.
   role: Role;
   fullName: string | null;
+  // Set once WhatsApp OTP verification has completed (lib/phoneVerification.ts) -
+  // the Build/Features submit gates (PhoneVerifyStep) check this to ask for
+  // verification once, ever, rather than on every quote/design request.
+  whatsappVerifiedAt: Date | null;
 };
 
 export async function hashPassword(password: string) {
@@ -64,6 +68,7 @@ export async function getSession(): Promise<SessionUser | null> {
     email: session.user.email,
     role: effectiveRole(session.user.role, session.viaStaffLogin),
     fullName: session.user.fullName,
+    whatsappVerifiedAt: session.user.whatsappVerifiedAt,
   };
 }
 

@@ -109,6 +109,7 @@ export default async function AdminDatabasePage() {
         }))}
         designers={designers}
         marketers={marketers}
+        isSuperAdmin={session.role === Role.super_admin}
       />
     </AdminShell>
   );

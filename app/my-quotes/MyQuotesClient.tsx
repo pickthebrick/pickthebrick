@@ -226,6 +226,9 @@ export default function MyQuotesClient({
             {t.label}
           </button>
         ))}
+        <Link href="/profile" className="dash-tab">
+          Profile
+        </Link>
       </div>
 
       {tab === "quotes" && (

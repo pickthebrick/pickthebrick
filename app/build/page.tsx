@@ -73,7 +73,10 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
     prisma.banner.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
     prisma.quote.findUnique({ where: { id: quoteId }, select: { location: true, officeSize: true } }),
     session
-      ? prisma.user.findUnique({ where: { id: session.id }, select: { fullName: true, company: true, email: true } })
+      ? prisma.user.findUnique({
+          where: { id: session.id },
+          select: { fullName: true, company: true, email: true, phone: true, whatsappNumber: true },
+        })
       : null,
   ]);
 
@@ -91,6 +94,8 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
       initialOfficeSize={quote?.officeSize ?? null}
       clientLabel={clientLabel ?? undefined}
       isAnonymous={!session}
+      hasVerifiedWhatsapp={!!session?.whatsappVerifiedAt}
+      initialPhone={client?.whatsappNumber ?? client?.phone ?? undefined}
     />
   );
 }

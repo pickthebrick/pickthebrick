@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { QuoteStatus } from "@/app/generated/prisma/enums";
 import { respondToSiteInspection, createSiteInspection, recordSiteVisitNotes } from "@/app/actions/progress";
 import { contactLabel } from "@/lib/contactLabel";
@@ -124,6 +125,7 @@ export default function CaptainClient({
               </span>
             </button>
           ))}
+          <Link href="/profile">Profile</Link>
         </nav>
       </aside>
 

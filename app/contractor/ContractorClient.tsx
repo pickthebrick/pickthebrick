@@ -2,6 +2,7 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { QuoteStatus } from "@/app/generated/prisma/enums";
 import { reportProgress, requestSiteInspection, requestPaymentClaim } from "@/app/actions/progress";
 import { applyForOpenJob } from "@/app/actions/timeline";
@@ -217,6 +218,7 @@ export default function ContractorClient({ assignments, openJobs }: { assignment
               </span>
             )}
           </button>
+          <Link href="/profile">Profile</Link>
         </nav>
       </aside>
 

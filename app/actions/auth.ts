@@ -13,8 +13,11 @@ export type AuthResult = { success: true } | { error: string };
 // lib/actor.ts. A no-op if there's no anon cookie (the common case for a
 // normal login unrelated to Build/Design). Only wired for client accounts:
 // a contractor/designer applicant signing up has no reason to inherit an
-// unrelated anonymous quote.
-async function reparentAnonymousSession(clientId: string) {
+// unrelated anonymous quote. Exported (not just used internally by
+// signUp/signIn below) so the Google OAuth callback route
+// (app/api/auth/google/callback/route.ts) can call the same logic after
+// completing its own sign-in.
+export async function reparentAnonymousSession(clientId: string) {
   const anonId = await getAnonSessionId();
   if (!anonId) return;
   await prisma.quote.updateMany({
@@ -103,6 +106,9 @@ export async function signIn(input: { email: string; password: string; viaStaffL
     },
   });
   if (!user) return { error: "Invalid email or password." };
+  if (!user.passwordHash) {
+    return { error: "This account signs in with Google - use the \"Continue with Google\" button, or set a password from your Profile page first." };
+  }
 
   const valid = await verifyPassword(input.password, user.passwordHash);
   if (!valid) return { error: "Invalid email or password." };

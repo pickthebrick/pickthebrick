@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateUserContactInfo } from "@/app/actions/users";
+import { updateUserContactInfo, deleteUserCompletely } from "@/app/actions/users";
 
 type Base = { id: string; fullName: string | null; email: string; phone: string | null; whatsappNumber: string | null; createdAt: Date };
 type Client = Base & { company: string | null; _count: { quotesAsClient: number; designRequestsAsClient: number } };
@@ -61,12 +61,14 @@ export default function AdminDatabaseClient({
   contractors,
   designers,
   marketers,
+  isSuperAdmin,
 }: {
   clients: Client[];
   captains: Captain[];
   contractors: Contractor[];
   designers: Designer[];
   marketers: Marketer[];
+  isSuperAdmin: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("client");
@@ -90,6 +92,29 @@ export default function AdminDatabaseClient({
     } finally {
       setBusy(null);
     }
+  }
+
+  async function handleDelete(user: Base, disclaimer: string) {
+    if (!confirm(`Permanently delete ${user.fullName ?? user.email}?\n\n${disclaimer}\n\nThis cannot be undone.`)) return;
+    setBusy(user.id);
+    setError(null);
+    try {
+      await deleteUserCompletely(user.id);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete this account");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function DeleteCell({ user, disclaimer }: { user: Base; disclaimer: string }) {
+    if (!isSuperAdmin) return null;
+    return (
+      <button className="action danger" disabled={busy === user.id} onClick={() => handleDelete(user, disclaimer)}>
+        Delete
+      </button>
+    );
   }
 
   function WhatsappCell({ user }: { user: Base }) {
@@ -273,6 +298,7 @@ export default function AdminDatabaseClient({
                 <th>Quotes</th>
                 <th>Design requests</th>
                 <th>Joined</th>
+                {isSuperAdmin && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -290,6 +316,14 @@ export default function AdminDatabaseClient({
                   <td>{c._count.quotesAsClient}</td>
                   <td>{c._count.designRequestsAsClient}</td>
                   <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                  {isSuperAdmin && (
+                    <td>
+                      <DeleteCell
+                        user={c}
+                        disclaimer={`This will permanently erase all ${c._count.quotesAsClient} quote(s) and ${c._count.designRequestsAsClient} design request(s) - including quote items, payment claims, project timelines, and uploaded files - not just the account.`}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -308,6 +342,7 @@ export default function AdminDatabaseClient({
                 <th>WhatsApp</th>
                 <th>Assigned projects</th>
                 <th>Joined</th>
+                {isSuperAdmin && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -323,6 +358,14 @@ export default function AdminDatabaseClient({
                   </td>
                   <td>{c._count.quotesAsCaptain}</td>
                   <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                  {isSuperAdmin && (
+                    <td>
+                      <DeleteCell
+                        user={c}
+                        disclaimer={`They're the captain on ${c._count.quotesAsCaptain} project(s) - those stay intact, just unassigned, so you can assign a new captain.`}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -343,6 +386,7 @@ export default function AdminDatabaseClient({
                 <th>Categories</th>
                 <th>Status</th>
                 <th>Joined</th>
+                {isSuperAdmin && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -383,6 +427,14 @@ export default function AdminDatabaseClient({
                     )}
                   </td>
                   <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                  {isSuperAdmin && (
+                    <td>
+                      <DeleteCell
+                        user={c}
+                        disclaimer="Their trade license file and contractor application are erased. Any project timeline items they're assigned to stay intact, just unassigned, so you can assign someone else."
+                      />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -401,6 +453,7 @@ export default function AdminDatabaseClient({
                 <th>WhatsApp</th>
                 <th>Design requests</th>
                 <th>Joined</th>
+                {isSuperAdmin && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -416,6 +469,14 @@ export default function AdminDatabaseClient({
                   </td>
                   <td>{c._count.designRequestsAsDesigner}</td>
                   <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                  {isSuperAdmin && (
+                    <td>
+                      <DeleteCell
+                        user={c}
+                        disclaimer={`Their CV and designer application are erased. The ${c._count.designRequestsAsDesigner} design request(s) they're assigned to stay intact, just unassigned, so you can assign a new designer.`}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -433,6 +494,7 @@ export default function AdminDatabaseClient({
                 <th>Email</th>
                 <th>WhatsApp</th>
                 <th>Joined</th>
+                {isSuperAdmin && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -447,6 +509,11 @@ export default function AdminDatabaseClient({
                     <WhatsappCell user={c} />
                   </td>
                   <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                  {isSuperAdmin && (
+                    <td>
+                      <DeleteCell user={c} disclaimer="This account will be permanently removed." />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

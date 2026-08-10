@@ -55,6 +55,9 @@ export default async function AdminShell({
     role === "Marketing"
       ? NAV_ITEMS.filter((item) => item.key === "marketing")
       : NAV_ITEMS.filter((item) => !item.superAdminOnly || isSuperAdmin);
+  // Profile isn't in NAV_ITEMS/AdminSection (it's the shared /profile page
+  // every role uses, not an admin-shell-wrapped section) - shown for every
+  // admin/super_admin/marketing account, appended after the role filter above.
 
   // Red-flag count for design requests a designer hasn't delivered within
   // their 48h window - shown on the nav item itself so it's visible from
@@ -84,6 +87,7 @@ export default async function AdminShell({
                 )}
               </Link>
             ))}
+            <Link href="/profile">Profile</Link>
           </nav>
         </aside>
         <main className="admin-main">{children}</main>

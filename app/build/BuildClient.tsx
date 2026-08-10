@@ -23,6 +23,7 @@ import QuoteDetailsModal from "./QuoteDetailsModal";
 import TermsSection from "./TermsSection";
 import AiAssistPanel from "./AiAssistPanel";
 import AuthGate from "@/app/components/AuthGate";
+import PhoneVerifyStep from "@/app/components/PhoneVerifyStep";
 import SignInBar from "@/app/components/SignInBar";
 import "./build.css";
 
@@ -71,6 +72,8 @@ export default function BuildClient({
   editAsCaptain = false,
   clientLabel,
   isAnonymous = false,
+  hasVerifiedWhatsapp = true,
+  initialPhone,
 }: {
   catalog: Catalog;
   quoteId: string;
@@ -85,6 +88,14 @@ export default function BuildClient({
   // /login) and gates the submit/download/share steps later in the flow
   // behind AuthGate instead of letting them through.
   isAnonymous?: boolean;
+  // Whether the signed-in client has already completed the once-ever
+  // WhatsApp OTP step (see PhoneVerifyStep) - defaults true so the
+  // editAsCaptain path (which never passes this prop, and never calls
+  // completeSubmit anyway) can't accidentally trigger it.
+  hasVerifiedWhatsapp?: boolean;
+  // A number already on file but unverified (client skipped at signup) -
+  // pre-fills PhoneVerifyStep here instead of asking from scratch.
+  initialPhone?: string;
 }) {
   const router = useRouter();
   const [cart, setCart] = useState<CartLine[]>(initialCart);
@@ -121,6 +132,21 @@ export default function BuildClient({
   // handleAuthSuccess), so the gate never leaves them stranded with an
   // extra click to re-submit.
   const [pendingAction, setPendingAction] = useState<null | "submit">(null);
+  // Drives AuthGate's render directly, instead of the isAnonymous prop - see
+  // the comment on AuthGate.tsx for why that prop can flip false mid-flow
+  // (a Server Action setting the session cookie auto-refreshes it) and would
+  // otherwise unmount AuthGate itself out from under an in-progress signup.
+  const [showAuthGate, setShowAuthGate] = useState(false);
+  // Local, optimistic mirror of hasVerifiedWhatsapp - PhoneVerifyStep flips
+  // this the instant it succeeds, rather than waiting on a router.refresh()
+  // round-trip to update the server-rendered prop.
+  const [locallyVerifiedWhatsapp, setLocallyVerifiedWhatsapp] = useState(hasVerifiedWhatsapp);
+  const [awaitingPhoneVerify, setAwaitingPhoneVerify] = useState(false);
+  // True only for the immediate post-signup phone step (justSignedUp) - a
+  // later "you still haven't verified" gate for an already-signed-in client
+  // (see completeSubmit) stays verify-or-cancel, matching PhoneVerifyStep's
+  // own doc comment on when onSkip is meant to be offered.
+  const [phoneVerifySkippable, setPhoneVerifySkippable] = useState(false);
   const [modalProductId, setModalProductId] = useState<string | null>(null);
   const [showAiAssist, setShowAiAssist] = useState(false);
 
@@ -312,8 +338,7 @@ export default function BuildClient({
     }
   }
 
-  async function completeSubmit() {
-    if (cart.length === 0) return;
+  async function doSubmitQuote() {
     setSubmitting(true);
     try {
       await submitQuote(quoteId);
@@ -326,12 +351,45 @@ export default function BuildClient({
     }
   }
 
+  async function completeSubmit() {
+    if (cart.length === 0) return;
+    // Asked once, ever: a signed-in client without a verified WhatsApp number
+    // yet sees PhoneVerifyStep here instead of submitting immediately -
+    // handlePhoneVerified() below calls doSubmitQuote() directly (not this
+    // function) once they're done, since locallyVerifiedWhatsapp set just
+    // beforehand isn't visible yet on this same synchronous pass - React
+    // state updates aren't applied until the next render.
+    if (!isAnonymous && !locallyVerifiedWhatsapp) {
+      setPhoneVerifySkippable(false);
+      setAwaitingPhoneVerify(true);
+      return;
+    }
+    await doSubmitQuote();
+  }
+
+  function handlePhoneVerified() {
+    setAwaitingPhoneVerify(false);
+    setLocallyVerifiedWhatsapp(true);
+    doSubmitQuote();
+  }
+
+  // Only reachable when phoneVerifySkippable is true (the immediate
+  // post-signup step) - the number itself was already saved unverified by
+  // PhoneVerifyStep's own handleSkip before this fires.
+  function handlePhoneSkipped() {
+    setAwaitingPhoneVerify(false);
+    doSubmitQuote();
+  }
+
   // Authenticated users submit immediately (existing two-step confirm); an
   // anonymous visitor instead sees AuthGate in the same confirm step, with
   // "submit" queued as the action to resume once they're signed in.
   function handleDoneClick() {
     setConfirmingComplete(true);
-    if (isAnonymous) setPendingAction("submit");
+    if (isAnonymous) {
+      setPendingAction("submit");
+      setShowAuthGate(true);
+    }
   }
 
   function quoteSummaryText() {
@@ -376,10 +434,22 @@ export default function BuildClient({
 
   // Fires once AuthGate reports a successful sign up/in - refreshes the
   // server-rendered isAnonymous prop for good (so it doesn't flip back on the
-  // next render, and unlocks the WhatsApp/Download buttons) and resumes the
-  // submit the visitor originally clicked "I'm done" for.
-  async function handleAuthSuccess() {
+  // next render, and unlocks the WhatsApp/Download buttons). A brand-new
+  // signup always sees the mandatory-but-skippable phone step next (driven
+  // by justSignedUp, not the hasVerifiedWhatsapp/locallyVerifiedWhatsapp
+  // pair below - those default true for an anonymous visitor, since they're
+  // only meaningful for an already-signed-in client, so they'd otherwise let
+  // a fresh signup skip the phone step entirely). Signing into an existing
+  // account instead resumes the submit the visitor originally clicked "I'm
+  // done" for.
+  async function handleAuthSuccess(justSignedUp: boolean) {
+    setShowAuthGate(false);
     router.refresh();
+    if (justSignedUp) {
+      setPhoneVerifySkippable(true);
+      setAwaitingPhoneVerify(true);
+      return;
+    }
     const action = pendingAction;
     setPendingAction(null);
     if (action === "submit") await completeSubmit();
@@ -868,14 +938,22 @@ export default function BuildClient({
                       office moving — or get in touch with our team now on{" "}
                       <a href="tel:+971523142272">0523142272</a>.
                     </div>
-                    {isAnonymous ? (
+                    {showAuthGate ? (
                       <AuthGate
                         context="Sign in to submit your quote"
                         onSuccess={handleAuthSuccess}
                         onCancel={() => {
                           setConfirmingComplete(false);
                           setPendingAction(null);
+                          setShowAuthGate(false);
                         }}
+                      />
+                    ) : awaitingPhoneVerify ? (
+                      <PhoneVerifyStep
+                        onSuccess={handlePhoneVerified}
+                        onCancel={phoneVerifySkippable ? undefined : () => setAwaitingPhoneVerify(false)}
+                        onSkip={phoneVerifySkippable ? handlePhoneSkipped : undefined}
+                        initialPhone={initialPhone}
                       />
                     ) : (
                       <>

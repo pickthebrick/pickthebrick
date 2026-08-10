@@ -315,7 +315,7 @@ export default function StyleFinderClient({
                 <Link href={returnTo} className="sf-go">
                   {saving ? "Saving…" : "Continue →"}
                 </Link>
-              ) : isAnonymous && showAuth ? (
+              ) : showAuth ? (
                 <AuthGate
                   context="Create an account to save your style profile and start your design"
                   onSuccess={() => router.push("/design")}

@@ -1,12 +1,22 @@
 import "server-only";
+import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 
-// No email provider is configured yet - every send just logs to the console
-// so nothing blocks development. Swap the body of sendEmail for a real
-// provider (e.g. Resend) once credentials are available; every call site
-// below stays unchanged.
+// Falls back to a console-log stub when RESEND_API_KEY isn't set (local dev
+// without credentials) so nothing blocks development - every call site below
+// stays unchanged either way.
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "PickTheBrick <hello@pickthebrick.com>";
+
 export async function sendEmail({ to, subject, body }: { to: string; subject: string; body: string }) {
-  console.log(`[email] to=${to} subject="${subject}"\n${body}\n`);
+  if (!resend) {
+    console.log(`[email] to=${to} subject="${subject}"\n${body}\n`);
+    return;
+  }
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to, subject, text: body });
+  if (error) {
+    console.error(`[email] Resend failed to=${to} subject="${subject}":`, error);
+  }
 }
 
 export function money(amount: number) {
