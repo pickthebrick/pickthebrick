@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { setStyleFinderImage, removeStyleFinderImage } from "@/app/actions/styleFinderImages";
 import { STYLE_FINDER_STYLES, IMAGES_PER_STYLE } from "@/lib/styleFinder";
+import ImageCropper from "@/app/components/ImageCropper";
 
 type StyleImageRow = { styleKey: string; slot: number; imageUrl: string };
 
@@ -12,6 +13,7 @@ export default function StyleFinderImagesClient({ images }: { images: StyleImage
   const [selectedStyle, setSelectedStyle] = useState(STYLE_FINDER_STYLES[0].key);
   const [busySlot, setBusySlot] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<{ file: File; onDone: (f: File) => void } | null>(null);
 
   const byStyle: Record<string, Record<number, string>> = {};
   for (const row of images) {
@@ -90,8 +92,8 @@ export default function StyleFinderImagesClient({ images }: { images: StyleImage
                       style={{ display: "none" }}
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;
-                        handleChange(slot, file);
                         e.target.value = "";
+                        setCropTarget(file && { file, onDone: (cropped) => handleChange(slot, cropped) });
                       }}
                     />
                   </label>
@@ -106,6 +108,17 @@ export default function StyleFinderImagesClient({ images }: { images: StyleImage
           );
         })}
       </div>
+
+      {cropTarget && (
+        <ImageCropper
+          file={cropTarget.file}
+          onCancel={() => setCropTarget(null)}
+          onConfirm={(cropped) => {
+            cropTarget.onDone(cropped);
+            setCropTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }

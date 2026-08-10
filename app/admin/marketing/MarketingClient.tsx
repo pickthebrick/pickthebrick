@@ -16,6 +16,7 @@ import AdminPanel from "../AdminPanel";
 import DesignLayersClient from "./DesignLayersClient";
 import StyleFinderImagesClient from "./StyleFinderImagesClient";
 import PackageFeaturesClient, { type PackageFeatureItemRow } from "./PackageFeaturesClient";
+import ImageCropper from "@/app/components/ImageCropper";
 
 type Banner = {
   id: string;
@@ -56,9 +57,19 @@ export default function MarketingClient({
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Shared crop step for every image uploader on this page - see
+  // ImageCropper.tsx. Each onChange hands its freshly-picked File through
+  // here instead of straight to its own upload handler; the handler only
+  // ever sees the cropped result.
+  const [cropTarget, setCropTarget] = useState<{ file: File; onDone: (f: File) => void } | null>(null);
+  function openCrop(file: File | null, onDone: (f: File) => void) {
+    if (!file) return;
+    setCropTarget({ file, onDone });
+  }
 
   const [aiHeadline, setAiHeadline] = useState(aiDesignerBanner.headline);
   const [aiSubText, setAiSubText] = useState(aiDesignerBanner.subText);
@@ -193,7 +204,21 @@ export default function MarketingClient({
       <div className="banner-upload-card">
         <h2>Add a banner</h2>
         <form ref={formRef} onSubmit={handleSubmit} className="banner-form">
-          <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" required />
+          <input
+            ref={bannerFileInputRef}
+            type="file"
+            name="image"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            required
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null;
+              openCrop(file, (cropped) => {
+                const dt = new DataTransfer();
+                dt.items.add(cropped);
+                if (bannerFileInputRef.current) bannerFileInputRef.current.files = dt.files;
+              });
+            }}
+          />
           <input type="text" name="title" placeholder="Title (optional, used as alt text)" />
           <input type="url" name="linkUrl" placeholder="Link URL (optional)" />
           {error && <p style={{ color: "#b91c1c", fontSize: 13 }}>{error}</p>}
@@ -284,8 +309,8 @@ export default function MarketingClient({
                       style={{ display: "none" }}
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;
-                        handleCategoryImageChange(c.id, file);
                         e.target.value = "";
+                        openCrop(file, (cropped) => handleCategoryImageChange(c.id, cropped));
                       }}
                     />
                   </label>
@@ -331,8 +356,8 @@ export default function MarketingClient({
                       style={{ display: "none" }}
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;
-                        handleCaseImageChange(c.id, file);
                         e.target.value = "";
+                        openCrop(file, (cropped) => handleCaseImageChange(c.id, cropped));
                       }}
                     />
                   </label>
@@ -380,6 +405,17 @@ export default function MarketingClient({
       <AdminPanel title="Design package features" count={packageFeatureItems.length} defaultOpen={false}>
         <PackageFeaturesClient items={packageFeatureItems} />
       </AdminPanel>
+
+      {cropTarget && (
+        <ImageCropper
+          file={cropTarget.file}
+          onCancel={() => setCropTarget(null)}
+          onConfirm={(cropped) => {
+            cropTarget.onDone(cropped);
+            setCropTarget(null);
+          }}
+        />
+      )}
     </>
   );
 }

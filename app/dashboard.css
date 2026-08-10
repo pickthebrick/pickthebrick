@@ -181,6 +181,120 @@
   box-shadow: none;
 }
 
+/* ---------- image crop modal - app/components/ImageCropper.tsx ---------- */
+.img-crop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(58, 54, 50, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+.img-crop-modal {
+  background: var(--surface);
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  box-shadow: 4px 4px 0 var(--line);
+  padding: 18px;
+  max-width: 95vw;
+  max-height: 95vh;
+  overflow: auto;
+}
+.img-crop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.img-crop-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+.img-crop-aspect-toggle {
+  display: flex;
+  gap: 4px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 2px;
+}
+.img-crop-aspect-toggle button {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border: none;
+  border-radius: calc(var(--radius) - 2px);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.img-crop-aspect-toggle button.selected {
+  background: var(--accent);
+  color: #fff;
+}
+.img-crop-stage {
+  position: relative;
+  overflow: hidden;
+  background: repeating-conic-gradient(#00000014 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+  border: 1px solid var(--line);
+  touch-action: none;
+  user-select: none;
+}
+.img-crop-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+.img-crop-box {
+  position: absolute;
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  cursor: move;
+}
+.img-crop-handle {
+  position: absolute;
+  width: 0;
+  height: 0;
+  background-clip: content-box;
+  transform: translate(-50%, -50%);
+}
+.img-crop-handle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border: 1.5px solid var(--fg);
+  border-radius: 50%;
+}
+.img-crop-handle.nw { top: 0; left: 0; cursor: nwse-resize; }
+.img-crop-handle.ne { top: 0; left: 100%; cursor: nesw-resize; }
+.img-crop-handle.sw { top: 100%; left: 0; cursor: nesw-resize; }
+.img-crop-handle.se { top: 100%; left: 100%; cursor: nwse-resize; }
+.img-crop-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+}
+.img-crop-dims {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.img-crop-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* ---------- dashboard hero: greeting + quick-glance stat tiles ---------- */
 .dash-hero {
   margin-bottom: 26px;

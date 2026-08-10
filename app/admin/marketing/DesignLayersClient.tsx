@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { setSpaceLayerImage, removeSpaceLayerImage } from "@/app/actions/spaceLayers";
 import { slotsForSpace } from "@/lib/spaceLayers";
 import { SPACES } from "@/lib/spaces";
+import ImageCropper from "@/app/components/ImageCropper";
 
 type LayerRow = { spaceKey: string; slot: string; imageUrl: string };
 
@@ -13,6 +14,7 @@ export default function DesignLayersClient({ images }: { images: LayerRow[] }) {
   const [selectedSpace, setSelectedSpace] = useState(SPACES[0].key);
   const [busySlot, setBusySlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<{ file: File; onDone: (f: File) => void } | null>(null);
 
   const bySpace: Record<string, Record<string, string>> = {};
   for (const row of images) {
@@ -91,8 +93,8 @@ export default function DesignLayersClient({ images }: { images: LayerRow[] }) {
                       style={{ display: "none" }}
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;
-                        handleChange(slot, file);
                         e.target.value = "";
+                        setCropTarget(file && { file, onDone: (cropped) => handleChange(slot, cropped) });
                       }}
                     />
                   </label>
@@ -107,6 +109,17 @@ export default function DesignLayersClient({ images }: { images: LayerRow[] }) {
           );
         })}
       </div>
+
+      {cropTarget && (
+        <ImageCropper
+          file={cropTarget.file}
+          onCancel={() => setCropTarget(null)}
+          onConfirm={(cropped) => {
+            cropTarget.onDone(cropped);
+            setCropTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }

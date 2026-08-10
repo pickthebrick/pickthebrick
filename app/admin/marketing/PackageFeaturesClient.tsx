@@ -10,6 +10,7 @@ import {
   setPackageFeatureSampleImage,
   removePackageFeatureSampleImage,
 } from "@/app/actions/packageFeatures";
+import ImageCropper from "@/app/components/ImageCropper";
 
 export type PackageFeatureItemRow = {
   id: string;
@@ -35,6 +36,7 @@ export default function PackageFeaturesClient({ items }: { items: PackageFeature
   );
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<{ file: File; onDone: (f: File) => void } | null>(null);
 
   const [newLabel, setNewLabel] = useState("");
   const [newTier, setNewTier] = useState<PackageFeatureItemRow["minTier"]>("essential");
@@ -195,8 +197,8 @@ export default function PackageFeaturesClient({ items }: { items: PackageFeature
                           style={{ display: "none" }}
                           onChange={(e) => {
                             const file = e.target.files?.[0] ?? null;
-                            handleImageChange(item.id, file);
                             e.target.value = "";
+                            setCropTarget(file && { file, onDone: (cropped) => handleImageChange(item.id, cropped) });
                           }}
                         />
                       </label>
@@ -245,6 +247,17 @@ export default function PackageFeaturesClient({ items }: { items: PackageFeature
           {adding ? "Adding..." : "+ Add item"}
         </button>
       </div>
+
+      {cropTarget && (
+        <ImageCropper
+          file={cropTarget.file}
+          onCancel={() => setCropTarget(null)}
+          onConfirm={(cropped) => {
+            cropTarget.onDone(cropped);
+            setCropTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }
