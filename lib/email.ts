@@ -189,6 +189,18 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   await sendTemplatedEmail("password_reset", to, { resetUrl });
 }
 
+// ---------- team.ts ----------
+
+export async function sendTeamMemberWelcomeEmail(
+  to: string,
+  data: { fullName: string; setPasswordUrl: string },
+) {
+  await sendTemplatedEmail("team_member_welcome", to, {
+    fullName: data.fullName,
+    setPasswordUrl: data.setPasswordUrl,
+  });
+}
+
 // ---------- careers.ts ----------
 
 // Internal ops notification, not client-facing marketing copy, so this

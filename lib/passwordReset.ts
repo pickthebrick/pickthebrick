@@ -4,9 +4,15 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 import { sendPasswordResetEmail } from "@/lib/email";
+import type { Role } from "@/app/generated/prisma/enums";
 
 const TOKEN_BYTES = 32;
 const EXPIRY_MINUTES = 60;
+// Onboarding links get much longer to live than a recovery link - a new
+// team member may not open the email same-day, and unlike a forgot-password
+// request, a superadmin can always mint a fresh one on demand (see
+// resendTeamWelcomeEmail in app/actions/team.ts) if it does lapse.
+const WELCOME_EXPIRY_MINUTES = 60 * 24 * 7;
 // Mirrors PhoneVerification's 60s resend cooldown in lib/phoneVerification.ts.
 const RESEND_COOLDOWN_MS = 60_000;
 
@@ -14,11 +20,24 @@ function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-async function siteOrigin() {
+export async function siteOrigin() {
   const h = await headers();
   const host = h.get("host");
   const proto = h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
   return `${proto}://${host}`;
+}
+
+// Shared by requestPasswordReset (self-service, cooldown-gated) and
+// issueTeamWelcomeToken (admin-triggered, no cooldown) - only the most
+// recently issued token for a user is ever valid, so issuing a new one
+// silently invalidates any still-unused older one.
+async function issueToken(userId: string, expiryMinutes: number) {
+  const token = crypto.randomBytes(TOKEN_BYTES).toString("hex");
+  const tokenHash = hashToken(token);
+  const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
+  await prisma.passwordReset.deleteMany({ where: { userId } });
+  await prisma.passwordReset.create({ data: { userId, tokenHash, expiresAt } });
+  return token;
 }
 
 // Always resolves the same way whether or not the email is registered, and
@@ -33,21 +52,24 @@ export async function requestPasswordReset(email: string) {
   });
   if (recent) return;
 
-  const token = crypto.randomBytes(TOKEN_BYTES).toString("hex");
-  const tokenHash = hashToken(token);
-  const expiresAt = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000);
-
-  // Only the most recently requested link is ever valid - requesting a new
-  // one silently invalidates any still-unused older one.
-  await prisma.passwordReset.deleteMany({ where: { userId: user.id } });
-  await prisma.passwordReset.create({ data: { userId: user.id, tokenHash, expiresAt } });
-
+  const token = await issueToken(user.id, EXPIRY_MINUTES);
   const origin = await siteOrigin();
   await sendPasswordResetEmail(user.email, `${origin}/reset-password?token=${token}`);
 }
 
-export async function confirmPasswordReset(token: string, newPassword: string): Promise<{ error: string } | { success: true }> {
-  const record = await prisma.passwordReset.findUnique({ where: { tokenHash: hashToken(token) } });
+// Issues a set-password link for a brand-new (or resend-requested) team
+// account - see createAdmin/resendTeamWelcomeEmail in app/actions/team.ts.
+// The account has no passwordHash yet, so this link (through the same
+// /reset-password page as a normal reset) is the only way in until it's used.
+export async function issueTeamWelcomeToken(userId: string): Promise<string> {
+  return issueToken(userId, WELCOME_EXPIRY_MINUTES);
+}
+
+export async function confirmPasswordReset(
+  token: string,
+  newPassword: string,
+): Promise<{ error: string } | { success: true; role: Role }> {
+  const record = await prisma.passwordReset.findUnique({ where: { tokenHash: hashToken(token) }, include: { user: true } });
   if (!record || record.expiresAt < new Date()) {
     return { error: "This reset link is invalid or has expired - request a new one." };
   }
@@ -57,7 +79,8 @@ export async function confirmPasswordReset(token: string, newPassword: string): 
   await prisma.passwordReset.deleteMany({ where: { userId: record.userId } });
   // A password reset is an account-recovery action - sign the account out
   // everywhere else, in case the reset was needed because of a compromise
-  // rather than plain forgetfulness.
+  // rather than plain forgetfulness. Harmless no-op for a brand-new account
+  // that has no other sessions yet.
   await prisma.session.deleteMany({ where: { userId: record.userId } });
-  return { success: true };
+  return { success: true, role: record.user.role };
 }
