@@ -18,7 +18,7 @@ const LOG_DIR = path.join(process.cwd(), "data", "marketing-agent-log");
 export type MarketingLogEvent =
   | { type: "chat"; userMessage: string; assistantReply: string; toolCalls: { name: string; args: unknown }[] }
   | { type: "analysis"; workingCount: number; problemsCount: number; recommendationCount: number }
-  | { type: "content_generated"; platform: string; format: string; idea?: string }
+  | { type: "content_generated"; platform: string; format: string; idea?: string; hasImage?: boolean }
   | { type: "insights_generated"; channel: string; count: number }
   | { type: "opportunities_generated"; count: number }
   | { type: "report_generated"; period: string };

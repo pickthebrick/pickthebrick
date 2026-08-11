@@ -12,7 +12,6 @@ import {
   META_CONTENT,
   META_INSIGHTS,
   LEADS,
-  QUEUE_ITEMS,
   AUTONOMY_LEVELS,
 } from "@/app/admin/brain/data";
 import * as marketingState from "@/lib/marketingState";
@@ -22,7 +21,17 @@ import { saveGeneratedContent } from "@/lib/marketingContent";
 import { assertBudgetAvailable, recordUsage, BudgetExceededError } from "@/lib/marketingBudget";
 import { getWebsiteAnalytics } from "@/lib/ga4";
 import { getGoogleAdsPerformance } from "@/lib/googleAds";
+import { executeAction, createAction } from "@/lib/ai/actionExecutor";
+import { ACTION_PERMISSIONS } from "@/lib/ai/actionPermissions";
+import { generateConceptImage } from "@/lib/ai/imageGen";
 import type { MarketingRoleId } from "@/lib/ai/marketingRoles";
+
+// The action types propose_action is allowed to create - anything with a
+// real (mocked, for now) execute tool behind it in lib/ai/actionTools.ts.
+// Kept as a runtime whitelist (not just an OpenAI enum) so a malformed/
+// hallucinated type can never create a row executeAction() would silently
+// fail on with a generic "no execute tool yet" error.
+const PROPOSABLE_ACTION_TYPES = Object.keys(ACTION_PERMISSIONS);
 
 // Single place the /admin/brain "AI Marketing Manager" card, the Content
 // Studio generator, and the Marketing chat (popup + Chat tab) all call
@@ -142,7 +151,21 @@ Top website pages:
 ${pages}`;
 }
 
-export type MarketingRecommendation = { id: string; title: string; why: string; impact: string; risk: string; status: string };
+export type MarketingRecommendation = {
+  id: string;
+  title: string;
+  why: string;
+  impact: string;
+  risk: string;
+  status: string;
+  type: string;
+  externalService: string | null;
+  externalId: string | null;
+  requestPayloadJson: string | null;
+  resultJson: string | null;
+  error: string | null;
+  mock: boolean;
+};
 export type MarketingAnalysis = {
   working: string[];
   problems: string[];
@@ -229,13 +252,14 @@ export async function getCurrentMarketingAnalysis(): Promise<MarketingAnalysis> 
 }
 
 export type ContentConceptInput = { platform: string; format: string; idea?: string };
-export type ContentConcept = { hook: string; visual: string; caption: string; cta: string; fallback: boolean };
+export type ContentConcept = { hook: string; visual: string; caption: string; cta: string; imageUrl: string | null; fallback: boolean };
 
 const FALLBACK_CONCEPT: ContentConcept = {
   hook: '"Most people overpay for their Dubai office fit-out. Here\'s exactly what AED 100K buys you."',
   visual: "Split-screen before/after walkthrough, handheld camera, natural light.",
   caption: 'Transparent pricing, no surprises. Supply + install, always. DM "OFFICE" for your estimate.',
   cta: "Get your instant estimate — link in bio",
+  imageUrl: null,
   fallback: true,
 };
 
@@ -261,9 +285,12 @@ export async function generateContentConcept(input: ContentConceptInput): Promis
   try {
     const parsed = JSON.parse(raw) as Partial<ContentConcept>;
     if (!parsed.hook || !parsed.visual || !parsed.caption || !parsed.cta) return FALLBACK_CONCEPT;
-    const concept: ContentConcept = { hook: parsed.hook, visual: parsed.visual, caption: parsed.caption, cta: parsed.cta, fallback: false };
+    const imageUrl = await generateConceptImage(
+      `Marketing photo for a Dubai office fit-out company. Platform: ${input.platform}. Shot direction: ${parsed.visual}. Concept: ${parsed.hook}. Clean, professional, photorealistic, no text overlays.`,
+    );
+    const concept: ContentConcept = { hook: parsed.hook, visual: parsed.visual, caption: parsed.caption, cta: parsed.cta, imageUrl, fallback: false };
     await saveGeneratedContent({ platform: input.platform, format: input.format, idea: input.idea, ...concept });
-    await logMarketingEvent({ type: "content_generated", platform: input.platform, format: input.format, idea: input.idea });
+    await logMarketingEvent({ type: "content_generated", platform: input.platform, format: input.format, idea: input.idea, hasImage: !!imageUrl });
     return concept;
   } catch {
     return FALLBACK_CONCEPT;
@@ -403,7 +430,7 @@ export async function getCurrentOpportunities(): Promise<{ opportunities: Market
 
 export async function generateReport(period: "daily" | "weekly"): Promise<{ content: string; fallback: boolean }> {
   const recommendations = await marketingState.getRecommendations();
-  const openCount = recommendations.filter((r) => r.status === "Awaiting review").length;
+  const openCount = recommendations.filter((r) => r.status === "RECOMMENDED").length;
   const fallbackContent = `${period === "daily" ? "Daily" : "Weekly"} report (sample - add OPENAI_API_KEY for a live one): Spend AED 184,200, 312 leads, 96 qualified, ROI 6.7x. Google Search remains the strongest channel; Meta CPM is up 31% and worth watching. ${recommendations.length} recommendation(s) on file, ${openCount} still awaiting review.`;
 
   const recentLog = await getRecentLogContext(period === "daily" ? 1 : 7);
@@ -429,14 +456,19 @@ export async function generateReport(period: "daily" | "weekly"): Promise<{ cont
 }
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
-export type ToolCallRecord = { name: string; args: Record<string, unknown> };
+// recommendationId is set whenever the tool call created or touched a
+// MarketingRecommendation row, so the chat UI can render that row's live
+// approve/reject/execute card inline right under the reply instead of the
+// founder having to go find it on Overview or Approvals.
+export type ToolCallRecord = { name: string; args: Record<string, unknown>; recommendationId?: string };
 
 const TOOLS: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
       name: "approve_recommendation",
-      description: "Approve one of the current AI Marketing Manager recommendations by id.",
+      description:
+        "Approve one of the current AI Marketing Manager recommendations by id. This only changes its internal status to APPROVED - it does NOT touch any external service (Google Ads, Meta, Instagram). For action-type recommendations, call execute_action afterward to actually run it; advisory recommendations have no execute step.",
       parameters: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
     },
   },
@@ -451,9 +483,47 @@ const TOOLS: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "approve_queue_item",
-      description: "Approve an item in the AI Action Queue by id.",
+      name: "execute_action",
+      description:
+        "Actually run an APPROVED action-type recommendation against its external service (e.g. Google Ads). Returns the real outcome - EXECUTED with an external id, or FAILED with a reason (e.g. missing Execute permission). Only call this after approve_recommendation, and only report success if the result says EXECUTED.",
       parameters: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "propose_action",
+      description:
+        "Queue a concrete, executable action (not just advice) for the founder to approve - e.g. actually creating a Google Ads campaign, ad group, ad, or keyword set, setting a budget, pausing/enabling a campaign, or creating/publishing a Meta/Instagram post. This only creates a RECOMMENDED row - it does not do anything yet. The founder (or you, once told to) still has to approve_recommendation then execute_action before it runs against the real service (currently mocked - see the tool result). Use this instead of just describing a plan in prose when the founder wants something queued up.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          why: { type: "string" },
+          impact: { type: "string" },
+          risk: { type: "string" },
+          type: {
+            type: "string",
+            enum: [
+              "google_ads.create_campaign",
+              "google_ads.create_ad_group",
+              "google_ads.create_ad",
+              "google_ads.add_keywords",
+              "google_ads.set_budget",
+              "google_ads.pause_campaign",
+              "google_ads.enable_campaign",
+              "meta.create_post",
+              "meta.publish_post",
+            ],
+          },
+          payload: {
+            type: "object",
+            description:
+              'The exact fields the chosen type needs: create_campaign {name, budgetAed?} - create_ad_group {campaignId, name} - create_ad {adGroupId, headlines[], descriptions[]} - add_keywords {adGroupId, keywords[]} - set_budget {campaignId, dailyBudgetAed} - pause_campaign/enable_campaign {campaignId} - meta.create_post {platform: "instagram"|"facebook", caption} - meta.publish_post {postId}.',
+          },
+        },
+        required: ["title", "why", "impact", "risk", "type", "payload"],
+      },
     },
   },
   {
@@ -484,7 +554,8 @@ const TOOLS: ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "generate_content_concept",
-      description: "Generate a content concept (hook/visual/caption/CTA) for a platform and format, optionally from a seed idea.",
+      description:
+        "Generate a content concept (hook/visual/caption/CTA + an actual generated image) for a platform and format, optionally from a seed idea. This automatically queues the result as a pending post (RECOMMENDED, type meta.create_post) for the founder to review with the real image attached - it is NOT published or scheduled. Tell the founder it's ready for review, never that it's posted.",
       parameters: {
         type: "object",
         properties: {
@@ -530,52 +601,99 @@ const TOOLS: ChatCompletionTool[] = [
   },
 ];
 
-async function executeTool(name: string, args: Record<string, unknown>): Promise<string> {
+type ToolExecutionResult = { message: string; recommendationId?: string };
+
+async function executeTool(name: string, args: Record<string, unknown>): Promise<ToolExecutionResult> {
   switch (name) {
     case "approve_recommendation":
-      await marketingState.setRecommendationStatus(String(args.id), "Approved");
-      return `Recommendation ${args.id} approved.`;
+      await marketingState.setRecommendationStatus(String(args.id), "APPROVED");
+      return {
+        message: `Recommendation ${args.id} approved internally. Not yet executed in any external service - call execute_action to run it.`,
+        recommendationId: String(args.id),
+      };
     case "reject_recommendation":
-      await marketingState.setRecommendationStatus(String(args.id), "Rejected");
-      return `Recommendation ${args.id} rejected.`;
-    case "approve_queue_item":
-      await marketingState.approveQueueItem(String(args.id));
-      return `Queue item ${args.id} approved.`;
+      await marketingState.setRecommendationStatus(String(args.id), "REJECTED");
+      return { message: `Recommendation ${args.id} rejected.`, recommendationId: String(args.id) };
+    case "execute_action": {
+      const result = await executeAction(String(args.id));
+      const message =
+        result.status === "EXECUTED"
+          ? `Action ${args.id} EXECUTED. External id: ${result.externalId ?? "(none returned)"}.`
+          : `Action ${args.id} FAILED to execute: ${result.error ?? "unknown error"}.`;
+      return { message, recommendationId: String(args.id) };
+    }
+    case "propose_action": {
+      const type = String(args.type);
+      if (!PROPOSABLE_ACTION_TYPES.includes(type)) {
+        return { message: `Rejected: "${type}" isn't a valid action type. Valid types: ${PROPOSABLE_ACTION_TYPES.join(", ")}.` };
+      }
+      const rec = await createAction({
+        title: String(args.title),
+        why: String(args.why),
+        impact: String(args.impact),
+        risk: String(args.risk),
+        type,
+        requestPayload: args.payload,
+      });
+      return {
+        message: `Action proposed: id=${rec.id}, type=${type}, status=RECOMMENDED. Nothing has happened yet - it needs approve_recommendation, then execute_action, before it runs against the real (currently mocked) service.`,
+        recommendationId: rec.id,
+      };
+    }
     case "set_autonomy_level": {
       const level = Number(args.level);
       await marketingState.setAutonomyLevel(level);
-      return `Autonomy set to ${AUTONOMY_LEVELS[level] ?? level} (level ${level}).`;
+      return { message: `Autonomy set to ${AUTONOMY_LEVELS[level] ?? level} (level ${level}).` };
     }
     case "set_tool_permission":
       await marketingState.setToolPermission(String(args.tool), String(args.permission), Boolean(args.enabled));
-      return `${args.tool}: ${args.permission} ${args.enabled ? "enabled" : "disabled"}.`;
+      return { message: `${args.tool}: ${args.permission} ${args.enabled ? "enabled" : "disabled"}.` };
     case "generate_content_concept": {
+      const platform = String(args.platform);
       const concept = await generateContentConcept({
-        platform: String(args.platform),
+        platform,
         format: String(args.format),
         idea: args.idea ? String(args.idea) : undefined,
       });
-      return JSON.stringify(concept);
+      const rec = await createAction({
+        title: `${platform} ${String(args.format)} concept: ${concept.hook.slice(0, 60)}`,
+        why: "Content Manager generated concept for review",
+        impact: "Pending performance once published",
+        risk: "Low",
+        type: "meta.create_post",
+        requestPayload: {
+          platform: platform.toLowerCase() === "instagram" ? "instagram" : "facebook",
+          caption: concept.caption,
+          hook: concept.hook,
+          visual: concept.visual,
+          cta: concept.cta,
+          imageUrl: concept.imageUrl,
+        },
+      });
+      return {
+        message: `Content concept created${concept.imageUrl ? " with an image" : " (no image - generation unavailable)"} and queued for review: id=${rec.id}, status=RECOMMENDED.${concept.fallback ? " Note: live AI was unavailable, this is example text." : ""}`,
+        recommendationId: rec.id,
+      };
     }
     case "add_instruction":
       await marketingState.addInstruction(String(args.text));
-      return `Instruction saved: "${args.text}"`;
+      return { message: `Instruction saved: "${args.text}"` };
     case "analyze_performance": {
       const channel = String(args.channel) as MarketingChannel;
       const result = await runPerformanceAnalysis(channel);
-      return `Performance Analyst on ${channel}: ${result.insights.join(" ")}`;
+      return { message: `Performance Analyst on ${channel}: ${result.insights.join(" ")}` };
     }
     case "find_growth_opportunities": {
       const result = await findGrowthOpportunities();
-      return `Growth Manager found: ${result.opportunities.map((o) => `${o.title} - ${o.why}`).join(" | ")}`;
+      return { message: `Growth Manager found: ${result.opportunities.map((o) => `${o.title} - ${o.why}`).join(" | ")}` };
     }
     case "generate_report": {
       const period = String(args.period) as "daily" | "weekly";
       const result = await generateReport(period);
-      return `Reporting Manager's ${period} report: ${result.content}`;
+      return { message: `Reporting Manager's ${period} report: ${result.content}` };
     }
     default:
-      return `Unknown tool: ${name}`;
+      return { message: `Unknown tool: ${name}` };
   }
 }
 
@@ -592,11 +710,9 @@ async function buildAgentContext(): Promise<string> {
       .map(([tool, perms]) => `- ${tool}: ${perms.length ? perms.join(", ") : "none"}`)
       .join("\n") || "(none set)";
   const recsText =
-    recommendations.map((r) => `- id=${r.id} [${r.status}] ${r.title}`).join("\n") ||
-    "(none yet - the founder can generate some from the Overview page's Refresh analysis button)";
-  const queueText = QUEUE_ITEMS.map(
-    (q) => `- id=${q.id} [${state.queueApprovals[q.id] ?? "pending"}] (${q.channel}) ${q.title}`,
-  ).join("\n");
+    recommendations
+      .map((r) => `- id=${r.id} [${r.status}] (type=${r.type}) ${r.title}${r.externalId ? ` (external id: ${r.externalId})` : ""}${r.error ? ` (error: ${r.error})` : ""}`)
+      .join("\n") || "(none yet - the founder can generate some from the Overview page's Refresh analysis button)";
   const instrText = instructions.map((i) => `- ${i.text}`).join("\n") || "(none set)";
   const opportunitiesLine = state.opportunitiesUpdatedAt
     ? `${state.opportunities.length} opportunit${state.opportunities.length === 1 ? "y" : "ies"} on file (last found ${state.opportunitiesUpdatedAt.toISOString()}) - call find_growth_opportunities for a fresh scan.`
@@ -610,11 +726,8 @@ Current AI Autonomy: ${AUTONOMY_LEVELS[state.autonomyLevel]} (level ${state.auto
 Per-tool permissions:
 ${permsText}
 
-Current recommendations (act on these with approve_recommendation / reject_recommendation using their id):
+Current recommendations (act on these with approve_recommendation / reject_recommendation / execute_action using their id; "type" tells you whether it's advisory (no execute step) or an action you can execute once APPROVED):
 ${recsText}
-
-Action queue (act on these with approve_queue_item using their id):
-${queueText}
 
 Standing instructions from the founder - follow these durably on every turn, not just when reminded:
 ${instrText}
@@ -638,6 +751,10 @@ export async function runMarketingAgent(userMessage: string): Promise<{ reply: s
     {
       role: "system",
       content: `You are the Marketing Manager - PickTheBrick's AI marketing employee, living inside the founder's internal dashboard. You decide what matters and you're who the founder actually talks to, but you lead a small team of specialists (see below) - delegate to them via their tools rather than trying to do their job yourself from memory. You can chat, answer questions, and take real action via your tools when asked or instructed. Confirm briefly (1-2 sentences) what you did after acting; if you can't or won't act (e.g. missing info), say so plainly. Keep replies short and direct - founder-to-employee tone, not a customer-support bot.
+
+STRICT EXECUTION RULE: you may RECOMMEND and DRAFT freely. Never say an action was created, launched, published, or set up in an external service (Google Ads, Meta, Instagram, the website) unless you called execute_action on it AND the tool result says EXECUTED. Approving a recommendation (approve_recommendation) only changes its internal status - it does not touch any external service, so never describe an approval alone as "done," "live," or "set up." If a recommendation's type has no execute tool yet, say so plainly: "I can prepare this, but I can't execute it yet." If execute_action returns FAILED, report the real reason - never soften it into a success.
+
+When the founder wants something concrete queued up (a real campaign, ad group, ad, keyword set, budget change, pause/enable, or Meta/Instagram post) rather than just discussed, call propose_action to actually create it as a RECOMMENDED row - do not just describe it in prose and call that done. It still needs approve_recommendation then execute_action before anything runs, and execution is currently mocked (no real Google Ads/Meta account is touched yet) - say so if asked.
 
 ${businessContext}
 
@@ -669,8 +786,8 @@ ${agentContext}`,
           // leave args empty if the model produced malformed JSON
         }
         const toolResult = await executeTool(call.function.name, args);
-        allToolCalls.push({ name: call.function.name, args });
-        messages.push({ role: "tool", tool_call_id: call.id, content: toolResult });
+        allToolCalls.push({ name: call.function.name, args, recommendationId: toolResult.recommendationId });
+        messages.push({ role: "tool", tool_call_id: call.id, content: toolResult.message });
       }
       continue;
     }

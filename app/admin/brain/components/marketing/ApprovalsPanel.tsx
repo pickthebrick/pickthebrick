@@ -8,9 +8,18 @@ import {
   setToolPermissionAction,
   getBudgetAction,
   setBudgetAction,
+  getRecommendationsAction,
+  setRecommendationStatusAction,
+  executeActionAction,
 } from "@/app/actions/marketingAi";
 import type { BudgetConfig } from "@/lib/marketingBudget";
+import type { MarketingRecommendation } from "@/lib/ai/marketingProvider";
 import { SectionCard } from "../ui";
+import RecommendationCard from "./RecommendationCard";
+
+// Anything not yet in a terminal state - the founder still has a decision or
+// an execute step left to take on it.
+const PENDING_STATUSES = new Set(["RECOMMENDED", "APPROVED", "FAILED"]);
 
 const BUDGET_FIELDS: { key: keyof BudgetConfig; label: string }[] = [
   { key: "dailyCapUsd", label: "Daily budget (USD)" },
@@ -26,6 +35,15 @@ export default function ApprovalsPanel() {
   const [loading, setLoading] = useState(true);
   const [budget, setBudgetState] = useState<BudgetConfig | null>(null);
   const [budgetSaving, setBudgetSaving] = useState(false);
+  const [recommendations, setRecommendations] = useState<MarketingRecommendation[]>([]);
+  const [recsLoading, setRecsLoading] = useState(true);
+  const [executing, setExecuting] = useState<Record<string, boolean>>({});
+
+  function loadRecommendations() {
+    getRecommendationsAction()
+      .then(setRecommendations)
+      .finally(() => setRecsLoading(false));
+  }
 
   useEffect(() => {
     getMarketingWorkspaceState().then((state) => {
@@ -34,7 +52,20 @@ export default function ApprovalsPanel() {
       setLoading(false);
     });
     getBudgetAction().then(setBudgetState);
+    loadRecommendations();
   }, []);
+
+  function setRecStatus(id: string, status: "APPROVED" | "REJECTED") {
+    setRecommendations((cur) => cur.map((r) => (r.id === id ? { ...r, status } : r)));
+    setRecommendationStatusAction(id, status);
+  }
+
+  function execute(id: string) {
+    setExecuting((s) => ({ ...s, [id]: true }));
+    executeActionAction(id)
+      .then(() => loadRecommendations())
+      .finally(() => setExecuting((s) => ({ ...s, [id]: false })));
+  }
 
   function selectAutonomy(level: number) {
     setAutonomy(level);
@@ -63,9 +94,26 @@ export default function ApprovalsPanel() {
 
   if (loading || autonomy === null) return <div className="brain-empty-note">Loading…</div>;
 
+  const pending = recommendations.filter((r) => PENDING_STATUSES.has(r.status));
+
   return (
     <>
-      <div className="brain-card brain-card--accent-blue brain-autonomy-card">
+      <div className="brain-section-label">Pending approvals</div>
+      {recsLoading && <div className="brain-empty-note">Loading…</div>}
+      {!recsLoading && pending.length === 0 && <div className="brain-empty-note">Nothing waiting on you right now.</div>}
+      {pending.map((r) => (
+        <RecommendationCard
+          key={r.id}
+          recommendation={r}
+          permissions={perms}
+          onApprove={(id) => setRecStatus(id, "APPROVED")}
+          onReject={(id) => setRecStatus(id, "REJECTED")}
+          onExecute={execute}
+          executing={!!executing[r.id]}
+        />
+      ))}
+
+      <div className="brain-card brain-card--accent-blue brain-autonomy-card" style={{ marginTop: 20 }}>
         <div className="brain-section-label">AI Autonomy (global)</div>
         <div className="brain-autonomy-row">
           {AUTONOMY_LEVELS.map((label, i) => (

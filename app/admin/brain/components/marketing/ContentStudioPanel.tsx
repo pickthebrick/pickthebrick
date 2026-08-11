@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CONTENT_IDEAS, GEN_PLATFORMS, GEN_FORMATS, CALENDAR_DAY_NAMES, CALENDAR_PLAN, type CalendarStatus } from "../../data";
-import { generateContentConcept } from "@/app/actions/marketingAi";
+import { generateContentConcept, proposeContentConceptAction } from "@/app/actions/marketingAi";
 import type { ContentConcept } from "@/lib/ai/marketingProvider";
 import { SectionCard, Chip, Pill } from "../ui";
 
@@ -20,12 +20,23 @@ export default function ContentStudioPanel() {
   const [idea, setIdea] = useState<string | undefined>(undefined);
   const [output, setOutput] = useState<ContentConcept | null>(null);
   const [loading, setLoading] = useState(false);
+  const [proposing, setProposing] = useState(false);
+  const [proposedId, setProposedId] = useState<string | null>(null);
 
   function generate(seedIdea?: string) {
     setLoading(true);
+    setProposedId(null);
     generateContentConcept({ platform, format, idea: seedIdea ?? idea })
       .then(setOutput)
       .finally(() => setLoading(false));
+  }
+
+  function propose() {
+    if (!output || proposedId || proposing) return;
+    setProposing(true);
+    proposeContentConceptAction({ platform, format, concept: output })
+      .then((rec) => setProposedId(rec.id))
+      .finally(() => setProposing(false));
   }
 
   return (
@@ -71,6 +82,12 @@ export default function ContentStudioPanel() {
           {!output && !loading && <div className="brain-empty-note">Pick a platform/format and generate a concept.</div>}
           {output && (
             <>
+              {output.imageUrl && (
+                <div className="brain-rec-image-wrap">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={output.imageUrl} alt="Generated concept visual" className="brain-rec-image" />
+                </div>
+              )}
               <div className="brain-gen-output-line">
                 <b>Hook —</b> {output.hook}
               </div>
@@ -85,9 +102,16 @@ export default function ContentStudioPanel() {
               </div>
               <div className="brain-modal-note">
                 {output.fallback
-                  ? "OPENAI_API_KEY isn't set yet — showing example output."
-                  : "AI-generated — review before publishing."}
+                  ? "Live AI unavailable right now — showing example output. Ask Marketing in the Chat tab why, or check server logs."
+                  : !output.imageUrl
+                    ? "AI-generated — image generation unavailable right now, text only. Review before publishing."
+                    : "AI-generated — review before publishing."}
               </div>
+              {!output.fallback && (
+                <div className="brain-btn brain-btn--primary brain-btn--small" style={{ marginTop: 10 }} onClick={propose}>
+                  {proposing ? "Queuing…" : proposedId ? "Queued for approval ✓" : "Propose for approval"}
+                </div>
+              )}
             </>
           )}
         </SectionCard>

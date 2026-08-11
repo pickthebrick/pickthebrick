@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MARKETING_KPIS, QUEUE_ITEMS } from "../../data";
+import { MARKETING_KPIS } from "../../data";
 import { MARKETING_ROLE_LIST } from "@/lib/ai/marketingRoles";
 import {
   getMarketingAnalysis,
   refreshMarketingAnalysis,
   setRecommendationStatusAction,
+  executeActionAction,
   getMarketingWorkspaceState,
-  approveQueueItemAction,
   getOpportunitiesAction,
   refreshOpportunitiesAction,
 } from "@/app/actions/marketingAi";
@@ -16,11 +16,13 @@ import type { MarketingAnalysis } from "@/lib/ai/marketingProvider";
 import type { MarketingOpportunity } from "@/lib/marketingState";
 import { KpiGrid, SectionCard } from "../ui";
 import AiUsageCard from "./AiUsageCard";
+import RecommendationCard from "./RecommendationCard";
 
 export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () => void }) {
   const [analysis, setAnalysis] = useState<MarketingAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
-  const [queueApprovals, setQueueApprovals] = useState<Record<string, "Approved">>({});
+  const [permissions, setPermissions] = useState<Record<string, string[]>>({});
+  const [executing, setExecuting] = useState<Record<string, boolean>>({});
   const [opportunities, setOpportunities] = useState<MarketingOpportunity[]>([]);
   const [opportunitiesFallback, setOpportunitiesFallback] = useState(true);
   const [opportunitiesLoading, setOpportunitiesLoading] = useState(true);
@@ -29,7 +31,7 @@ export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () =
     Promise.all([getMarketingAnalysis(), getMarketingWorkspaceState()])
       .then(([a, state]) => {
         setAnalysis(a);
-        setQueueApprovals(state.queueApprovals);
+        setPermissions(state.permissions);
       })
       .finally(() => setLoading(false));
     getOpportunitiesAction()
@@ -61,14 +63,17 @@ export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () =
     fetchAll();
   }, []);
 
-  function setRecStatus(id: string, status: "Approved" | "Rejected") {
+  function setRecStatus(id: string, status: "APPROVED" | "REJECTED") {
     setAnalysis((cur) => (cur ? { ...cur, recommendations: cur.recommendations.map((r) => (r.id === id ? { ...r, status } : r)) } : cur));
     setRecommendationStatusAction(id, status);
   }
 
-  function approveQueue(id: string) {
-    setQueueApprovals((s) => ({ ...s, [id]: "Approved" }));
-    approveQueueItemAction(id);
+  function execute(id: string) {
+    setExecuting((s) => ({ ...s, [id]: true }));
+    executeActionAction(id)
+      .then(() => getMarketingAnalysis())
+      .then((a) => setAnalysis(a))
+      .finally(() => setExecuting((s) => ({ ...s, [id]: false })));
   }
 
   return (
@@ -100,7 +105,7 @@ export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () =
           </div>
           <div className="brain-ai-manager-intro">Good morning. Here&apos;s what changed this week.</div>
 
-          {analysis?.fallback && <div className="brain-modal-note">{"OPENAI_API_KEY isn't set yet — showing example output below."}</div>}
+          {analysis?.fallback && <div className="brain-modal-note">{"Live AI unavailable right now — showing example output below. Ask Marketing in the Chat tab why, or check server logs."}</div>}
 
           <div className="brain-ai-manager-section-label brain-ai-manager-section-label--green">Things working</div>
           {(analysis?.working ?? []).map((line, i) => (
@@ -118,64 +123,18 @@ export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () =
 
           <div className="brain-ai-manager-section-label brain-ai-manager-section-label--gold">Recommendations</div>
           {(analysis?.recommendations ?? []).map((r) => (
-            <div className="brain-rec-card" key={r.id}>
-              <div className="brain-rec-title">{r.title}</div>
-              <div className="brain-rec-tags">
-                <div>
-                  <b>Why</b> {r.why}
-                </div>
-                <div>
-                  <b>Impact</b> {r.impact}
-                </div>
-                <div>
-                  <b>Risk</b> {r.risk}
-                </div>
-              </div>
-              <div className="brain-rec-actions">
-                <div className="brain-btn brain-btn--primary brain-btn--small" onClick={() => setRecStatus(r.id, "Approved")}>
-                  Approve
-                </div>
-                <div className="brain-btn brain-btn--small" onClick={() => setRecStatus(r.id, "Rejected")}>
-                  Reject
-                </div>
-                <div className="brain-btn brain-btn--small">Modify</div>
-                <div className="brain-btn brain-btn--small" onClick={onAskAssistant}>
-                  Ask AI
-                </div>
-                <div className={`brain-rec-status ${r.status !== "Awaiting review" ? `brain-rec-status--${r.status.toLowerCase()}` : ""}`}>
-                  {r.status}
-                </div>
-              </div>
-            </div>
+            <RecommendationCard
+              key={r.id}
+              recommendation={r}
+              permissions={permissions}
+              onApprove={(id) => setRecStatus(id, "APPROVED")}
+              onReject={(id) => setRecStatus(id, "REJECTED")}
+              onExecute={execute}
+              onAskAssistant={onAskAssistant}
+              executing={!!executing[r.id]}
+            />
           ))}
           {!loading && (analysis?.recommendations.length ?? 0) === 0 && <div className="brain-empty-note">No recommendations right now.</div>}
-        </SectionCard>
-
-        <SectionCard title="AI Action Queue — Today">
-          {QUEUE_ITEMS.map((q) => {
-            const approved = queueApprovals[q.id] === "Approved";
-            const priorityTone = q.priority === "HIGH" ? "red" : q.priority === "MEDIUM" ? "gold" : "green";
-            return (
-              <div className="brain-queue-card" key={q.id}>
-                <div className="brain-queue-head">
-                  <span className={`brain-status-dot brain-status-dot--${priorityTone}`} />
-                  <span className={`brain-queue-priority brain-queue-priority--${priorityTone}`}>{q.priority}</span>
-                  <span className="brain-queue-channel">{q.channel}</span>
-                </div>
-                <div className="brain-queue-title">{q.title}</div>
-                <div className="brain-queue-metric">{q.metric}</div>
-                <div className="brain-queue-actions">
-                  <div className="brain-btn brain-btn--small">Review</div>
-                  <div
-                    className={`brain-btn brain-btn--small ${approved ? "" : "brain-btn--primary"}`}
-                    onClick={() => approveQueue(q.id)}
-                  >
-                    {approved ? "Approved" : "Approve"}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
         </SectionCard>
       </div>
 
@@ -187,7 +146,7 @@ export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () =
             {opportunitiesLoading ? "Thinking…" : "Refresh"}
           </div>
         </div>
-        {opportunitiesFallback && <div className="brain-modal-note">{"OPENAI_API_KEY isn't set yet — showing example output below."}</div>}
+        {opportunitiesFallback && <div className="brain-modal-note">{"Live AI unavailable right now — showing example output below. Ask Marketing in the Chat tab why, or check server logs."}</div>}
         <div className="brain-opportunities-grid">
           {opportunities.map((o, i) => (
             <div className="brain-rec-card" key={i}>

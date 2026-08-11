@@ -47,7 +47,7 @@ export default function ChannelInsights({ channel }: { channel: MarketingChannel
           {loading ? "Thinking…" : "Refresh (Performance Analyst)"}
         </div>
       </div>
-      {fallback && <div className="brain-modal-note">{"OPENAI_API_KEY isn't set yet — showing example output below."}</div>}
+      {fallback && <div className="brain-modal-note">{"Live AI unavailable right now — showing example output below. Ask Marketing in the Chat tab why, or check server logs."}</div>}
       <div className="brain-insight-list">
         {insights.map((line, i) => (
           <div className="brain-insight-item" key={i}>

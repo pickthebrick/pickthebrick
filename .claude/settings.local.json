@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(ls -la \"/c/Users/husai/.claude/projects/C--Users-husai-Desktop-ptb-claude-home/\" 2>&1)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(mkdir -p \"/c/Users/husai/AppData/Local/Temp/claude/C--Users-husai-Desktop-ptb-claude-home/494cabd3-e167-4761-a412-40b55eefe7aa/scratchpad/dashboard-scope\")",
+      "Read(//c/Users/husai/AppData/Local/Temp/claude/C--Users-husai-Desktop-ptb-claude-home/494cabd3-e167-4761-a412-40b55eefe7aa/scratchpad/**)",
+      "Bash(unzip -o \"/c/Users/husai/Desktop/PTB FInal/Dashboard and marketing scope.zip\" -d .)",
+      "Bash(cd \"/c/Users/husai/AppData/Local/Temp/claude/C--Users-husai-Desktop-ptb-claude-home/494cabd3-e167-4761-a412-40b55eefe7aa/scratchpad/dashboard-scope/design_handoff_marketing_command_centre\" && wc -l *.html README.md)"
     ]
   }
 }

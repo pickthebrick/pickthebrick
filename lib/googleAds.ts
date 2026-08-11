@@ -13,7 +13,7 @@ import "server-only";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const API_VERSION = "v18";
 
-async function getAccessToken(): Promise<string | null> {
+export async function getAccessToken(): Promise<string | null> {
   const client_id = process.env.GOOGLE_ADS_CLIENT_ID;
   const client_secret = process.env.GOOGLE_ADS_CLIENT_SECRET;
   const refresh_token = process.env.GOOGLE_ADS_REFRESH_TOKEN;
@@ -29,12 +29,18 @@ async function getAccessToken(): Promise<string | null> {
   return access_token;
 }
 
-type GoogleAdsRow = {
-  campaign?: { id: string; name: string };
+export type GoogleAdsRow = {
+  campaign?: { id: string; name: string; status?: string };
+  adGroup?: { id: string; name: string; status?: string };
+  adGroupCriterion?: { criterionId: string; keyword?: { text: string; matchType: string } };
+  searchTermView?: { searchTerm: string };
   metrics?: { clicks?: string; impressions?: string; costMicros?: string; conversions?: string };
 };
 
-async function searchGoogleAds(query: string): Promise<GoogleAdsRow[] | null> {
+// Exported so lib/ai/actionTools.ts can run its own read-only GAQL queries
+// (ad groups, keywords, search terms) through the same auth/customer setup
+// without duplicating the token/header plumbing.
+export async function searchGoogleAds(query: string): Promise<GoogleAdsRow[] | null> {
   const accessToken = await getAccessToken();
   const developerToken = process.env.GOOGLE_ADS_DEVELOPER_TOKEN;
   const loginCustomerId = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID;

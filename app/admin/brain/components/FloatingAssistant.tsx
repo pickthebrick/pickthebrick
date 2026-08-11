@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getChatHistoryAction, sendChatMessageAction } from "@/app/actions/marketingAi";
 
 type ChatRow = { id: string; role: string; content: string };
@@ -10,6 +10,7 @@ export default function FloatingAssistant({ open, onOpenChange }: { open: boolea
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Same persisted thread as the full Chat tab - Marketing is one
@@ -19,6 +20,11 @@ export default function FloatingAssistant({ open, onOpenChange }: { open: boolea
       setLoaded(true);
     });
   }, []);
+
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, busy, open]);
 
   async function send() {
     const text = input.trim();
@@ -44,7 +50,7 @@ export default function FloatingAssistant({ open, onOpenChange }: { open: boolea
       {open && (
         <div className="brain-assistant-panel">
           <div className="brain-assistant-title">AI Assistant</div>
-          <div className="brain-assistant-messages">
+          <div className="brain-assistant-messages" ref={messagesRef}>
             {loaded && messages.length === 0 && (
               <>
                 <div className="brain-assistant-bubble">Ask me anything, or tell me to do something - I can act on it.</div>
