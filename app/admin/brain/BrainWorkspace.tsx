@@ -19,6 +19,8 @@ import ContentStudioPanel from "./components/marketing/ContentStudioPanel";
 import LeadsPanel from "./components/marketing/LeadsPanel";
 import WebsitePanel from "./components/marketing/WebsitePanel";
 import CalculatorPanel from "./components/marketing/CalculatorPanel";
+import ReportingManagerPanel from "./components/marketing/ReportingManagerPanel";
+import KnowledgeBasePanel from "./components/marketing/KnowledgeBasePanel";
 import ComingSoonPanel from "./components/marketing/ComingSoonPanel";
 import { BRAIN_TABS, MARKETING_TABS, COMING_SOON, type BrainTab, type MarketingTab } from "./data";
 
@@ -92,6 +94,8 @@ export default function BrainWorkspace({ initialChecklist }: { initialChecklist:
             {!isBrainActive && activeTab === "leads" && <LeadsPanel />}
             {!isBrainActive && activeTab === "website" && <WebsitePanel />}
             {!isBrainActive && activeTab === "calculator" && <CalculatorPanel />}
+            {!isBrainActive && activeTab === "reports" && <ReportingManagerPanel />}
+            {!isBrainActive && activeTab === "knowledge" && <KnowledgeBasePanel />}
             {isComingSoon && (
               <ComingSoonPanel title={pageTitle} description={COMING_SOON[activeTab as MarketingTab] ?? ""} />
             )}

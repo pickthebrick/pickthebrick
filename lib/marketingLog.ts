@@ -18,7 +18,10 @@ const LOG_DIR = path.join(process.cwd(), "data", "marketing-agent-log");
 export type MarketingLogEvent =
   | { type: "chat"; userMessage: string; assistantReply: string; toolCalls: { name: string; args: unknown }[] }
   | { type: "analysis"; workingCount: number; problemsCount: number; recommendationCount: number }
-  | { type: "content_generated"; platform: string; format: string; idea?: string };
+  | { type: "content_generated"; platform: string; format: string; idea?: string }
+  | { type: "insights_generated"; channel: string; count: number }
+  | { type: "opportunities_generated"; count: number }
+  | { type: "report_generated"; period: string };
 
 function todayFilename(date = new Date()) {
   return `${date.toISOString().slice(0, 10)}.jsonl`;
@@ -58,6 +61,9 @@ export async function getRecentLogContext(days = 3): Promise<string> {
         if (e.type === "chat") return `[${e.ts}] Chat - asked: "${e.userMessage.slice(0, 120)}" -> replied: "${e.assistantReply.slice(0, 160)}"${e.toolCalls?.length ? ` (ran: ${e.toolCalls.map((t: { name: string }) => t.name).join(", ")})` : ""}`;
         if (e.type === "analysis") return `[${e.ts}] Ran analysis - ${e.workingCount} working, ${e.problemsCount} problems, ${e.recommendationCount} recommendations.`;
         if (e.type === "content_generated") return `[${e.ts}] Generated ${e.platform}/${e.format} content${e.idea ? ` from idea "${e.idea.slice(0, 80)}"` : ""}.`;
+        if (e.type === "insights_generated") return `[${e.ts}] Analyzed ${e.channel} - ${e.count} insight(s).`;
+        if (e.type === "opportunities_generated") return `[${e.ts}] Found ${e.count} growth opportunit${e.count === 1 ? "y" : "ies"}.`;
+        if (e.type === "report_generated") return `[${e.ts}] Generated a ${e.period} report.`;
         return `[${e.ts}] ${e.type}`;
       } catch {
         return null;

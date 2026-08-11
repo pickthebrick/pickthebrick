@@ -1,19 +1,30 @@
 import "server-only";
 import OpenAI from "openai";
-import type { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
+import type {
+  ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionMessage,
+  ChatCompletionMessageParam,
+  ChatCompletionTool,
+} from "openai/resources/chat/completions";
 import {
   PINNED,
   MARKETING_KPIS,
   GOOGLE_CAMPAIGNS,
+  GOOGLE_INSIGHTS,
   META_CONTENT,
+  META_INSIGHTS,
   LEADS,
   TOP_PAGES,
+  CONVERSION_INSIGHTS,
   QUEUE_ITEMS,
   AUTONOMY_LEVELS,
 } from "@/app/admin/brain/data";
 import * as marketingState from "@/lib/marketingState";
+import type { MarketingChannel, MarketingOpportunity } from "@/lib/marketingState";
 import { logMarketingEvent, getRecentLogContext } from "@/lib/marketingLog";
 import { saveGeneratedContent } from "@/lib/marketingContent";
+import { assertBudgetAvailable, recordUsage, BudgetExceededError } from "@/lib/marketingBudget";
+import type { MarketingRoleId } from "@/lib/ai/marketingRoles";
 
 // Single place the /admin/brain "AI Marketing Manager" card, the Content
 // Studio generator, and the Marketing chat (popup + Chat tab) all call
@@ -32,11 +43,39 @@ function getClient(): OpenAI | null {
   return new OpenAI({ apiKey });
 }
 
-// A compact snapshot of the current sample data - stands in for what a real
-// integration would pull live from Google Ads/GA/Meta/the CRM (see the
-// design handoff's Data Architecture notes). Kept short on purpose so every
-// call stays cheap and fast.
-function buildBusinessContext(): string {
+// Every OpenAI request in this file goes through here - the one place that
+// enforces this app's own hard spend cap (lib/marketingBudget.ts, not
+// OpenAI's own soft project budget) and records token usage/cost for every
+// call, regardless of which role made it. Callers just check `ok`.
+type CallModelResult = { ok: true; message: ChatCompletionMessage } | { ok: false; reason: "not_configured" | "budget_exceeded" };
+
+async function callModel(role: MarketingRoleId, params: Omit<ChatCompletionCreateParamsNonStreaming, "model">): Promise<CallModelResult> {
+  const client = getClient();
+  if (!client) return { ok: false, reason: "not_configured" };
+
+  try {
+    await assertBudgetAvailable();
+  } catch (err) {
+    if (err instanceof BudgetExceededError) return { ok: false, reason: "budget_exceeded" };
+    throw err;
+  }
+
+  const response = await client.chat.completions.create({ model: MARKETING_AI_MODEL, ...params });
+  if (response.usage) {
+    await recordUsage(role, MARKETING_AI_MODEL, response.usage.prompt_tokens, response.usage.completion_tokens);
+  }
+  const message = response.choices[0]?.message;
+  if (!message) return { ok: false, reason: "not_configured" };
+  return { ok: true, message };
+}
+
+// The Constitution (permanent business knowledge, founder-editable from the
+// Knowledge Base tab) plus a compact snapshot of the current sample data -
+// the latter stands in for what a real integration would pull live from
+// Google Ads/GA/Meta/the CRM (see the design handoff's Data Architecture
+// notes). Kept short on purpose so every call stays cheap and fast.
+async function buildBusinessContext(): Promise<string> {
+  const constitution = await marketingState.getConstitution();
   const pinned = PINNED.map((p) => `- ${p.label}: ${p.value}`).join("\n");
   const kpis = MARKETING_KPIS.map((k) => `- ${k.label}: ${k.value} (${k.deltaArrow}${k.delta} vs prev. period)`).join("\n");
   const googleTop = GOOGLE_CAMPAIGNS.slice(0, 5)
@@ -48,8 +87,15 @@ function buildBusinessContext(): string {
   const leads = LEADS.slice(0, 6).map((l) => `- ${l.name} via ${l.source}, est. ${l.budget}, status ${l.status}`).join("\n");
   const pages = TOP_PAGES.map((p) => `- ${p.page}: ${p.sessions} sessions, ${p.cvr} conversion, ${p.bounce} bounce`).join("\n");
 
-  return `PickTheBrick is a Dubai office fit-out aggregator (supply + install, always - no separate install charge).
+  return `--- Marketing Constitution (permanent, founder-set - follow these rules over anything else below) ---
+Business: ${constitution.business}
+Customers: ${constitution.customers}
+Products: ${constitution.products}
+Marketing objectives: ${constitution.objectives}
+Brand rules: ${constitution.brandRules}
+Commercial rules (hard constraints, never violate): ${constitution.commercialRules}
 
+--- Current snapshot (sample data standing in for live feeds - reason over it as if real, but don't claim certainty beyond what it shows) ---
 Pinned business facts:
 ${pinned}
 
@@ -66,9 +112,7 @@ Recent leads:
 ${leads}
 
 Top website pages:
-${pages}
-
-NOTE: all of the above is illustrative sample data standing in for live Google Ads/GA/Meta/CRM feeds that aren't wired up yet - reason over it as if it were real, but don't claim certainty beyond what it shows.`;
+${pages}`;
 }
 
 export type MarketingRecommendation = { id: string; title: string; why: string; impact: string; risk: string; status: string };
@@ -100,28 +144,27 @@ const FALLBACK_RECOMMENDATIONS = [
 // visit ever - NOT on every page mount, so it never silently overwrites a
 // status the chat agent (or a prior visit) already set.
 export async function runMarketingAnalysis(): Promise<MarketingAnalysis> {
-  const client = getClient();
   let working = FALLBACK_WORKING;
   let problems = FALLBACK_PROBLEMS;
   let recSource: { title: string; why: string; impact: string; risk: string }[] = FALLBACK_RECOMMENDATIONS;
   let fallback = true;
 
-  if (client) {
-    try {
-      const response = await client.chat.completions.create({
-        model: MARKETING_AI_MODEL,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content: `You are the AI Marketing Manager for PickTheBrick. Read the business snapshot and produce a short morning brief. Respond with strict JSON only, shape:
+  const result = await callModel("manager", {
+    max_tokens: 700,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: `You are the Marketing Manager for PickTheBrick - you decide what matters. Read the business snapshot and produce a short morning brief. Respond with strict JSON only, shape:
 {"working": string[] (2-3 short sentences on what's performing well), "problems": string[] (2-3 short sentences on what needs attention), "recommendations": [{"title": string, "why": string (short), "impact": string (short, e.g. "+6-9 qualified leads/wk"), "risk": string (one of "Low", "Medium — <reason>", "High — <reason>")}] (3-4 items)}
 Be specific and reference numbers from the snapshot. No prose outside the JSON.`,
-          },
-          { role: "user", content: buildBusinessContext() },
-        ],
-      });
-      const raw = response.choices[0]?.message?.content;
+      },
+      { role: "user", content: await buildBusinessContext() },
+    ],
+  });
+  if (result.ok) {
+    try {
+      const raw = result.message.content;
       const parsed = raw ? JSON.parse(raw) : null;
       if (parsed?.working && parsed?.problems && parsed?.recommendations) {
         working = parsed.working;
@@ -170,25 +213,23 @@ const FALLBACK_CONCEPT: ContentConcept = {
 };
 
 export async function generateContentConcept(input: ContentConceptInput): Promise<ContentConcept> {
-  const client = getClient();
-  if (!client) return FALLBACK_CONCEPT;
-
-  const response = await client.chat.completions.create({
-    model: MARKETING_AI_MODEL,
+  const result = await callModel("content", {
+    max_tokens: 500,
     response_format: { type: "json_object" },
     messages: [
       {
         role: "system",
-        content: `You are a marketing content generator for PickTheBrick (Dubai office fit-out, supply + install always, transparent fixed pricing). Given a platform and format (and optionally a seed idea), produce one content concept. Respond with strict JSON only, shape: {"hook": string, "visual": string (shot/production direction), "caption": string, "cta": string}. Keep it punchy and specific to the platform/format.`,
+        content: `You are the Content Manager for PickTheBrick's marketing team (Dubai office fit-out, supply + install always, transparent fixed pricing). Your job is creating content concepts and campaign copy - not analysis or strategy, that's other teammates' jobs. Given a platform and format (and optionally a seed idea), produce one content concept. Respond with strict JSON only, shape: {"hook": string, "visual": string (shot/production direction), "caption": string, "cta": string}. Keep it punchy and specific to the platform/format.`,
       },
       {
         role: "user",
-        content: `Platform: ${input.platform}\nFormat: ${input.format}${input.idea ? `\nSeed idea: ${input.idea}` : ""}\n\nBusiness context:\n${buildBusinessContext()}`,
+        content: `Platform: ${input.platform}\nFormat: ${input.format}${input.idea ? `\nSeed idea: ${input.idea}` : ""}\n\nBusiness context:\n${await buildBusinessContext()}`,
       },
     ],
   });
+  if (!result.ok) return FALLBACK_CONCEPT;
 
-  const raw = response.choices[0]?.message?.content;
+  const raw = result.message.content;
   if (!raw) return FALLBACK_CONCEPT;
   try {
     const parsed = JSON.parse(raw) as Partial<ContentConcept>;
@@ -200,6 +241,154 @@ export async function generateContentConcept(input: ContentConceptInput): Promis
   } catch {
     return FALLBACK_CONCEPT;
   }
+}
+
+// --- Performance Analyst: read-only per-channel analysis ---
+
+const CHANNEL_NAMES: Record<MarketingChannel, string> = { google: "Google Ads", meta: "Meta/Instagram", website: "the website" };
+const CHANNEL_FALLBACK_INSIGHTS: Record<MarketingChannel, string[]> = {
+  google: GOOGLE_INSIGHTS,
+  meta: META_INSIGHTS,
+  website: CONVERSION_INSIGHTS,
+};
+
+function buildChannelData(channel: MarketingChannel): string {
+  if (channel === "google") {
+    return GOOGLE_CAMPAIGNS.map((c) => `- ${c.name}: spend ${c.spend}, ${c.leads} leads, ${c.qualified} qualified, CPL ${c.cpl}, revenue ${c.revenue}, ROAS ${c.roas}, status ${c.status}`).join("\n");
+  }
+  if (channel === "meta") {
+    return META_CONTENT.map((c) => `- "${c.name}" (${c.type}): reach ${c.reach}, engagement ${c.engagement}, ${c.clicks} clicks, ${c.leads} leads, ${c.revenue} revenue`).join("\n");
+  }
+  return TOP_PAGES.map((p) => `- ${p.page}: ${p.sessions} sessions, ${p.cvr} conversion, ${p.bounce} bounce`).join("\n");
+}
+
+// Regenerates one channel's insights via the LLM (or its fallback), always
+// persisting so getCurrentChannelInsights() below stays cheap. Called
+// directly by the Google Ads/Meta/Website pages' "Refresh" button, or by the
+// Marketing Manager delegating through the analyze_performance tool.
+export async function runPerformanceAnalysis(channel: MarketingChannel): Promise<marketingState.ChannelInsights> {
+  let insights = CHANNEL_FALLBACK_INSIGHTS[channel];
+  let fallback = true;
+
+  const result = await callModel("analyst", {
+    max_tokens: 500,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: `You are the Performance Analyst for PickTheBrick's marketing team. You only analyze - you never take action, approve anything, or make final calls, that's the Marketing Manager's job. Read the ${CHANNEL_NAMES[channel]} data and produce 3-4 short, specific insight bullets a marketer would actually act on. Respond with strict JSON only: {"insights": string[]}`,
+      },
+      { role: "user", content: buildChannelData(channel) },
+    ],
+  });
+  if (result.ok) {
+    try {
+      const raw = result.message.content;
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(parsed?.insights) && parsed.insights.length) {
+        insights = parsed.insights;
+        fallback = false;
+      }
+    } catch {
+      // fall through to fallback content already assigned above
+    }
+  }
+
+  await marketingState.setChannelInsights(channel, insights, fallback);
+  await logMarketingEvent({ type: "insights_generated", channel, count: insights.length });
+  return { insights, fallback, updatedAt: new Date() };
+}
+
+// Cheap read for the Google Ads/Meta/Website pages - no LLM call. Bootstraps
+// once if this channel has never been analyzed yet.
+export async function getCurrentChannelInsights(channel: MarketingChannel): Promise<marketingState.ChannelInsights> {
+  const existing = await marketingState.getChannelInsights(channel);
+  if (existing) return existing;
+  return runPerformanceAnalysis(channel);
+}
+
+// --- Growth Manager: cross-channel opportunity finding ---
+
+const FALLBACK_OPPORTUNITIES: MarketingOpportunity[] = [
+  {
+    title: "Dedicated cost-calculator landing page",
+    why: "/pricing has high traffic but low conversion - visitors want a number, not a range.",
+    action: "Build a page around the internal calculator's formula and link it from top campaigns.",
+  },
+  {
+    title: "Scale the AED 100K reel format",
+    why: "3.8x normal traffic on the original - the pattern hasn't been repeated since.",
+    action: "Brief the Content Manager for 3-5 variations across different case studies.",
+  },
+];
+
+export async function findGrowthOpportunities(): Promise<{ opportunities: MarketingOpportunity[]; fallback: boolean }> {
+  let opportunities = FALLBACK_OPPORTUNITIES;
+  let fallback = true;
+
+  const result = await callModel("growth", {
+    max_tokens: 600,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: `You are the Growth Manager for PickTheBrick's marketing team. You look across every channel for gaps and untapped opportunities - a keyword nobody's targeting, a winning pattern worth repeating, an underserved page - not day-to-day optimization (the Performance Analyst's job) or single pieces of content (the Content Manager's job). Respond with strict JSON only: {"opportunities": [{"title": string, "why": string, "action": string}]} (3-4 items).`,
+      },
+      { role: "user", content: await buildBusinessContext() },
+    ],
+  });
+  if (result.ok) {
+    try {
+      const raw = result.message.content;
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(parsed?.opportunities) && parsed.opportunities.length) {
+        opportunities = parsed.opportunities;
+        fallback = false;
+      }
+    } catch {
+      // fall through to fallback content already assigned above
+    }
+  }
+
+  await marketingState.setOpportunities(opportunities);
+  await logMarketingEvent({ type: "opportunities_generated", count: opportunities.length });
+  return { opportunities, fallback };
+}
+
+// Cheap read for the Overview page - bootstraps once on first-ever visit.
+export async function getCurrentOpportunities(): Promise<{ opportunities: MarketingOpportunity[]; fallback: boolean }> {
+  const state = await marketingState.getWorkspaceState();
+  if (!state.opportunitiesUpdatedAt) return findGrowthOpportunities();
+  return { opportunities: state.opportunities, fallback: !getClient() };
+}
+
+// --- Reporting Manager: daily/weekly report generation ---
+
+export async function generateReport(period: "daily" | "weekly"): Promise<{ content: string; fallback: boolean }> {
+  const recommendations = await marketingState.getRecommendations();
+  const openCount = recommendations.filter((r) => r.status === "Awaiting review").length;
+  const fallbackContent = `${period === "daily" ? "Daily" : "Weekly"} report (sample - add OPENAI_API_KEY for a live one): Spend AED 184,200, 312 leads, 96 qualified, ROI 6.7x. Google Search remains the strongest channel; Meta CPM is up 31% and worth watching. ${recommendations.length} recommendation(s) on file, ${openCount} still awaiting review.`;
+
+  const recentLog = await getRecentLogContext(period === "daily" ? 1 : 7);
+  const result = await callModel("reporting", {
+    max_tokens: 1200,
+    messages: [
+      {
+        role: "system",
+        content: `You are the Reporting Manager for PickTheBrick's marketing team. Write a concise ${period} performance report a founder could read in under a minute: a headline line, what happened, what's still outstanding. Plain text, short paragraphs or a few bullet points - no markdown headers, no code fences.`,
+      },
+      {
+        role: "user",
+        content: `${await buildBusinessContext()}\n\nCurrent recommendations:\n${recommendations.map((r) => `- [${r.status}] ${r.title}`).join("\n") || "(none)"}\n\nRecent activity:\n${recentLog}`,
+      },
+    ],
+  });
+
+  const content = result.ok && result.message.content ? result.message.content : fallbackContent;
+  const fallback = !(result.ok && result.message.content);
+  await marketingState.addReport(period, content, fallback);
+  await logMarketingEvent({ type: "report_generated", period });
+  return { content, fallback };
 }
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -278,6 +467,30 @@ const TOOLS: ChatCompletionTool[] = [
       parameters: { type: "object", properties: { text: { type: "string" } }, required: ["text"] },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "analyze_performance",
+      description: "Delegate to the Performance Analyst for a fresh read on one channel's data (Google Ads, Meta/Instagram, or the website).",
+      parameters: { type: "object", properties: { channel: { type: "string", enum: ["google", "meta", "website"] } }, required: ["channel"] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "find_growth_opportunities",
+      description: "Delegate to the Growth Manager to scan every channel for untapped opportunities (gaps, patterns worth repeating, underserved pages).",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_report",
+      description: "Delegate to the Reporting Manager to produce a daily or weekly performance report.",
+      parameters: { type: "object", properties: { period: { type: "string", enum: ["daily", "weekly"] } }, required: ["period"] },
+    },
+  },
 ];
 
 async function executeTool(name: string, args: Record<string, unknown>): Promise<string> {
@@ -310,6 +523,20 @@ async function executeTool(name: string, args: Record<string, unknown>): Promise
     case "add_instruction":
       await marketingState.addInstruction(String(args.text));
       return `Instruction saved: "${args.text}"`;
+    case "analyze_performance": {
+      const channel = String(args.channel) as MarketingChannel;
+      const result = await runPerformanceAnalysis(channel);
+      return `Performance Analyst on ${channel}: ${result.insights.join(" ")}`;
+    }
+    case "find_growth_opportunities": {
+      const result = await findGrowthOpportunities();
+      return `Growth Manager found: ${result.opportunities.map((o) => `${o.title} - ${o.why}`).join(" | ")}`;
+    }
+    case "generate_report": {
+      const period = String(args.period) as "daily" | "weekly";
+      const result = await generateReport(period);
+      return `Reporting Manager's ${period} report: ${result.content}`;
+    }
     default:
       return `Unknown tool: ${name}`;
   }
@@ -334,8 +561,15 @@ async function buildAgentContext(): Promise<string> {
     (q) => `- id=${q.id} [${state.queueApprovals[q.id] ?? "pending"}] (${q.channel}) ${q.title}`,
   ).join("\n");
   const instrText = instructions.map((i) => `- ${i.text}`).join("\n") || "(none set)";
+  const opportunitiesLine = state.opportunitiesUpdatedAt
+    ? `${state.opportunities.length} opportunit${state.opportunities.length === 1 ? "y" : "ies"} on file (last found ${state.opportunitiesUpdatedAt.toISOString()}) - call find_growth_opportunities for a fresh scan.`
+    : "None found yet - call find_growth_opportunities to have the Growth Manager scan for some.";
 
-  return `Current AI Autonomy: ${AUTONOMY_LEVELS[state.autonomyLevel]} (level ${state.autonomyLevel})
+  return `Your team: Performance Analyst (analyze_performance), Content Manager (generate_content_concept), Growth Manager (find_growth_opportunities), Reporting Manager (generate_report) - delegate to them via their tool rather than guessing at their job yourself.
+
+Growth opportunities: ${opportunitiesLine}
+
+Current AI Autonomy: ${AUTONOMY_LEVELS[state.autonomyLevel]} (level ${state.autonomyLevel})
 Per-tool permissions:
 ${permsText}
 
@@ -357,17 +591,18 @@ ${recentLog}`;
 // can actually act via the tools above, not just describe what it would do.
 // Bounded to 4 tool-calling rounds so a confused model can't loop forever.
 export async function runMarketingAgent(userMessage: string): Promise<{ reply: string; toolCalls: ToolCallRecord[] }> {
-  const client = getClient();
-  if (!client) return { reply: NOT_CONFIGURED, toolCalls: [] };
-
-  const [history, agentContext] = await Promise.all([marketingState.getChatHistory(20), buildAgentContext()]);
+  const [history, agentContext, businessContext] = await Promise.all([
+    marketingState.getChatHistory(20),
+    buildAgentContext(),
+    buildBusinessContext(),
+  ]);
 
   const messages: ChatCompletionMessageParam[] = [
     {
       role: "system",
-      content: `You are "Marketing" - PickTheBrick's AI marketing employee, living inside the founder's internal dashboard. You can chat, answer questions, and take real action via the tools available to you when asked or instructed. Confirm briefly (1-2 sentences) what you did after acting; if you can't or won't act (e.g. missing info), say so plainly. Keep replies short and direct - founder-to-employee tone, not a customer-support bot.
+      content: `You are the Marketing Manager - PickTheBrick's AI marketing employee, living inside the founder's internal dashboard. You decide what matters and you're who the founder actually talks to, but you lead a small team of specialists (see below) - delegate to them via their tools rather than trying to do their job yourself from memory. You can chat, answer questions, and take real action via your tools when asked or instructed. Confirm briefly (1-2 sentences) what you did after acting; if you can't or won't act (e.g. missing info), say so plainly. Keep replies short and direct - founder-to-employee tone, not a customer-support bot.
 
-${buildBusinessContext()}
+${businessContext}
 
 ${agentContext}`,
     },
@@ -379,14 +614,15 @@ ${agentContext}`,
   let finalReply = "Sorry, I didn't get an answer for that - please try again.";
 
   for (let round = 0; round < 4; round++) {
-    const response = await client.chat.completions.create({
-      model: MARKETING_AI_MODEL,
-      messages,
-      tools: TOOLS,
-      tool_choice: "auto",
-    });
-    const message = response.choices[0]?.message;
-    if (!message) break;
+    const result = await callModel("manager", { max_tokens: 1000, messages, tools: TOOLS, tool_choice: "auto" });
+    if (!result.ok) {
+      finalReply =
+        result.reason === "budget_exceeded"
+          ? "I've hit today's or this month's AI budget cap, so I can't respond right now — ask again later, or raise the cap on the Approvals page."
+          : NOT_CONFIGURED;
+      break;
+    }
+    const message = result.message;
 
     if (message.tool_calls && message.tool_calls.length > 0) {
       messages.push({ role: "assistant", content: message.content, tool_calls: message.tool_calls });
@@ -398,9 +634,9 @@ ${agentContext}`,
         } catch {
           // leave args empty if the model produced malformed JSON
         }
-        const result = await executeTool(call.function.name, args);
+        const toolResult = await executeTool(call.function.name, args);
         allToolCalls.push({ name: call.function.name, args });
-        messages.push({ role: "tool", tool_call_id: call.id, content: result });
+        messages.push({ role: "tool", tool_call_id: call.id, content: toolResult });
       }
       continue;
     }

@@ -967,6 +967,10 @@ model MarketingWorkspaceState {
   workingJson        String    @default("[]")
   problemsJson       String    @default("[]")
   analysisUpdatedAt  DateTime?
+  // Growth Manager's latest opportunity list - same cache-until-refreshed
+  // shape as working/problems above.
+  opportunitiesJson       String    @default("[]")
+  opportunitiesUpdatedAt  DateTime?
   updatedAt          DateTime  @updatedAt
 }
 
@@ -1023,4 +1027,71 @@ model SiteAssistantMessage {
 
   @@index([clientId])
   @@index([anonymousSessionId])
+}
+
+// The Performance Analyst's latest read on one channel - replaces the old
+// static GOOGLE_INSIGHTS/META_INSIGHTS/CONVERSION_INSIGHTS arrays with a
+// real per-channel analysis, cached until "Refresh insights" (or the
+// Marketing Manager delegating via the analyze_performance tool) reruns it.
+model MarketingChannelInsight {
+  id           String   @id @default(cuid())
+  channel      String   @unique
+  insightsJson String
+  fallback     Boolean  @default(true)
+  updatedAt    DateTime @updatedAt
+}
+
+// One Reporting Manager output - daily/weekly reports accumulate as a
+// history rather than being overwritten, so past reports stay browsable.
+model MarketingReport {
+  id        String   @id @default(cuid())
+  period    String
+  content   String
+  fallback  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// One row per OpenAI call the Marketing employee makes - this app's own
+// cost-tracking/hard-stop layer (lib/marketingBudget.ts), independent of
+// (and more reliable than) OpenAI's own project-level budget, which is a
+// soft threshold that doesn't always block requests once exceeded.
+model MarketingAiUsage {
+  id               String   @id @default(cuid())
+  role             String   // "manager" | "analyst" | "content" | "growth" | "reporting"
+  model            String
+  inputTokens      Int
+  outputTokens     Int
+  estimatedCostUsd Float
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Singleton row (fixed id, see lib/marketingBudget.ts) holding the
+// founder's spend caps, checked before every OpenAI call. Defaults match
+// the founder's own starting numbers - conservative until real usage data
+// justifies raising them.
+model MarketingBudget {
+  id                   String @id @default(cuid())
+  dailyCapUsd          Float  @default(3)
+  monthlyCapUsd        Float  @default(50)
+  maxSingleCallUsd     Float  @default(0.5)
+  warningThresholdUsd  Float  @default(25)
+  criticalThresholdUsd Float  @default(40)
+}
+
+// The Marketing team's shared "constitution" - permanent business knowledge
+// every role's system prompt is built from (see buildBusinessContext() in
+// lib/ai/marketingProvider.ts), editable from the Knowledge Base tab
+// instead of requiring a code change. Singleton row (fixed id), plain text
+// per section rather than nested JSON - it's just a form of textareas.
+model MarketingConstitution {
+  id              String   @id @default(cuid())
+  business        String
+  customers       String
+  products        String
+  objectives      String
+  brandRules      String
+  commercialRules String
+  updatedAt       DateTime @updatedAt
 }

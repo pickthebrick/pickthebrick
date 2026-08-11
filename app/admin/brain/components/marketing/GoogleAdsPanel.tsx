@@ -1,7 +1,8 @@
 "use client";
 
-import { GOOGLE_KPIS, GOOGLE_CAMPAIGNS, GOOGLE_INSIGHTS, type GoogleCampaign } from "../../data";
-import { KpiGrid, DataTable, InsightList, Pill } from "../ui";
+import { GOOGLE_KPIS, GOOGLE_CAMPAIGNS, type GoogleCampaign } from "../../data";
+import { KpiGrid, DataTable, Pill } from "../ui";
+import ChannelInsights from "./ChannelInsights";
 
 const STATUS_TONE: Record<GoogleCampaign["status"], "green" | "gold" | "red" | "grey"> = {
   SCALE: "green",
@@ -29,7 +30,7 @@ export default function GoogleAdsPanel() {
           <Pill key="status" label={c.status} tone={STATUS_TONE[c.status]} />,
         ])}
       />
-      <InsightList title="What is Google Ads telling us?" items={GOOGLE_INSIGHTS} />
+      <ChannelInsights channel="google" />
     </>
   );
 }

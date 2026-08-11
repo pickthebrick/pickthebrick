@@ -54,11 +54,8 @@ export const COMING_SOON: Partial<Record<MarketingTab, string>> = {
     "AI-guided campaign builder — pick an objective, get a full strategy (audience, offer, budget, creative) across Google + Meta, generated as drafts.",
   competitors:
     "Competitor monitoring across search rankings, Instagram content, offers and pricing — with AI positioning suggestions.",
-  knowledge:
-    "Central knowledge base of business, product, customer and sales facts the AI draws on before writing anything.",
   automation:
     "Scheduled workflows — daily performance checks, weekly reviews, content pipeline, lead follow-up — each with status, last run, and an on/off switch.",
-  reports: "Auto-generated daily, weekly and monthly reports with full performance breakdowns, exportable to PDF.",
 };
 
 export type ToolTile = {

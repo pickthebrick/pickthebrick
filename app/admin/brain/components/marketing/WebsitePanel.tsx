@@ -1,7 +1,8 @@
 "use client";
 
-import { WEBSITE_KPIS, TOP_PAGES, CONVERSION_INSIGHTS } from "../../data";
-import { KpiGrid, DataTable, InsightList } from "../ui";
+import { WEBSITE_KPIS, TOP_PAGES } from "../../data";
+import { KpiGrid, DataTable } from "../ui";
+import ChannelInsights from "./ChannelInsights";
 
 export default function WebsitePanel() {
   return (
@@ -18,7 +19,7 @@ export default function WebsitePanel() {
           p.bounce,
         ])}
       />
-      <InsightList title="Why aren't visitors converting?" items={CONVERSION_INSIGHTS} />
+      <ChannelInsights channel="website" />
     </>
   );
 }

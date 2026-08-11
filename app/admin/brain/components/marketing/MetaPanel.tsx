@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { META_KPIS, META_CONTENT, META_INSIGHTS, META_FILTERS, META_FILTER_TYPE_MAP } from "../../data";
-import { KpiGrid, DataTable, InsightList, Chip } from "../ui";
+import { META_KPIS, META_CONTENT, META_FILTERS, META_FILTER_TYPE_MAP } from "../../data";
+import { KpiGrid, DataTable, Chip } from "../ui";
+import ChannelInsights from "./ChannelInsights";
 
 export default function MetaPanel() {
   const [filter, setFilter] = useState<(typeof META_FILTERS)[number]>("All");
@@ -20,7 +21,7 @@ export default function MetaPanel() {
         columns={["Post / Reel", "Type", "Reach", "Engagement", "Clicks", "Leads", "Revenue"]}
         rows={filtered.map((c) => [c.name, c.type, c.reach, c.engagement, c.clicks, c.leads, <span key="rev" className="brain-roas">{c.revenue}</span>])}
       />
-      <InsightList title="Content patterns" items={META_INSIGHTS} />
+      <ChannelInsights channel="meta" />
     </>
   );
 }

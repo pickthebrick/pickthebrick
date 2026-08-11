@@ -8,8 +8,15 @@ import {
   getCurrentMarketingAnalysis,
   generateContentConcept as generateContentConceptProvider,
   runMarketingAgent,
+  runPerformanceAnalysis,
+  getCurrentChannelInsights,
+  findGrowthOpportunities,
+  getCurrentOpportunities,
+  generateReport,
   type ContentConceptInput,
 } from "@/lib/ai/marketingProvider";
+import type { MarketingChannel, MarketingConstitutionFields } from "@/lib/marketingState";
+import { getUsageSummary, getBudget, setBudget, type BudgetConfig } from "@/lib/marketingBudget";
 
 async function requireSuperAdmin() {
   const session = await getSession();
@@ -97,4 +104,69 @@ export async function sendChatMessageAction(message: string) {
   await marketingState.appendChatMessage("user", text);
   await marketingState.appendChatMessage("assistant", reply, toolCalls.length ? toolCalls : undefined);
   return { reply, toolCalls };
+}
+
+// --- Performance Analyst (Google Ads / Meta / Website pages) ---
+
+export async function getChannelInsightsAction(channel: MarketingChannel) {
+  await requireSuperAdmin();
+  return getCurrentChannelInsights(channel);
+}
+
+export async function refreshChannelInsightsAction(channel: MarketingChannel) {
+  await requireSuperAdmin();
+  return runPerformanceAnalysis(channel);
+}
+
+// --- Growth Manager (Overview page) ---
+
+export async function getOpportunitiesAction() {
+  await requireSuperAdmin();
+  return getCurrentOpportunities();
+}
+
+export async function refreshOpportunitiesAction() {
+  await requireSuperAdmin();
+  return findGrowthOpportunities();
+}
+
+// --- Reporting Manager (Reports page) ---
+
+export async function getReportsAction() {
+  await requireSuperAdmin();
+  return marketingState.getReports();
+}
+
+export async function generateReportAction(period: "daily" | "weekly") {
+  await requireSuperAdmin();
+  return generateReport(period);
+}
+
+// --- AI budget (Overview page usage card + Approvals page cap editor) ---
+
+export async function getUsageSummaryAction() {
+  await requireSuperAdmin();
+  return getUsageSummary();
+}
+
+export async function getBudgetAction() {
+  await requireSuperAdmin();
+  return getBudget();
+}
+
+export async function setBudgetAction(fields: Partial<BudgetConfig>) {
+  await requireSuperAdmin();
+  return setBudget(fields);
+}
+
+// --- Marketing Constitution (Knowledge Base tab) ---
+
+export async function getConstitutionAction() {
+  await requireSuperAdmin();
+  return marketingState.getConstitution();
+}
+
+export async function setConstitutionAction(fields: Partial<MarketingConstitutionFields>) {
+  await requireSuperAdmin();
+  return marketingState.setConstitution(fields);
 }

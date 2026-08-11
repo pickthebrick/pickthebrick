@@ -2,20 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { MARKETING_KPIS, QUEUE_ITEMS } from "../../data";
+import { MARKETING_ROLE_LIST } from "@/lib/ai/marketingRoles";
 import {
   getMarketingAnalysis,
   refreshMarketingAnalysis,
   setRecommendationStatusAction,
   getMarketingWorkspaceState,
   approveQueueItemAction,
+  getOpportunitiesAction,
+  refreshOpportunitiesAction,
 } from "@/app/actions/marketingAi";
 import type { MarketingAnalysis } from "@/lib/ai/marketingProvider";
+import type { MarketingOpportunity } from "@/lib/marketingState";
 import { KpiGrid, SectionCard } from "../ui";
+import AiUsageCard from "./AiUsageCard";
 
 export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () => void }) {
   const [analysis, setAnalysis] = useState<MarketingAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [queueApprovals, setQueueApprovals] = useState<Record<string, "Approved">>({});
+  const [opportunities, setOpportunities] = useState<MarketingOpportunity[]>([]);
+  const [opportunitiesFallback, setOpportunitiesFallback] = useState(true);
+  const [opportunitiesLoading, setOpportunitiesLoading] = useState(true);
 
   function fetchAll() {
     Promise.all([getMarketingAnalysis(), getMarketingWorkspaceState()])
@@ -24,6 +32,12 @@ export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () =
         setQueueApprovals(state.queueApprovals);
       })
       .finally(() => setLoading(false));
+    getOpportunitiesAction()
+      .then((r) => {
+        setOpportunities(r.opportunities);
+        setOpportunitiesFallback(r.fallback);
+      })
+      .finally(() => setOpportunitiesLoading(false));
   }
 
   function refresh() {
@@ -31,6 +45,16 @@ export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () =
     refreshMarketingAnalysis()
       .then(setAnalysis)
       .finally(() => setLoading(false));
+  }
+
+  function refreshOpportunities() {
+    setOpportunitiesLoading(true);
+    refreshOpportunitiesAction()
+      .then((r) => {
+        setOpportunities(r.opportunities);
+        setOpportunitiesFallback(r.fallback);
+      })
+      .finally(() => setOpportunitiesLoading(false));
   }
 
   useEffect(() => {
@@ -49,6 +73,20 @@ export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () =
 
   return (
     <>
+      <div className="brain-team-strip">
+        {MARKETING_ROLE_LIST.map((role) => (
+          <div className="brain-team-card" key={role.id}>
+            <div className="brain-team-icon">{role.icon}</div>
+            <div>
+              <div className="brain-team-name">{role.name}</div>
+              <div className="brain-team-mission">{role.mission}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <AiUsageCard />
+
       <KpiGrid kpis={MARKETING_KPIS} />
 
       <div className="brain-grid" style={{ gridTemplateColumns: "1.55fr 1fr", marginTop: 14 }}>
@@ -140,6 +178,29 @@ export default function OverviewPanel({ onAskAssistant }: { onAskAssistant: () =
           })}
         </SectionCard>
       </div>
+
+      <SectionCard accent="gold" className="brain-opportunities-card">
+        <div className="brain-ai-manager-head">
+          <span className="brain-status-dot brain-status-dot--gold" />
+          <div className="brain-ai-manager-title">Growth Opportunities</div>
+          <div className="brain-ai-manager-refresh" onClick={refreshOpportunities}>
+            {opportunitiesLoading ? "Thinking…" : "Refresh"}
+          </div>
+        </div>
+        {opportunitiesFallback && <div className="brain-modal-note">{"OPENAI_API_KEY isn't set yet — showing example output below."}</div>}
+        <div className="brain-opportunities-grid">
+          {opportunities.map((o, i) => (
+            <div className="brain-rec-card" key={i}>
+              <div className="brain-rec-title">{o.title}</div>
+              <div className="brain-opportunity-why">{o.why}</div>
+              <div className="brain-opportunity-action">
+                <b>Suggested action</b> {o.action}
+              </div>
+            </div>
+          ))}
+        </div>
+        {!opportunitiesLoading && opportunities.length === 0 && <div className="brain-empty-note">No opportunities found right now.</div>}
+      </SectionCard>
     </>
   );
 }
