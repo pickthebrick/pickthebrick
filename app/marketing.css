@@ -1422,6 +1422,29 @@
   color: var(--fg);
 }
 
+.landing-breadcrumb {
+  max-width: 880px;
+  margin: 18px auto 0;
+  padding: 0 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.landing-breadcrumb a {
+  color: var(--muted);
+  text-decoration: underline;
+}
+.landing-breadcrumb a:hover {
+  color: var(--accent);
+}
+.landing-breadcrumb span[aria-current] {
+  color: var(--fg);
+  font-weight: 600;
+}
+
 .landing-section {
   max-width: 880px;
   margin: 0 auto 56px;
@@ -1545,6 +1568,7 @@
   margin-bottom: 32px;
 }
 .landing-type-tab {
+  display: inline-block;
   padding: 9px 18px;
   font-size: 13px;
   font-weight: 700;
@@ -1552,7 +1576,11 @@
   border-radius: 999px;
   background: var(--surface);
   color: var(--fg);
+  text-decoration: none;
   cursor: pointer;
+}
+.landing-type-tab:hover {
+  border-color: var(--accent);
 }
 .landing-type-tab.selected {
   background: var(--accent);
