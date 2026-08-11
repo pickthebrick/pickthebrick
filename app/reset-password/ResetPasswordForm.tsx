@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { confirmPasswordResetAction } from "@/app/actions/passwordReset";
+import { Role } from "@/app/generated/prisma/enums";
 
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -13,6 +14,12 @@ export default function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  // A staff-capable account only ever unlocks its real dashboard through
+  // /staff-login, not the public /login this page otherwise points to (see
+  // effectiveRole() in lib/auth.ts) - this link also covers a brand-new team
+  // account choosing its password for the first time via this same page
+  // (see createAdmin in app/actions/team.ts).
+  const [signInHref, setSignInHref] = useState("/login");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,6 +39,7 @@ export default function ResetPasswordForm() {
         setError(result.error);
         return;
       }
+      setSignInHref(result.role === Role.client ? "/login" : "/staff-login");
       setDone(true);
     } finally {
       setLoading(false);
@@ -60,7 +68,7 @@ export default function ResetPasswordForm() {
             <>
               <p className="text-sm text-[var(--fg)]">Your password has been updated. You&apos;ve been signed out everywhere else for safety.</p>
               <Link
-                href="/login"
+                href={signInHref}
                 className="mt-4 inline-block text-sm font-semibold"
                 style={{ color: "var(--accent)" }}
               >

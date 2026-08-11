@@ -107,7 +107,11 @@ export async function signIn(input: { email: string; password: string; viaStaffL
   });
   if (!user) return { error: "Invalid email or password." };
   if (!user.passwordHash) {
-    return { error: "This account signs in with Google - use the \"Continue with Google\" button, or set a password from your Profile page first." };
+    return {
+      error: user.googleId
+        ? "This account signs in with Google - use the \"Continue with Google\" button, or set a password from your Profile page first."
+        : "This account doesn't have a password set yet - use the link from your welcome or password-reset email to choose one.",
+    };
   }
 
   const valid = await verifyPassword(input.password, user.passwordHash);

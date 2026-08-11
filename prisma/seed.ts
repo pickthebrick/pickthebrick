@@ -329,6 +329,14 @@ const NOTIFICATION_TEMPLATES: { key: string; label: string; emailSubject: string
       "We received a request to reset your password. Click the link below to choose a new one - it expires in 1 hour and can only be used once.\n\n{{resetUrl}}\n\nIf you didn't request this, you can safely ignore this email.",
     whatsappBody: "Reset your PickTheBrick password (expires in 1 hour): {{resetUrl}}",
   },
+  {
+    key: "team_member_welcome",
+    label: "Team member welcome (new account)",
+    emailSubject: "Welcome to the PickTheBrick team",
+    emailBody:
+      "Hi {{fullName}},\n\nAn account has been created for you on PickTheBrick. Choose your password to finish setting it up - this link expires in 7 days and can only be used once:\n\n{{setPasswordUrl}}\n\nImportant: once your password is set, don't use the normal sign-in page - sign in from the Staff login link at the bottom of the homepage instead.\n\nWelcome aboard!",
+    whatsappBody: "Welcome to PickTheBrick! Set your password to finish creating your account: {{setPasswordUrl}} (expires in 7 days). Sign in afterwards via Staff login, not the normal login.",
+  },
 ];
 
 async function seedNotificationTemplates() {
