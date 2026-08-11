@@ -3,7 +3,20 @@
 // reusable, styled (see ../brain.css) building blocks used across almost
 // every screen.
 
+import ReactMarkdown from "react-markdown";
+
 export type Tone = "green" | "gold" | "red" | "grey" | "blue" | "coral";
+
+// Renders AI-generated text (chat replies, reports) as actual formatted
+// markdown instead of a wall of literal ###/**/--- characters. See
+// brain.css .brain-markdown for the element styling.
+export function Markdown({ children }: { children: string }) {
+  return (
+    <div className="brain-markdown">
+      <ReactMarkdown>{children}</ReactMarkdown>
+    </div>
+  );
+}
 
 export function Pill({ label, tone }: { label: string; tone: Tone }) {
   return <span className={`brain-pill brain-pill--${tone}`}>{label}</span>;

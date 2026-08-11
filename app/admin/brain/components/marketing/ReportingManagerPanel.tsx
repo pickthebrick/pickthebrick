@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getReportsAction, generateReportAction } from "@/app/actions/marketingAi";
-import { SectionCard, Pill } from "../ui";
+import { SectionCard, Pill, Markdown } from "../ui";
 
 type ReportRow = { id: string; period: string; content: string; fallback: boolean; createdAt: Date };
 
@@ -49,8 +49,10 @@ export default function ReportingManagerPanel() {
             <Pill label={r.period === "daily" ? "Daily" : "Weekly"} tone="gold" />
             <span className="brain-report-date">{new Date(r.createdAt).toLocaleString()}</span>
           </div>
-          <div className="brain-report-content">{r.content}</div>
-          {r.fallback && <div className="brain-modal-note">{"OPENAI_API_KEY isn't set yet — this is example output."}</div>}
+          <div className="brain-report-content">
+            <Markdown>{r.content}</Markdown>
+          </div>
+          {r.fallback && <div className="brain-modal-note">{"Live AI unavailable right now — this is example output. Ask Marketing in the Chat tab why, or check server logs."}</div>}
         </SectionCard>
       ))}
     </>

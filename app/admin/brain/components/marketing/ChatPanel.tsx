@@ -8,7 +8,7 @@ import {
   addInstructionAction,
   removeInstructionAction,
 } from "@/app/actions/marketingAi";
-import { SectionCard } from "../ui";
+import { SectionCard, Markdown } from "../ui";
 
 type ChatRow = { id: string; role: string; content: string; toolCallsJson: string | null };
 type Instruction = { id: string; text: string };
@@ -84,7 +84,9 @@ export default function ChatPanel() {
           )}
           {messages.map((m) => (
             <div key={m.id}>
-              <div className={`brain-assistant-bubble brain-assistant-bubble--${m.role} brain-chat-bubble`}>{m.content}</div>
+              <div className={`brain-assistant-bubble brain-assistant-bubble--${m.role} brain-chat-bubble`}>
+                {m.role === "assistant" ? <Markdown>{m.content}</Markdown> : m.content}
+              </div>
               {toolTrace(m.toolCallsJson).length > 0 && (
                 <div className="brain-chat-trace">did: {toolTrace(m.toolCallsJson).join(", ")}</div>
               )}
