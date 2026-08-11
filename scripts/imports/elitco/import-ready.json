@@ -12,38 +12,89 @@
               "products": [
                 {
                   "name": "Levin Round Recessed LED Slim Downlight 36W - Daylight (6500K)",
-                  "rate": 37,
-                  "images": ["https://elitco.com/uploads/product/image/levin-round-shape-recessed-led-slim-downlight-w-v-k-daylight--ip-with-driver-mm-nondimmable-flicker-free-white-finish_2.jpg"],
+                  "rate": 197,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/levin-round-shape-recessed-led-slim-downlight-w-v-k-daylight--ip-with-driver-mm-nondimmable-flicker-free-white-finish_2.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "36W" },
-                    { "label": "Color Temperature", "value": "6500K (Daylight)" },
-                    { "label": "IP Rating", "value": "IP20" },
-                    { "label": "Dimmable", "value": "No" },
-                    { "label": "Brand", "value": "Levin" }
+                    {
+                      "label": "Wattage",
+                      "value": "36W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "6500K (Daylight)"
+                    },
+                    {
+                      "label": "IP Rating",
+                      "value": "IP20"
+                    },
+                    {
+                      "label": "Dimmable",
+                      "value": "No"
+                    },
+                    {
+                      "label": "Brand",
+                      "value": "Levin"
+                    }
                   ]
                 },
                 {
                   "name": "Levin Round Recessed LED Slim Downlight 18W - Warm White (3000K)",
-                  "rate": 21,
-                  "images": ["https://elitco.com/uploads/product/image/levin-round-shape-recessed-led-slim-downlight-w-v-k-warm-white--ip-with-driver-mm-nondimmable-flicker-free-white-finish_3.jpg"],
+                  "rate": 181,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/levin-round-shape-recessed-led-slim-downlight-w-v-k-warm-white--ip-with-driver-mm-nondimmable-flicker-free-white-finish_3.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "18W" },
-                    { "label": "Color Temperature", "value": "3000K (Warm White)" },
-                    { "label": "IP Rating", "value": "IP20" },
-                    { "label": "Dimmable", "value": "No" },
-                    { "label": "Brand", "value": "Levin" }
+                    {
+                      "label": "Wattage",
+                      "value": "18W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "3000K (Warm White)"
+                    },
+                    {
+                      "label": "IP Rating",
+                      "value": "IP20"
+                    },
+                    {
+                      "label": "Dimmable",
+                      "value": "No"
+                    },
+                    {
+                      "label": "Brand",
+                      "value": "Levin"
+                    }
                   ]
                 },
                 {
                   "name": "GE LED Slim Downlight 12W - Warm White (3000K)",
-                  "rate": 129,
-                  "images": ["https://elitco.com/uploads/product/image/ge--led-slim--lm-w-v-k-ip-h-cri--recessed.jpg"],
+                  "rate": 289,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/ge--led-slim--lm-w-v-k-ip-h-cri--recessed.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "12W" },
-                    { "label": "Color Temperature", "value": "3000K" },
-                    { "label": "IP Rating", "value": "IP20" },
-                    { "label": "CRI", "value": "80" },
-                    { "label": "Brand", "value": "GE" }
+                    {
+                      "label": "Wattage",
+                      "value": "12W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "3000K"
+                    },
+                    {
+                      "label": "IP Rating",
+                      "value": "IP20"
+                    },
+                    {
+                      "label": "CRI",
+                      "value": "80"
+                    },
+                    {
+                      "label": "Brand",
+                      "value": "GE"
+                    }
                   ]
                 }
               ]
@@ -53,37 +104,85 @@
               "products": [
                 {
                   "name": "Recessed Downlight Adjustable 13W - Warm White (3000K)",
-                  "rate": 262,
-                  "images": ["https://elitco.com/uploads/product/image/recessed-downlights-adjustable-w-led-lm-k-warm-white-ma-suitable-for-low-ceilings-in-hotel-restaurant-and-home-lighting-good-for-replacement-the-luminaires-with-halogen-lamps.jpg"],
+                  "rate": 422,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/recessed-downlights-adjustable-w-led-lm-k-warm-white-ma-suitable-for-low-ceilings-in-hotel-restaurant-and-home-lighting-good-for-replacement-the-luminaires-with-halogen-lamps.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "13W" },
-                    { "label": "Color Temperature", "value": "3000K" },
-                    { "label": "Adjustment", "value": "Tilt / rotate gimbal" },
-                    { "label": "Use case", "value": "Low ceilings - hotel, restaurant, office" }
+                    {
+                      "label": "Wattage",
+                      "value": "13W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "3000K"
+                    },
+                    {
+                      "label": "Adjustment",
+                      "value": "Tilt / rotate gimbal"
+                    },
+                    {
+                      "label": "Use case",
+                      "value": "Low ceilings - hotel, restaurant, office"
+                    }
                   ]
                 },
                 {
                   "name": "Tungsram LED Scoop 33W Adjustable Downlight - Cool White (4000K)",
-                  "rate": 440,
-                  "images": ["https://elitco.com/uploads/product/image/tungsramled-scoop--w-v-lm-k-cool-white--h-cridownlight-adjustablerecessed_1.jpg"],
+                  "rate": 600,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/tungsramled-scoop--w-v-lm-k-cool-white--h-cridownlight-adjustablerecessed_1.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "33W" },
-                    { "label": "Color Temperature", "value": "4000K" },
-                    { "label": "CRI", "value": "80" },
-                    { "label": "Brand", "value": "Tungsram" },
-                    { "label": "Type", "value": "Adjustable recessed downlight" }
+                    {
+                      "label": "Wattage",
+                      "value": "33W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "4000K"
+                    },
+                    {
+                      "label": "CRI",
+                      "value": "80"
+                    },
+                    {
+                      "label": "Brand",
+                      "value": "Tungsram"
+                    },
+                    {
+                      "label": "Type",
+                      "value": "Adjustable recessed downlight"
+                    }
                   ]
                 },
                 {
                   "name": "Tungsram LED Recessed Spotlight 6W - Warm White (3000K)",
-                  "rate": 80,
-                  "images": ["https://elitco.com/uploads/product/image/tungsram--led-recessed-spotlight-w-k-lm--adjustable-spotlight-dia-mm-cutout-white-round-bezel-non-dimmable.jpg"],
+                  "rate": 240,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/tungsram--led-recessed-spotlight-w-k-lm--adjustable-spotlight-dia-mm-cutout-white-round-bezel-non-dimmable.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "6W" },
-                    { "label": "Color Temperature", "value": "3000K" },
-                    { "label": "Adjustment", "value": "Adjustable spotlight" },
-                    { "label": "Dimmable", "value": "No" },
-                    { "label": "Brand", "value": "Tungsram" }
+                    {
+                      "label": "Wattage",
+                      "value": "6W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "3000K"
+                    },
+                    {
+                      "label": "Adjustment",
+                      "value": "Adjustable spotlight"
+                    },
+                    {
+                      "label": "Dimmable",
+                      "value": "No"
+                    },
+                    {
+                      "label": "Brand",
+                      "value": "Tungsram"
+                    }
                   ]
                 }
               ]
@@ -98,35 +197,77 @@
               "products": [
                 {
                   "name": "High Voltage Focus Adjustable 13W LED Track Spotlight - Warm White (3000K)",
-                  "rate": 487,
-                  "images": ["https://elitco.com/uploads/product/image/high-voltage-focus-adjustable-w-led-track-spotlight-k-warm-white-precise-light-distribution-is-perfect-for-highlighting-artworks-and-exhibitions-art-galleries-showrooms-stores-and-other-commercial-applications.jpg"],
+                  "rate": 647,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/high-voltage-focus-adjustable-w-led-track-spotlight-k-warm-white-precise-light-distribution-is-perfect-for-highlighting-artworks-and-exhibitions-art-galleries-showrooms-stores-and-other-commercial-applications.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "13W" },
-                    { "label": "Color Temperature", "value": "3000K" },
-                    { "label": "Track Type", "value": "High-voltage single-circuit" },
-                    { "label": "Use case", "value": "Highlighting artwork / displays" }
+                    {
+                      "label": "Wattage",
+                      "value": "13W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "3000K"
+                    },
+                    {
+                      "label": "Track Type",
+                      "value": "High-voltage single-circuit"
+                    },
+                    {
+                      "label": "Use case",
+                      "value": "Highlighting artwork / displays"
+                    }
                   ]
                 },
                 {
                   "name": "White 25W Focus Adjustable LED Track Spotlight - Warm White (3000K)",
-                  "rate": 694,
-                  "images": ["https://elitco.com/uploads/product/image/pioneer-white-w-focus-adjustable-led-track-spotlight-k_1.jpg"],
+                  "rate": 854,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/pioneer-white-w-focus-adjustable-led-track-spotlight-k_1.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "25W" },
-                    { "label": "Color Temperature", "value": "3000K" },
-                    { "label": "Track Type", "value": "High-voltage single-circuit" },
-                    { "label": "Finish", "value": "White" }
+                    {
+                      "label": "Wattage",
+                      "value": "25W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "3000K"
+                    },
+                    {
+                      "label": "Track Type",
+                      "value": "High-voltage single-circuit"
+                    },
+                    {
+                      "label": "Finish",
+                      "value": "White"
+                    }
                   ]
                 },
                 {
                   "name": "High Voltage LED Track Spotlight 7.5W - Warm White (3000K)",
-                  "rate": 255,
-                  "images": ["https://elitco.com/uploads/product/image/led-track-spotlight-w-warm-white--rotatable-for-showrooms-office-art-gallery-etc.jpg"],
+                  "rate": 415,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/led-track-spotlight-w-warm-white--rotatable-for-showrooms-office-art-gallery-etc.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "7.5W" },
-                    { "label": "Color Temperature", "value": "3000K" },
-                    { "label": "Rotation", "value": "Rotatable head" },
-                    { "label": "Use case", "value": "Showrooms, offices, galleries" }
+                    {
+                      "label": "Wattage",
+                      "value": "7.5W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "3000K"
+                    },
+                    {
+                      "label": "Rotation",
+                      "value": "Rotatable head"
+                    },
+                    {
+                      "label": "Use case",
+                      "value": "Showrooms, offices, galleries"
+                    }
                   ]
                 }
               ]
@@ -136,38 +277,89 @@
               "products": [
                 {
                   "name": "Black LED Focus Magnetic Track Light 12W - Warm White (3000K, 48VDC)",
-                  "rate": 77,
-                  "images": ["https://elitco.com/uploads/product/image/black-led-focus-magnetic-track-light-w-k-vdc--dmm-ra_2.jpg"],
+                  "rate": 237,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/black-led-focus-magnetic-track-light-w-k-vdc--dmm-ra_2.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "12W" },
-                    { "label": "Color Temperature", "value": "3000K" },
-                    { "label": "System Voltage", "value": "48VDC" },
-                    { "label": "Beam Angle", "value": "24°" },
-                    { "label": "CRI", "value": "Ra90" },
-                    { "label": "Finish", "value": "Black" }
+                    {
+                      "label": "Wattage",
+                      "value": "12W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "3000K"
+                    },
+                    {
+                      "label": "System Voltage",
+                      "value": "48VDC"
+                    },
+                    {
+                      "label": "Beam Angle",
+                      "value": "24°"
+                    },
+                    {
+                      "label": "CRI",
+                      "value": "Ra90"
+                    },
+                    {
+                      "label": "Finish",
+                      "value": "Black"
+                    }
                   ]
                 },
                 {
                   "name": "LED Linear Magnetic Track Light 36W, Black - 900mm (3000K, 48VDC)",
-                  "rate": 73,
-                  "images": ["https://elitco.com/uploads/product/image/led-linear-magnetic-track-light--black-w-k-vdc-opal-diffuser--mm--beam-angle.jpg"],
+                  "rate": 233,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/led-linear-magnetic-track-light--black-w-k-vdc-opal-diffuser--mm--beam-angle.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "36W" },
-                    { "label": "Color Temperature", "value": "3000K" },
-                    { "label": "System Voltage", "value": "48VDC" },
-                    { "label": "Length", "value": "900mm" },
-                    { "label": "Diffuser", "value": "Opal" }
+                    {
+                      "label": "Wattage",
+                      "value": "36W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "3000K"
+                    },
+                    {
+                      "label": "System Voltage",
+                      "value": "48VDC"
+                    },
+                    {
+                      "label": "Length",
+                      "value": "900mm"
+                    },
+                    {
+                      "label": "Diffuser",
+                      "value": "Opal"
+                    }
                   ]
                 },
                 {
                   "name": "M20 2-Meter Black Recessed Magnetic Track Rail",
-                  "rate": 68,
-                  "images": ["https://elitco.com/uploads/product/image/m-meters-black-recessed-magnetic-track.jpg"],
+                  "rate": 228,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/m-meters-black-recessed-magnetic-track.jpg"
+                  ],
                   "specs": [
-                    { "label": "Length", "value": "2m" },
-                    { "label": "Mount Type", "value": "Recessed magnetic track rail" },
-                    { "label": "System", "value": "M20" },
-                    { "label": "Finish", "value": "Black" }
+                    {
+                      "label": "Length",
+                      "value": "2m"
+                    },
+                    {
+                      "label": "Mount Type",
+                      "value": "Recessed magnetic track rail"
+                    },
+                    {
+                      "label": "System",
+                      "value": "M20"
+                    },
+                    {
+                      "label": "Finish",
+                      "value": "Black"
+                    }
                   ]
                 }
               ]
@@ -182,26 +374,60 @@
               "products": [
                 {
                   "name": "Elitco 2M White Surface Mounted LED Aluminium Profile (8.2x17.4mm)",
-                  "rate": 52,
-                  "images": ["https://elitco.com/uploads/product/image/elitco--ftm-white-surface-mounted-led-aluminium-profile-xmm-aluminum-channel-profile-with-frosted-diffuser-aluminum-channel-profile-track-for-led-strip-light-installations_1.jpg"],
+                  "rate": 212,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/elitco--ftm-white-surface-mounted-led-aluminium-profile-xmm-aluminum-channel-profile-with-frosted-diffuser-aluminum-channel-profile-track-for-led-strip-light-installations_1.jpg"
+                  ],
                   "specs": [
-                    { "label": "Length", "value": "2m (6.6ft)" },
-                    { "label": "Profile Size", "value": "8.2 x 17.4mm" },
-                    { "label": "Diffuser", "value": "Frosted" },
-                    { "label": "Mount Type", "value": "Surface-mounted" },
-                    { "label": "Material", "value": "Aluminium" }
+                    {
+                      "label": "Length",
+                      "value": "2m (6.6ft)"
+                    },
+                    {
+                      "label": "Profile Size",
+                      "value": "8.2 x 17.4mm"
+                    },
+                    {
+                      "label": "Diffuser",
+                      "value": "Frosted"
+                    },
+                    {
+                      "label": "Mount Type",
+                      "value": "Surface-mounted"
+                    },
+                    {
+                      "label": "Material",
+                      "value": "Aluminium"
+                    }
                   ]
                 },
                 {
                   "name": "Elitco 1M White Surface Mounted LED Aluminium Profile (8.2x17.4mm)",
-                  "rate": 27,
-                  "images": ["https://elitco.com/uploads/product/image/elitco--ftm-white-surface-mounted-led-aluminium-profile-xmm-aluminum-channel-profile-with-frosted-diffuser-aluminum-channel-profile-track-for-led-strip-light-installations.jpg"],
+                  "rate": 187,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/elitco--ftm-white-surface-mounted-led-aluminium-profile-xmm-aluminum-channel-profile-with-frosted-diffuser-aluminum-channel-profile-track-for-led-strip-light-installations.jpg"
+                  ],
                   "specs": [
-                    { "label": "Length", "value": "1m (3.3ft)" },
-                    { "label": "Profile Size", "value": "8.2 x 17.4mm" },
-                    { "label": "Diffuser", "value": "Frosted" },
-                    { "label": "Mount Type", "value": "Surface-mounted" },
-                    { "label": "Material", "value": "Aluminium" }
+                    {
+                      "label": "Length",
+                      "value": "1m (3.3ft)"
+                    },
+                    {
+                      "label": "Profile Size",
+                      "value": "8.2 x 17.4mm"
+                    },
+                    {
+                      "label": "Diffuser",
+                      "value": "Frosted"
+                    },
+                    {
+                      "label": "Mount Type",
+                      "value": "Surface-mounted"
+                    },
+                    {
+                      "label": "Material",
+                      "value": "Aluminium"
+                    }
                   ]
                 }
               ]
@@ -211,26 +437,60 @@
               "products": [
                 {
                   "name": "Elitco 2M White Recessed LED Aluminium Profile (9.7x23.7mm)",
-                  "rate": 56,
-                  "images": ["https://elitco.com/uploads/product/image/elitco--ftm-white-recessed-led-aluminium-profile-xmm-aluminum-channel-profile-with-frosted-diffuser-aluminum-channel-profile-track-for-led-strip-light-installations.jpg"],
+                  "rate": 216,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/elitco--ftm-white-recessed-led-aluminium-profile-xmm-aluminum-channel-profile-with-frosted-diffuser-aluminum-channel-profile-track-for-led-strip-light-installations.jpg"
+                  ],
                   "specs": [
-                    { "label": "Length", "value": "2m (6.6ft)" },
-                    { "label": "Profile Size", "value": "9.7 x 23.7mm" },
-                    { "label": "Diffuser", "value": "Frosted" },
-                    { "label": "Mount Type", "value": "Recessed / in-ground" },
-                    { "label": "Material", "value": "Aluminium" }
+                    {
+                      "label": "Length",
+                      "value": "2m (6.6ft)"
+                    },
+                    {
+                      "label": "Profile Size",
+                      "value": "9.7 x 23.7mm"
+                    },
+                    {
+                      "label": "Diffuser",
+                      "value": "Frosted"
+                    },
+                    {
+                      "label": "Mount Type",
+                      "value": "Recessed / in-ground"
+                    },
+                    {
+                      "label": "Material",
+                      "value": "Aluminium"
+                    }
                   ]
                 },
                 {
                   "name": "Elitco 1M White Recessed LED Aluminium Profile (32x90mm)",
-                  "rate": 129,
-                  "images": ["https://elitco.com/uploads/product/image/elitco--ftm-white-recessed-led-channel-system-with-frosted-diffuser-xmm-aluminum-channel-profile-track-for-led-strip-light-installations.jpg"],
+                  "rate": 289,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/elitco--ftm-white-recessed-led-channel-system-with-frosted-diffuser-xmm-aluminum-channel-profile-track-for-led-strip-light-installations.jpg"
+                  ],
                   "specs": [
-                    { "label": "Length", "value": "1m (3.3ft)" },
-                    { "label": "Profile Size", "value": "32 x 90mm" },
-                    { "label": "Diffuser", "value": "Frosted" },
-                    { "label": "Mount Type", "value": "Recessed / in-ground" },
-                    { "label": "Material", "value": "Aluminium" }
+                    {
+                      "label": "Length",
+                      "value": "1m (3.3ft)"
+                    },
+                    {
+                      "label": "Profile Size",
+                      "value": "32 x 90mm"
+                    },
+                    {
+                      "label": "Diffuser",
+                      "value": "Frosted"
+                    },
+                    {
+                      "label": "Mount Type",
+                      "value": "Recessed / in-ground"
+                    },
+                    {
+                      "label": "Material",
+                      "value": "Aluminium"
+                    }
                   ]
                 }
               ]
@@ -245,25 +505,56 @@
               "products": [
                 {
                   "name": "LED Ceiling Panel 600x600mm 40W - Pure White",
-                  "rate": 215,
-                  "images": ["https://elitco.com/uploads/product/image/led-panel-xmm-w-led-ceiling-lamp-k-pure-white-for-office--living-room--kitchen--bathroom.jpg"],
+                  "rate": 375,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/led-panel-xmm-w-led-ceiling-lamp-k-pure-white-for-office--living-room--kitchen--bathroom.jpg"
+                  ],
                   "specs": [
-                    { "label": "Size", "value": "600 x 600mm" },
-                    { "label": "Wattage", "value": "40W" },
-                    { "label": "Mount Type", "value": "Ceiling / grid" },
-                    { "label": "Use case", "value": "Office, retail, general ceilings" }
+                    {
+                      "label": "Size",
+                      "value": "600 x 600mm"
+                    },
+                    {
+                      "label": "Wattage",
+                      "value": "40W"
+                    },
+                    {
+                      "label": "Mount Type",
+                      "value": "Ceiling / grid"
+                    },
+                    {
+                      "label": "Use case",
+                      "value": "Office, retail, general ceilings"
+                    }
                   ]
                 },
                 {
                   "name": "GE LED Eco Recessed Panel 22W - Natural White (4000K)",
-                  "rate": 196,
-                  "images": ["https://elitco.com/uploads/product/image/ge--led-eco--lm-w-v-k-ip-h-cri--recessed.jpg"],
+                  "rate": 356,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/ge--led-eco--lm-w-v-k-ip-h-cri--recessed.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "22W" },
-                    { "label": "Color Temperature", "value": "4000K" },
-                    { "label": "IP Rating", "value": "IP20" },
-                    { "label": "CRI", "value": "80" },
-                    { "label": "Rated Life", "value": "45,000h" }
+                    {
+                      "label": "Wattage",
+                      "value": "22W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "4000K"
+                    },
+                    {
+                      "label": "IP Rating",
+                      "value": "IP20"
+                    },
+                    {
+                      "label": "CRI",
+                      "value": "80"
+                    },
+                    {
+                      "label": "Rated Life",
+                      "value": "45,000h"
+                    }
                   ]
                 }
               ]
@@ -273,70 +564,60 @@
               "products": [
                 {
                   "name": "GE LED Eco Slim Panel 16W - Daylight (6500K)",
-                  "rate": 123,
-                  "images": ["https://elitco.com/uploads/product/image/ge--led-eco--lm-w-v-k-ip-h-cri--recessed_2.jpg"],
+                  "rate": 283,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/ge--led-eco--lm-w-v-k-ip-h-cri--recessed_2.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "16W" },
-                    { "label": "Color Temperature", "value": "6500K" },
-                    { "label": "IP Rating", "value": "IP20" },
-                    { "label": "CRI", "value": "80" },
-                    { "label": "Use case", "value": "Individual desk / task areas" }
+                    {
+                      "label": "Wattage",
+                      "value": "16W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "6500K"
+                    },
+                    {
+                      "label": "IP Rating",
+                      "value": "IP20"
+                    },
+                    {
+                      "label": "CRI",
+                      "value": "80"
+                    },
+                    {
+                      "label": "Use case",
+                      "value": "Individual desk / task areas"
+                    }
                   ]
                 },
                 {
                   "name": "GE LED Eco Slim Panel 16W - Natural White (4000K)",
-                  "rate": 119,
-                  "images": ["https://elitco.com/uploads/product/image/ge--led-eco--lm-w-v-k-ip-h-cri--recessed_1.jpg"],
+                  "rate": 279,
+                  "images": [
+                    "https://elitco.com/uploads/product/image/ge--led-eco--lm-w-v-k-ip-h-cri--recessed_1.jpg"
+                  ],
                   "specs": [
-                    { "label": "Wattage", "value": "16W" },
-                    { "label": "Color Temperature", "value": "4000K" },
-                    { "label": "IP Rating", "value": "IP20" },
-                    { "label": "CRI", "value": "80" },
-                    { "label": "Use case", "value": "Individual desk / task areas" }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "label": "Decorative / Feature Lighting",
-          "subtypes": [
-            {
-              "label": "Wall Sconce",
-              "products": [
-                {
-                  "name": "Vintage Wall Sconce E27 - Crackled Glass Shade & Crystal Accents",
-                  "rate": 329,
-                  "images": ["https://elitco.com/uploads/product/image/vintage-wall-sconce-e-with-crackled-glass-shade--crystal-accents.jpg"],
-                  "specs": [
-                    { "label": "Lamp Base", "value": "E27" },
-                    { "label": "Shade", "value": "Crackled glass with crystal accents" },
-                    { "label": "Style", "value": "Vintage decorative" }
-                  ]
-                },
-                {
-                  "name": "Square Aluminum LED Wall Recessed Stair Light 3W - Warm White (3000K)",
-                  "rate": 65,
-                  "images": ["https://elitco.com/uploads/product/image/square-aluminum-w-led-wall-recessed-stair-light-k-vac-with--meters-induction-distance-delay-time-s--s-for-garden-lighting-deck-balcony-corridors--step-lighting-modern-design-black-color-.jpg"],
-                  "specs": [
-                    { "label": "Wattage", "value": "3W" },
-                    { "label": "Color Temperature", "value": "3000K" },
-                    { "label": "Mount Type", "value": "Wall-recessed" },
-                    { "label": "Finish", "value": "Black" },
-                    { "label": "Style", "value": "Modern minimal" }
-                  ]
-                },
-                {
-                  "name": "Porcelain Shade Wall Light G9 60W - Chrome/Silver Finish",
-                  "rate": 198,
-                  "images": ["https://elitco.com/uploads/product/image/porcelain-shade-wall-light-g-w-v-chrome--silver-finish-.jpg"],
-                  "specs": [
-                    { "label": "Lamp Base", "value": "G9" },
-                    { "label": "Wattage", "value": "60W" },
-                    { "label": "Voltage", "value": "230-240V" },
-                    { "label": "Finish", "value": "Chrome / Silver" },
-                    { "label": "Shade", "value": "Porcelain" }
+                    {
+                      "label": "Wattage",
+                      "value": "16W"
+                    },
+                    {
+                      "label": "Color Temperature",
+                      "value": "4000K"
+                    },
+                    {
+                      "label": "IP Rating",
+                      "value": "IP20"
+                    },
+                    {
+                      "label": "CRI",
+                      "value": "80"
+                    },
+                    {
+                      "label": "Use case",
+                      "value": "Individual desk / task areas"
+                    }
                   ]
                 }
               ]

@@ -16,7 +16,8 @@ import {
   type ContentConceptInput,
 } from "@/lib/ai/marketingProvider";
 import type { MarketingChannel, MarketingConstitutionFields } from "@/lib/marketingState";
-import { getUsageSummary, getBudget, setBudget, type BudgetConfig } from "@/lib/marketingBudget";
+import { getUsageSummary, getUsageDetail, getBudget, setBudget, type BudgetConfig } from "@/lib/marketingBudget";
+import { getWebsiteAnalytics } from "@/lib/ga4";
 
 async function requireSuperAdmin() {
   const session = await getSession();
@@ -118,6 +119,13 @@ export async function refreshChannelInsightsAction(channel: MarketingChannel) {
   return runPerformanceAnalysis(channel);
 }
 
+// Real GA4 numbers for the Website & Analytics tab - returns null if GA4
+// isn't configured yet or the property has no traffic recorded yet.
+export async function getWebsiteAnalyticsAction() {
+  await requireSuperAdmin();
+  return getWebsiteAnalytics();
+}
+
 // --- Growth Manager (Overview page) ---
 
 export async function getOpportunitiesAction() {
@@ -147,6 +155,12 @@ export async function generateReportAction(period: "daily" | "weekly") {
 export async function getUsageSummaryAction() {
   await requireSuperAdmin();
   return getUsageSummary();
+}
+
+// Full token/cost breakdown for the dedicated AI Usage tab.
+export async function getUsageDetailAction() {
+  await requireSuperAdmin();
+  return getUsageDetail();
 }
 
 export async function getBudgetAction() {

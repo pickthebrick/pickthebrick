@@ -11,6 +11,7 @@ export type MarketingTab =
   | "chat"
   | "ai-manager"
   | "approvals"
+  | "usage"
   | "google-ads"
   | "meta"
   | "content"
@@ -36,6 +37,7 @@ export const MARKETING_TABS: { key: MarketingTab; label: string }[] = [
   { key: "chat", label: "Chat" },
   { key: "ai-manager", label: "AI Manager" },
   { key: "approvals", label: "Approvals" },
+  { key: "usage", label: "AI Usage" },
   { key: "google-ads", label: "Google Ads" },
   { key: "meta", label: "Meta & Instagram" },
   { key: "content", label: "Content Studio" },
@@ -431,28 +433,9 @@ export const CHANNEL_REVENUE: string[] = [
   "Google is producing fewer leads than Instagram but 5.6× more revenue per lead.",
 ];
 
-export const WEBSITE_KPIS: Kpi[] = [
-  { label: "Visitors (30d)", value: "28,400", delta: "", deltaGood: true, deltaArrow: "▲" },
-  { label: "Sessions", value: "34,900", delta: "", deltaGood: true, deltaArrow: "▲" },
-  { label: "Avg. conv. rate", value: "3.9%", delta: "", deltaGood: true, deltaArrow: "▲" },
-  { label: "Bounce rate", value: "52%", delta: "", deltaGood: true, deltaArrow: "▲" },
-  { label: "New keywords ranking", value: "34", delta: "", deltaGood: true, deltaArrow: "▲" },
-];
-
-export const TOP_PAGES: { page: string; sessions: string; cvr: string; bounce: string }[] = [
-  { page: "/office-fit-out-dubai", sessions: "6,240", cvr: "7.4%", bounce: "38%" },
-  { page: "/instant-estimate", sessions: "4,180", cvr: "11.2%", bounce: "29%" },
-  { page: "/build-tool", sessions: "3,920", cvr: "6.8%", bounce: "41%" },
-  { page: "/pricing", sessions: "2,610", cvr: "2.1%", bounce: "61%" },
-  { page: "/blog/office-cost-guide", sessions: "2,040", cvr: "1.4%", bounce: "68%" },
-];
-
-export const CONVERSION_INSIGHTS: string[] = [
-  "/pricing has high traffic but low conversion — visitors want a number, not a range. Calculator would fix this.",
-  "/instant-estimate converts 2.9× better than site average — expand its placement across top landing pages.",
-  "Mobile bounce rate is 19pts higher than desktop — form is likely too long on small screens.",
-  "Blog traffic rarely converts directly — best used as a top-of-funnel retargeting audience.",
-];
+// Website KPIs/top-pages/insights used to be hardcoded sample data here -
+// now sourced live from GA4 (see lib/ga4.ts, WebsitePanel.tsx, and
+// marketingProvider.ts's buildChannelData/buildBusinessContext).
 
 export const CALC_QUALITY_MULTIPLIER: Record<string, number> = { Standard: 0.92, Premium: 1.0, Luxury: 1.15 };
 export const CALC_PER_SQFT = 210;

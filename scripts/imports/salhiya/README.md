@@ -1,4 +1,13 @@
-# Al Salhiya Lighting import
+# Al Salhiya Lighting import - ON HOLD, do not run
+
+**Rejected 2026-08-11: too residential/decorative for an office fitout
+catalog (crystal chandeliers, ornate multi-arm pendants) - not office-like.**
+Left here for reference only. Do not run `import.mjs` in this folder against
+production. A replacement supplier/product set for Single Pendant,
+Cluster / Multi-Drop, and Feature Installation (plus Elitco's rejected Wall
+Sconce picks) is being re-researched - see task tracking. `../elitco/`'s
+current import excludes Wall Sconce for the same reason and is safe to run on
+its own.
 
 Real pendant and feature-lighting products scraped from
 salhiyalighting.com (Al Salhiya Lighting, a UAE lighting retailer) to
@@ -44,18 +53,5 @@ import time, so production never depends on Salhiya's site staying up.
 
 ## How to run
 
-```bash
-# 1. Delete the 60 placeholder Lighting products first (only once, before
-#    running either supplier's import.mjs)
-PRODUCTS_IMPORT_API_KEY="<key>" node scripts/admin/delete-placeholder-products.mjs Lighting
-
-# 2. Import the real elitco.com products (downlights/track/profile/panel/sconce)
-PRODUCTS_IMPORT_API_KEY="<key>" node scripts/imports/elitco/import.mjs
-
-# 3. Import the real Al Salhiya products
-PRODUCTS_IMPORT_API_KEY="<key>" node scripts/imports/salhiya/import.mjs
-```
-
-The API key is production's `PRODUCTS_IMPORT_API_KEY` (Vercel env var,
-separate from local `.env`). Never commit the key itself - both scripts read
-it from the environment only.
+Don't - see the hold notice at the top. `../elitco/README.md` has the
+current run instructions for the 8 subtypes that *are* going live.

@@ -14,8 +14,6 @@ import {
   META_CONTENT,
   META_INSIGHTS,
   LEADS,
-  TOP_PAGES,
-  CONVERSION_INSIGHTS,
   QUEUE_ITEMS,
   AUTONOMY_LEVELS,
 } from "@/app/admin/brain/data";
@@ -24,6 +22,7 @@ import type { MarketingChannel, MarketingOpportunity } from "@/lib/marketingStat
 import { logMarketingEvent, getRecentLogContext } from "@/lib/marketingLog";
 import { saveGeneratedContent } from "@/lib/marketingContent";
 import { assertBudgetAvailable, recordUsage, BudgetExceededError } from "@/lib/marketingBudget";
+import { getWebsiteAnalytics } from "@/lib/ga4";
 import type { MarketingRoleId } from "@/lib/ai/marketingRoles";
 
 // Single place the /admin/brain "AI Marketing Manager" card, the Content
@@ -46,8 +45,25 @@ function getClient(): OpenAI | null {
 // Every OpenAI request in this file goes through here - the one place that
 // enforces this app's own hard spend cap (lib/marketingBudget.ts, not
 // OpenAI's own soft project budget) and records token usage/cost for every
-// call, regardless of which role made it. Callers just check `ok`.
-type CallModelResult = { ok: true; message: ChatCompletionMessage } | { ok: false; reason: "not_configured" | "budget_exceeded" };
+// call, regardless of which role made it. Callers just check `ok` - every
+// failure mode (missing key, budget cap, or OpenAI itself erroring, e.g. an
+// account with no credits) degrades to fallback content instead of a 500,
+// matching this app's fallback-first design everywhere else.
+type CallModelResult =
+  | { ok: true; message: ChatCompletionMessage }
+  | { ok: false; reason: "not_configured" | "budget_exceeded" | "api_error"; detail?: string };
+
+// One line, safe to show the founder (in chat) or a developer (server logs)
+// for any callModel failure - the actual cause, not a generic "not set up".
+function failureNote(result: Extract<CallModelResult, { ok: false }>): string {
+  if (result.reason === "budget_exceeded") {
+    return "This app's AI budget cap has been reached - showing example output. Raise the cap on the Approvals page to continue.";
+  }
+  if (result.reason === "api_error") {
+    return `OpenAI request failed${result.detail ? ` (${result.detail})` : ""} - showing example output.`;
+  }
+  return NOT_CONFIGURED;
+}
 
 async function callModel(role: MarketingRoleId, params: Omit<ChatCompletionCreateParamsNonStreaming, "model">): Promise<CallModelResult> {
   const client = getClient();
@@ -60,12 +76,20 @@ async function callModel(role: MarketingRoleId, params: Omit<ChatCompletionCreat
     throw err;
   }
 
-  const response = await client.chat.completions.create({ model: MARKETING_AI_MODEL, ...params });
+  let response;
+  try {
+    response = await client.chat.completions.create({ model: MARKETING_AI_MODEL, ...params });
+  } catch (err) {
+    const detail = err instanceof OpenAI.APIError ? (err.error as { message?: string } | undefined)?.message ?? err.message : "unknown error";
+    console.error(`marketingProvider: OpenAI call failed for role "${role}"`, err);
+    return { ok: false, reason: "api_error", detail };
+  }
+
   if (response.usage) {
     await recordUsage(role, MARKETING_AI_MODEL, response.usage.prompt_tokens, response.usage.completion_tokens);
   }
   const message = response.choices[0]?.message;
-  if (!message) return { ok: false, reason: "not_configured" };
+  if (!message) return { ok: false, reason: "api_error", detail: "empty response" };
   return { ok: true, message };
 }
 
@@ -85,7 +109,10 @@ async function buildBusinessContext(): Promise<string> {
     .map((c) => `- "${c.name}" (${c.type}): reach ${c.reach}, engagement ${c.engagement}, ${c.leads} leads, ${c.revenue} revenue`)
     .join("\n");
   const leads = LEADS.slice(0, 6).map((l) => `- ${l.name} via ${l.source}, est. ${l.budget}, status ${l.status}`).join("\n");
-  const pages = TOP_PAGES.map((p) => `- ${p.page}: ${p.sessions} sessions, ${p.cvr} conversion, ${p.bounce} bounce`).join("\n");
+  const websiteAnalytics = await getWebsiteAnalytics();
+  const pages = websiteAnalytics
+    ? websiteAnalytics.topPages.map((p) => `- ${p.page}: ${p.sessions} sessions, ${(p.bounceRate * 100).toFixed(1)}% bounce`).join("\n")
+    : "(no Google Analytics data yet - GA4 is connected but hasn't recorded any traffic)";
 
   return `--- Marketing Constitution (permanent, founder-set - follow these rules over anything else below) ---
 Business: ${constitution.business}
@@ -246,20 +273,26 @@ export async function generateContentConcept(input: ContentConceptInput): Promis
 // --- Performance Analyst: read-only per-channel analysis ---
 
 const CHANNEL_NAMES: Record<MarketingChannel, string> = { google: "Google Ads", meta: "Meta/Instagram", website: "the website" };
+// Google Ads and Meta aren't wired to real APIs yet, so they still fall back
+// to sample insights when the LLM call fails or isn't configured. Website
+// is real (GA4) - its "fallback" is an honest no-data note, never invented
+// numbers.
 const CHANNEL_FALLBACK_INSIGHTS: Record<MarketingChannel, string[]> = {
   google: GOOGLE_INSIGHTS,
   meta: META_INSIGHTS,
-  website: CONVERSION_INSIGHTS,
+  website: ["No Google Analytics data yet - GA4 is connected but the property hasn't recorded any traffic."],
 };
 
-function buildChannelData(channel: MarketingChannel): string {
+async function buildChannelData(channel: MarketingChannel): Promise<string> {
   if (channel === "google") {
     return GOOGLE_CAMPAIGNS.map((c) => `- ${c.name}: spend ${c.spend}, ${c.leads} leads, ${c.qualified} qualified, CPL ${c.cpl}, revenue ${c.revenue}, ROAS ${c.roas}, status ${c.status}`).join("\n");
   }
   if (channel === "meta") {
     return META_CONTENT.map((c) => `- "${c.name}" (${c.type}): reach ${c.reach}, engagement ${c.engagement}, ${c.clicks} clicks, ${c.leads} leads, ${c.revenue} revenue`).join("\n");
   }
-  return TOP_PAGES.map((p) => `- ${p.page}: ${p.sessions} sessions, ${p.cvr} conversion, ${p.bounce} bounce`).join("\n");
+  const analytics = await getWebsiteAnalytics();
+  if (!analytics) return "(no Google Analytics data yet - GA4 is connected but hasn't recorded any traffic)";
+  return analytics.topPages.map((p) => `- ${p.page}: ${p.sessions} sessions, ${(p.bounceRate * 100).toFixed(1)}% bounce`).join("\n");
 }
 
 // Regenerates one channel's insights via the LLM (or its fallback), always
@@ -278,7 +311,7 @@ export async function runPerformanceAnalysis(channel: MarketingChannel): Promise
         role: "system",
         content: `You are the Performance Analyst for PickTheBrick's marketing team. You only analyze - you never take action, approve anything, or make final calls, that's the Marketing Manager's job. Read the ${CHANNEL_NAMES[channel]} data and produce 3-4 short, specific insight bullets a marketer would actually act on. Respond with strict JSON only: {"insights": string[]}`,
       },
-      { role: "user", content: buildChannelData(channel) },
+      { role: "user", content: await buildChannelData(channel) },
     ],
   });
   if (result.ok) {
@@ -616,10 +649,7 @@ ${agentContext}`,
   for (let round = 0; round < 4; round++) {
     const result = await callModel("manager", { max_tokens: 1000, messages, tools: TOOLS, tool_choice: "auto" });
     if (!result.ok) {
-      finalReply =
-        result.reason === "budget_exceeded"
-          ? "I've hit today's or this month's AI budget cap, so I can't respond right now — ask again later, or raise the cap on the Approvals page."
-          : NOT_CONFIGURED;
+      finalReply = failureNote(result);
       break;
     }
     const message = result.message;

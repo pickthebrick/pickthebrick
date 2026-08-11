@@ -13,6 +13,7 @@ import MarketingOverviewPanel from "./components/marketing/OverviewPanel";
 import ChatPanel from "./components/marketing/ChatPanel";
 import AiManagerPanel from "./components/marketing/AiManagerPanel";
 import ApprovalsPanel from "./components/marketing/ApprovalsPanel";
+import UsagePanel from "./components/marketing/UsagePanel";
 import GoogleAdsPanel from "./components/marketing/GoogleAdsPanel";
 import MetaPanel from "./components/marketing/MetaPanel";
 import ContentStudioPanel from "./components/marketing/ContentStudioPanel";
@@ -88,6 +89,7 @@ export default function BrainWorkspace({ initialChecklist }: { initialChecklist:
             {!isBrainActive && activeTab === "chat" && <ChatPanel />}
             {!isBrainActive && activeTab === "ai-manager" && <AiManagerPanel />}
             {!isBrainActive && activeTab === "approvals" && <ApprovalsPanel />}
+            {!isBrainActive && activeTab === "usage" && <UsagePanel />}
             {!isBrainActive && activeTab === "google-ads" && <GoogleAdsPanel />}
             {!isBrainActive && activeTab === "meta" && <MetaPanel />}
             {!isBrainActive && activeTab === "content" && <ContentStudioPanel />}

@@ -106,3 +106,64 @@ export async function recordUsage(role: string, model: string, inputTokens: numb
   await prisma.marketingAiUsage.create({ data: { role, model, inputTokens, outputTokens, estimatedCostUsd } });
   return estimatedCostUsd;
 }
+
+export type UsageTotals = { calls: number; inputTokens: number; outputTokens: number; costUsd: number };
+export type RoleUsage = UsageTotals & { role: string };
+export type RecentCall = {
+  id: string;
+  role: string;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  createdAt: Date;
+};
+
+function sumTotals(rows: { inputTokens: number; outputTokens: number; estimatedCostUsd: number }[]): UsageTotals {
+  return rows.reduce(
+    (acc, r) => ({
+      calls: acc.calls + 1,
+      inputTokens: acc.inputTokens + r.inputTokens,
+      outputTokens: acc.outputTokens + r.outputTokens,
+      costUsd: acc.costUsd + r.estimatedCostUsd,
+    }),
+    { calls: 0, inputTokens: 0, outputTokens: 0, costUsd: 0 },
+  );
+}
+
+// Full usage detail for the AI Usage tab - token counts (not just USD, which
+// getUsageSummary() already covers for the Overview strip), a per-role
+// breakdown for the current month, and the most recent individual calls.
+export async function getUsageDetail() {
+  const [budget, monthRows, recentRows] = await Promise.all([
+    getBudget(),
+    prisma.marketingAiUsage.findMany({ where: { createdAt: { gte: startOfMonth() } } }),
+    prisma.marketingAiUsage.findMany({ orderBy: { createdAt: "desc" }, take: 20 }),
+  ]);
+
+  const todayRows = monthRows.filter((r) => r.createdAt >= startOfToday());
+  const today = sumTotals(todayRows);
+  const month = sumTotals(monthRows);
+
+  const byRole = new Map<string, typeof monthRows>();
+  for (const row of monthRows) {
+    const list = byRole.get(row.role) ?? [];
+    list.push(row);
+    byRole.set(row.role, list);
+  }
+  const roleBreakdown: RoleUsage[] = [...byRole.entries()]
+    .map(([role, rows]) => ({ role, ...sumTotals(rows) }))
+    .sort((a, b) => b.costUsd - a.costUsd);
+
+  const recentCalls: RecentCall[] = recentRows.map((r) => ({
+    id: r.id,
+    role: r.role,
+    model: r.model,
+    inputTokens: r.inputTokens,
+    outputTokens: r.outputTokens,
+    costUsd: r.estimatedCostUsd,
+    createdAt: r.createdAt,
+  }));
+
+  return { budget, today, month, roleBreakdown, recentCalls };
+}

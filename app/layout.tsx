@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { Raleway } from "next/font/google";
+import Script from "next/script";
 import { getSession } from "@/lib/auth";
 import { ROLE_HOME } from "@/lib/roles";
 import AccountBar from "@/app/components/AccountBar";
 import SupportChatButtons from "@/app/components/SupportChatButtons";
 import "./globals.css";
+
+const GA4_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
 
 const raleway = Raleway({
   variable: "--font-raleway",
@@ -32,6 +35,17 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={`${raleway.variable} h-full antialiased`}>
+      {GA4_MEASUREMENT_ID && (
+        <>
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`} strategy="afterInteractive" />
+          <Script id="ga4-init" strategy="afterInteractive">
+            {`window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GA4_MEASUREMENT_ID}');`}
+          </Script>
+        </>
+      )}
       <body className="min-h-full flex flex-col">
         {dashboardHref && <AccountBar dashboardHref={dashboardHref} />}
         {showSupportChat && <SupportChatButtons />}
