@@ -18,6 +18,7 @@ import {
 import type { MarketingChannel, MarketingConstitutionFields } from "@/lib/marketingState";
 import { getUsageSummary, getUsageDetail, getBudget, setBudget, type BudgetConfig } from "@/lib/marketingBudget";
 import { getWebsiteAnalytics } from "@/lib/ga4";
+import { getGoogleAdsPerformance } from "@/lib/googleAds";
 
 async function requireSuperAdmin() {
   const session = await getSession();
@@ -124,6 +125,13 @@ export async function refreshChannelInsightsAction(channel: MarketingChannel) {
 export async function getWebsiteAnalyticsAction() {
   await requireSuperAdmin();
   return getWebsiteAnalytics();
+}
+
+// Real Google Ads numbers for the Google Ads tab - returns null if the
+// integration isn't configured yet or no spend has been recorded yet.
+export async function getGoogleAdsPerformanceAction() {
+  await requireSuperAdmin();
+  return getGoogleAdsPerformance();
 }
 
 // --- Growth Manager (Overview page) ---

@@ -306,40 +306,8 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
   "Meta Ads": ["Read", "Draft"],
 };
 
-export const GOOGLE_KPIS: Kpi[] = [
-  { label: "Spend", value: "AED 96,400", delta: "", deltaGood: true, deltaArrow: "▲" },
-  { label: "Leads", value: "214", delta: "", deltaGood: true, deltaArrow: "▲" },
-  { label: "CPL", value: "AED 450", delta: "", deltaGood: true, deltaArrow: "▲" },
-  { label: "Qualified", value: "71", delta: "", deltaGood: true, deltaArrow: "▲" },
-  { label: "CVR", value: "5.8%", delta: "", deltaGood: true, deltaArrow: "▲" },
-  { label: "ROAS", value: "8.4×", delta: "", deltaGood: true, deltaArrow: "▲" },
-];
-
-export type GoogleCampaign = {
-  name: string;
-  spend: string;
-  leads: string;
-  qualified: string;
-  cpl: string;
-  revenue: string;
-  roas: string;
-  status: "SCALE" | "MONITOR" | "FIX" | "LEARNING";
-};
-
-export const GOOGLE_CAMPAIGNS: GoogleCampaign[] = [
-  { name: "Office Fit Out Dubai", spend: "AED 18,200", leads: "62", qualified: "28", cpl: "AED 294", revenue: "AED 412,000", roas: "22.6×", status: "SCALE" },
-  { name: "Dubai SME Office Package", spend: "AED 14,900", leads: "48", qualified: "19", cpl: "AED 310", revenue: "AED 198,000", roas: "13.3×", status: "SCALE" },
-  { name: "Office Furniture Dubai", spend: "AED 8,700", leads: "11", qualified: "2", cpl: "AED 791", revenue: "AED 0", roas: "0.0×", status: "FIX" },
-  { name: "Commercial Fitout Cost", spend: "AED 12,300", leads: "39", qualified: "14", cpl: "AED 315", revenue: "AED 156,000", roas: "12.7×", status: "MONITOR" },
-  { name: "Retail Store Fitout — New", spend: "AED 3,100", leads: "6", qualified: "1", cpl: "AED 517", revenue: "AED 0", roas: "0.0×", status: "LEARNING" },
-];
-
-export const GOOGLE_INSIGHTS: string[] = [
-  '"Office fit out Dubai" is your most efficient campaign — 22.6× ROAS, room to scale budget further.',
-  '"Office furniture Dubai" is wasting spend: broad match is pulling residential furniture shoppers.',
-  'Search terms with "cost" or "price" convert 2.1× better than generic "fit out" terms — worth dedicated ad copy.',
-  "Dubai Marina and Business Bay show the highest qualified-lead rate by location — consider a location bid modifier.",
-];
+// Google Ads KPIs/campaigns/insights are now sourced live from the Google
+// Ads API (see lib/googleAds.ts + GoogleAdsPanel.tsx) rather than sample data.
 
 export const META_KPIS: Kpi[] = [
   { label: "Spend", value: "AED 41,600", delta: "", deltaGood: true, deltaArrow: "▲" },

@@ -9,8 +9,6 @@ import type {
 import {
   PINNED,
   MARKETING_KPIS,
-  GOOGLE_CAMPAIGNS,
-  GOOGLE_INSIGHTS,
   META_CONTENT,
   META_INSIGHTS,
   LEADS,
@@ -23,6 +21,7 @@ import { logMarketingEvent, getRecentLogContext } from "@/lib/marketingLog";
 import { saveGeneratedContent } from "@/lib/marketingContent";
 import { assertBudgetAvailable, recordUsage, BudgetExceededError } from "@/lib/marketingBudget";
 import { getWebsiteAnalytics } from "@/lib/ga4";
+import { getGoogleAdsPerformance } from "@/lib/googleAds";
 import type { MarketingRoleId } from "@/lib/ai/marketingRoles";
 
 // Single place the /admin/brain "AI Marketing Manager" card, the Content
@@ -102,9 +101,10 @@ async function buildBusinessContext(): Promise<string> {
   const constitution = await marketingState.getConstitution();
   const pinned = PINNED.map((p) => `- ${p.label}: ${p.value}`).join("\n");
   const kpis = MARKETING_KPIS.map((k) => `- ${k.label}: ${k.value} (${k.deltaArrow}${k.delta} vs prev. period)`).join("\n");
-  const googleTop = GOOGLE_CAMPAIGNS.slice(0, 5)
-    .map((c) => `- ${c.name}: spend ${c.spend}, ${c.leads} leads, ${c.qualified} qualified, ROAS ${c.roas}, status ${c.status}`)
-    .join("\n");
+  const googleAds = await getGoogleAdsPerformance();
+  const googleTop = googleAds
+    ? googleAds.topCampaigns.map((c) => `- ${c.name}: ${c.clicks} clicks, AED ${c.costAed.toFixed(0)} spend, ${c.conversions} conversions`).join("\n")
+    : "(no Google Ads data yet - the integration is connected but no campaigns have run yet)";
   const metaTop = META_CONTENT.slice(0, 5)
     .map((c) => `- "${c.name}" (${c.type}): reach ${c.reach}, engagement ${c.engagement}, ${c.leads} leads, ${c.revenue} revenue`)
     .join("\n");
@@ -273,19 +273,23 @@ export async function generateContentConcept(input: ContentConceptInput): Promis
 // --- Performance Analyst: read-only per-channel analysis ---
 
 const CHANNEL_NAMES: Record<MarketingChannel, string> = { google: "Google Ads", meta: "Meta/Instagram", website: "the website" };
-// Google Ads and Meta aren't wired to real APIs yet, so they still fall back
-// to sample insights when the LLM call fails or isn't configured. Website
-// is real (GA4) - its "fallback" is an honest no-data note, never invented
-// numbers.
+// Meta isn't wired to a real API yet, so it still falls back to sample
+// insights when the LLM call fails or isn't configured. Google Ads and
+// Website are real (Google Ads API / GA4) - their "fallback" is an honest
+// no-data note, never invented numbers.
 const CHANNEL_FALLBACK_INSIGHTS: Record<MarketingChannel, string[]> = {
-  google: GOOGLE_INSIGHTS,
+  google: ["No Google Ads data yet - the integration is connected but no campaigns have run yet."],
   meta: META_INSIGHTS,
   website: ["No Google Analytics data yet - GA4 is connected but the property hasn't recorded any traffic."],
 };
 
 async function buildChannelData(channel: MarketingChannel): Promise<string> {
   if (channel === "google") {
-    return GOOGLE_CAMPAIGNS.map((c) => `- ${c.name}: spend ${c.spend}, ${c.leads} leads, ${c.qualified} qualified, CPL ${c.cpl}, revenue ${c.revenue}, ROAS ${c.roas}, status ${c.status}`).join("\n");
+    const googleAds = await getGoogleAdsPerformance();
+    if (!googleAds) return "(no Google Ads data yet - the integration is connected but no campaigns have run yet)";
+    return googleAds.topCampaigns
+      .map((c) => `- ${c.name}: ${c.clicks} clicks, ${c.impressions} impressions, AED ${c.costAed.toFixed(0)} spend, ${c.conversions} conversions`)
+      .join("\n");
   }
   if (channel === "meta") {
     return META_CONTENT.map((c) => `- "${c.name}" (${c.type}): reach ${c.reach}, engagement ${c.engagement}, ${c.clicks} clicks, ${c.leads} leads, ${c.revenue} revenue`).join("\n");
