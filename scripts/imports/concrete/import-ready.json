@@ -1,0 +1,34 @@
+{
+  "categories": [
+    {
+      "label": "Flooring",
+      "unit": "sqm",
+      "types": [
+        {
+          "label": "Concrete",
+          "subtypes": [
+            {
+              "label": "Screed",
+              "products": [
+                { "name": "Sand Cement Screed — 5cm", "rate": 80, "images": ["https://images.pexels.com/photos/37121398/pexels-photo-37121398.jpeg"] },
+                { "name": "Sand Cement Screed — 10cm", "rate": 170, "images": ["https://images.pexels.com/photos/37121405/pexels-photo-37121405.jpeg"] }
+              ]
+            },
+            {
+              "label": "Microcement",
+              "products": [
+                { "name": "Topciment Microcement", "rate": 240, "images": ["https://images.pexels.com/photos/20818874/pexels-photo-20818874.jpeg"] }
+              ]
+            },
+            {
+              "label": "Terrazzo",
+              "products": [
+                { "name": "Terrazzo Flooring", "rate": 340, "images": ["https://images.pexels.com/photos/4977451/pexels-photo-4977451.jpeg"] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

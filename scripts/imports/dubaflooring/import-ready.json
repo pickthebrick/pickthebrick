@@ -1,0 +1,28 @@
+{
+  "categories": [
+    {
+      "label": "Flooring",
+      "unit": "sqm",
+      "types": [
+        {
+          "label": "Parquet",
+          "subtypes": [
+            {
+              "label": "Solid Wood",
+              "products": [
+                { "name": "Oak Hardwood — Dubai Flooring", "rate": 280, "images": ["https://dubaflooring.com/wp-content/uploads/2025/10/8701-ZS.jpg"] },
+                { "name": "Walnut Plank — Dubai Flooring", "rate": 295, "images": ["https://dubaflooring.com/wp-content/uploads/2025/10/8609-ZS-e1769411131711.webp"] },
+                { "name": "Arctic Elite Parquet — Dubai Flooring", "rate": 310, "images": ["https://dubaflooring.com/wp-content/uploads/2025/10/8605-ZS.jpg"] },
+                { "name": "Honey Elite Plank — Dubai Flooring", "rate": 365, "images": ["https://dubaflooring.com/wp-content/uploads/2025/10/8601-ZS-e1769411657331.webp"] },
+                { "name": "Wood Elite Plank — Dubai Flooring", "rate": 285, "images": ["https://dubaflooring.com/wp-content/uploads/2025/10/886-ZS-e1769411867206.jpg"] },
+                { "name": "Luxe Parquet — Dubai Flooring", "rate": 315, "images": ["https://dubaflooring.com/wp-content/uploads/2025/10/586-ZS-e1769412072750.jpg"] },
+                { "name": "Silver Wood Plank — Dubai Flooring", "rate": 370, "images": ["https://dubaflooring.com/wp-content/uploads/2025/10/386-ZS.jpg"] },
+                { "name": "Walnut Signature — Dubai Flooring", "rate": 325, "images": ["https://dubaflooring.com/wp-content/uploads/2025/10/186-ZS-e1769412394966.jpg"] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
