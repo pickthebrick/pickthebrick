@@ -17,10 +17,12 @@ export type AdminSection =
   | "notifications"
   | "careers"
   | "team"
-  | "applicants";
+  | "applicants"
+  | "brain";
 
 const NAV_ITEMS: { key: AdminSection; label: string; href: string; superAdminOnly?: boolean }[] = [
   { key: "approvals", label: "Approvals", href: "/admin" },
+  { key: "brain", label: "The Brain 🧠", href: "/admin/brain", superAdminOnly: true },
   { key: "quotes", label: "New Quotes", href: "/admin/quotes" },
   { key: "products", label: "Products", href: "/admin/products" },
   { key: "marketing", label: "Marketing", href: "/admin/marketing" },

@@ -936,3 +936,91 @@ model PackageFeatureItem {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 }
+
+// A single task row on the /admin/brain "Checklist" page - the one
+// genuinely functional (non-sample) piece of that internal workspace.
+// Shared across whoever's signed in as super_admin (DB-backed rather than
+// localStorage, so it's the same list on any device), seeded once with 8
+// starter rows on first load (see app/admin/brain/page.tsx).
+model BrainChecklistItem {
+  id        String   @id @default(cuid())
+  text      String
+  done      Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// Singleton row (fixed id, see lib/marketingState.ts) holding the Marketing
+// employee's global autonomy level and per-tool permissions - shared source
+// of truth for both the Approvals page and the chat agent's tool calls, so
+// changing autonomy in chat is reflected in the UI and vice versa.
+model MarketingWorkspaceState {
+  id                 String    @id @default(cuid())
+  autonomyLevel      Int       @default(1)
+  permissionsJson    String    @default("{}")
+  queueApprovalsJson String    @default("{}")
+  // Last-run analysis summary bullets (the recommendations themselves live
+  // in MarketingRecommendation, since those need individual ids/status) -
+  // cached here so re-opening the Overview page shows the last analysis
+  // without an LLM call; only "Refresh analysis" (or the first-ever visit,
+  // when this is still empty) triggers a new one.
+  workingJson        String    @default("[]")
+  problemsJson       String    @default("[]")
+  analysisUpdatedAt  DateTime?
+  updatedAt          DateTime  @updatedAt
+}
+
+// The AI Marketing Manager's current batch of recommendations - persisted
+// (not regenerated-and-thrown-away) so the chat agent can approve/reject a
+// specific recommendation by id and have the Overview page reflect it.
+// Replaced wholesale each time a fresh analysis runs (see
+// lib/marketingState.ts replaceRecommendations()).
+model MarketingRecommendation {
+  id        String   @id @default(cuid())
+  title     String
+  why       String
+  impact    String
+  risk      String
+  status    String   @default("Awaiting review")
+  createdAt DateTime @default(now())
+}
+
+// Standing instructions the founder has given the Marketing employee (e.g.
+// "always flag CPL spikes over 20%") - durable rules folded into the system
+// prompt on every chat/analysis call, distinct from one-off chat messages.
+model MarketingInstruction {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+}
+
+// One global conversation thread with the Marketing employee - shared by the
+// floating assistant popup and the full Chat tab (same employee, same
+// conversation, viewed two ways). toolCallsJson records which tools (if any)
+// fired while producing an assistant turn, shown as a small trace in the UI.
+model MarketingChatMessage {
+  id            String   @id @default(cuid())
+  role          String
+  content       String
+  toolCallsJson String?
+  createdAt     DateTime @default(now())
+}
+
+// A visitor's conversation with the public /ask-ai assistant (see
+// app/actions/assistant.ts) - identified by the same actor pattern as
+// Build/Design (lib/actor.ts): a signed-in client's id, or an anonymous
+// visitor's ptb_anon cookie id (lib/anonSession.ts). Exactly one of
+// clientId/anonymousSessionId is set. Persisted so a conversation survives a
+// reload or return visit, and so the assistant's own past replies to this
+// visitor are folded back into context on the next turn.
+model SiteAssistantMessage {
+  id                 String   @id @default(cuid())
+  clientId           String?
+  anonymousSessionId String?
+  role               String
+  content            String
+  createdAt          DateTime @default(now())
+
+  @@index([clientId])
+  @@index([anonymousSessionId])
+}

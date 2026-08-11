@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local-only marketing agent memory log + generated content library
+# (see lib/marketingLog.ts, lib/marketingContent.ts - does not exist/persist
+# on Vercel's read-only filesystem, so it's never meant to be deployed)
+/data
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

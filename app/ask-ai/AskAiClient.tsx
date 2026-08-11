@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { askSiteAssistant, type ChatMessage } from "@/app/actions/assistant";
+import { useEffect, useRef, useState } from "react";
+import { askSiteAssistant, getSiteAssistantHistory, type ChatMessage } from "@/app/actions/assistant";
 
 const STARTER_PROMPTS = [
   "What's the difference between Design and Build?",
@@ -14,18 +14,26 @@ export default function AskAiClient() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Picks up a saved conversation from a reload or return visit instead
+    // of starting blank - see app/actions/assistant.ts.
+    getSiteAssistantHistory()
+      .then(setMessages)
+      .finally(() => setLoaded(true));
+  }, []);
 
   const send = async (text: string) => {
     const question = text.trim();
     if (!question || busy) return;
-    const next: ChatMessage[] = [...messages, { role: "user", content: question }];
-    setMessages(next);
+    setMessages((prev) => [...prev, { role: "user", content: question }]);
     setInput("");
     setBusy(true);
     setError(null);
     try {
-      const reply = await askSiteAssistant(next);
+      const reply = await askSiteAssistant(question);
       setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
     } catch {
       setError("Something went wrong reaching the assistant - please try again.");
@@ -44,7 +52,7 @@ export default function AskAiClient() {
 
       <div className="ask-ai-box">
         <div className="ask-ai-messages" ref={listRef}>
-          {messages.length === 0 && (
+          {loaded && messages.length === 0 && (
             <div className="ask-ai-empty">
               <p>Try one of these:</p>
               <div className="ask-ai-starters">

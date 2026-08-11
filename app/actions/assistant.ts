@@ -1,7 +1,9 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
+import { prisma } from "@/lib/prisma";
 import { SITE_FAQ } from "@/lib/siteFaq";
+import { resolveActor } from "@/lib/actor";
 
 const OFFICE_ADDRESS = "Warehouse 3A, 21st Street, Umm Ramool, Dubai";
 const OFFICE_PHONE = "+971523142272";
@@ -25,30 +27,58 @@ Keep answers short - 2 to 4 sentences, friendly and plain. Never invent pricing,
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
-export async function askSiteAssistant(history: ChatMessage[]): Promise<string> {
-  if (history.length === 0) throw new Error("No message to send");
-  if (history[history.length - 1].role !== "user") throw new Error("Last message must be from the user");
+// The same signed-in-client-or-anonymous-cookie actor Build/Design already
+// use (lib/actor.ts) - so a client's chat follows their account across
+// devices, and an anonymous visitor's follows their browser for as long as
+// the ptb_anon cookie lives (180 days, see lib/anonSession.ts).
+async function actorWhere() {
+  const actor = await resolveActor();
+  return "clientId" in actor ? { clientId: actor.clientId } : { anonymousSessionId: actor.anonymousSessionId };
+}
+
+// Loads this visitor's saved conversation - called on page load so a reload
+// or return visit picks up where they left off, instead of starting blank.
+export async function getSiteAssistantHistory(): Promise<ChatMessage[]> {
+  const where = await actorWhere();
+  const rows = await prisma.siteAssistantMessage.findMany({ where, orderBy: { createdAt: "asc" } });
+  return rows.map((r) => ({ role: r.role === "assistant" ? "assistant" : "user", content: r.content }));
+}
+
+export async function askSiteAssistant(message: string): Promise<string> {
+  const question = message.trim();
+  if (!question) throw new Error("No message to send");
+
+  const where = await actorWhere();
+  const priorRows = await prisma.siteAssistantMessage.findMany({ where, orderBy: { createdAt: "desc" }, take: 12 });
+  const priorHistory: ChatMessage[] = priorRows
+    .reverse()
+    .map((r) => ({ role: r.role === "assistant" ? "assistant" : "user", content: r.content.slice(0, 2000) }));
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  let reply: string;
+
   if (!apiKey) {
-    return "The AI assistant isn't set up yet - PickTheBrick needs to add an API key to enable it. In the meantime, call +971523142272 or email us and we'll help directly.";
+    reply = "The AI assistant isn't set up yet - PickTheBrick needs to add an API key to enable it. In the meantime, call +971523142272 or email us and we'll help directly.";
+  } else {
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: "claude-opus-5",
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      thinking: { type: "disabled" },
+      messages: [...priorHistory, { role: "user", content: question.slice(0, 2000) }],
+    });
+
+    if (response.stop_reason === "refusal") {
+      reply = "Sorry, I can't help with that one - try rephrasing, or call us at +971523142272.";
+    } else {
+      const textBlock = response.content.find((block) => block.type === "text");
+      reply = textBlock?.text ?? "Sorry, I didn't get an answer for that - please try again.";
+    }
   }
 
-  // Keep the request bounded regardless of how long the conversation runs.
-  const trimmed = history.slice(-12).map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
+  await prisma.siteAssistantMessage.create({ data: { ...where, role: "user", content: question } });
+  await prisma.siteAssistantMessage.create({ data: { ...where, role: "assistant", content: reply } });
 
-  const client = new Anthropic({ apiKey });
-  const response = await client.messages.create({
-    model: "claude-opus-5",
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    thinking: { type: "disabled" },
-    messages: trimmed,
-  });
-
-  if (response.stop_reason === "refusal") {
-    return "Sorry, I can't help with that one - try rephrasing, or call us at +971523142272.";
-  }
-  const textBlock = response.content.find((block) => block.type === "text");
-  return textBlock?.text ?? "Sorry, I didn't get an answer for that - please try again.";
+  return reply;
 }
