@@ -1,0 +1,135 @@
+{
+  "categories": [
+    {
+      "label": "Lighting",
+      "unit": "count",
+      "types": [
+        {
+          "label": "Pendant Lights",
+          "subtypes": [
+            {
+              "label": "Single Pendant",
+              "products": [
+                {
+                  "name": "Pendant Light Stylish 1-Ball Small LED 3W - Warm White (2800K), Chrome",
+                  "rate": 60,
+                  "images": ["https://salhiyalighting.com/media/catalog/product/7/2/72sl18.jpg"],
+                  "specs": [
+                    { "label": "Wattage", "value": "3W" },
+                    { "label": "Color Temperature", "value": "2800K (Warm White)" },
+                    { "label": "Bulb Base", "value": "G9" },
+                    { "label": "Finish", "value": "Chrome" },
+                    { "label": "Style", "value": "Single ball pendant" }
+                  ]
+                },
+                {
+                  "name": "Pendant Light D221206/1A LED 7W - Warm White (3000K), Brass/Clear",
+                  "rate": 90,
+                  "images": ["https://salhiyalighting.com/media/catalog/product/1/4/142sl24.jpg"],
+                  "specs": [
+                    { "label": "Wattage", "value": "7W" },
+                    { "label": "Color Temperature", "value": "3000K (Warm White)" },
+                    { "label": "Finish", "value": "Brass / Clear glass" },
+                    { "label": "Style", "value": "Modern single drop" }
+                  ]
+                },
+                {
+                  "name": "Pendant Light PL174G-1H 10W, Bronze",
+                  "rate": 112,
+                  "images": ["https://salhiyalighting.com/media/catalog/product/4/5/45sl26-02.jpg"],
+                  "specs": [
+                    { "label": "Wattage", "value": "10W" },
+                    { "label": "Finish", "value": "Bronze" },
+                    { "label": "Style", "value": "Single drop pendant" }
+                  ]
+                },
+                {
+                  "name": "Pendant Light Single Opal Glass Ball Hoop LED 3W - Warm White (2800K), Bronze",
+                  "rate": 120,
+                  "images": ["https://salhiyalighting.com/media/catalog/product/0/6/06sl21.jpg"],
+                  "specs": [
+                    { "label": "Wattage", "value": "3W" },
+                    { "label": "Color Temperature", "value": "2800K (Warm White)" },
+                    { "label": "Bulb Base", "value": "G9" },
+                    { "label": "Shade", "value": "Opal glass ball hoop" },
+                    { "label": "Finish", "value": "Bronze" }
+                  ]
+                },
+                {
+                  "name": "Pendant Light MD2757 LED 3W - Warm White (3000K), White",
+                  "rate": 110,
+                  "images": ["https://salhiyalighting.com/media/catalog/product/3/5/35sl22-1.jpg"],
+                  "specs": [
+                    { "label": "Wattage", "value": "3W" },
+                    { "label": "Color Temperature", "value": "3000K (Warm White)" },
+                    { "label": "Finish", "value": "White" },
+                    { "label": "Style", "value": "Minimal single drop" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Cluster / Multi-Drop",
+              "products": [
+                {
+                  "name": "LED Chandelier 8 Arms MX16032013, Chrome",
+                  "rate": 850,
+                  "images": ["https://salhiyalighting.com/media/catalog/product/7/0/70sl18-2.jpg"],
+                  "specs": [
+                    { "label": "Arms", "value": "8" },
+                    { "label": "Finish", "value": "Chrome" },
+                    { "label": "Style", "value": "Multi-arm cluster pendant" },
+                    { "label": "Light Source", "value": "Integrated LED" }
+                  ]
+                },
+                {
+                  "name": "Modern 24-Branch Stylish Hanging Light MD21362/24Y, Bronze",
+                  "rate": 1580,
+                  "images": ["https://salhiyalighting.com/media/catalog/product/1/4/140sl21.jpg"],
+                  "specs": [
+                    { "label": "Arms / Drops", "value": "24" },
+                    { "label": "Finish", "value": "Bronze" },
+                    { "label": "Style", "value": "Contemporary cluster / multi-drop" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Decorative / Feature Lighting",
+          "subtypes": [
+            {
+              "label": "Feature Installation",
+              "products": [
+                {
+                  "name": "Crystal LED Chandelier Dia100 D180828, Chrome - 3000K",
+                  "rate": 1680,
+                  "images": ["https://salhiyalighting.com/media/catalog/product/1/2/129sl24.jpg"],
+                  "specs": [
+                    { "label": "Diameter", "value": "100cm" },
+                    { "label": "Color Temperature", "value": "3000K" },
+                    { "label": "Finish", "value": "Chrome" },
+                    { "label": "Style", "value": "Statement crystal chandelier" },
+                    { "label": "Use case", "value": "Lobby / reception feature installation" }
+                  ]
+                },
+                {
+                  "name": "Modern 60-LED Glass Iron Crystal Pendant Light TLD20200812, Bronze",
+                  "rate": 1880,
+                  "images": ["https://salhiyalighting.com/media/catalog/product/3/8/384sl21.jpg"],
+                  "specs": [
+                    { "label": "LEDs", "value": "60" },
+                    { "label": "Material", "value": "Glass / iron / crystal" },
+                    { "label": "Finish", "value": "Bronze" },
+                    { "label": "Style", "value": "Large-format feature installation" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
