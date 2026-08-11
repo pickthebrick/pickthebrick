@@ -66,15 +66,26 @@ export default function Sidebar({
       </div>
       {activeEmployee === "marketing" && (
         <div className="brain-sidebar-nav">
-          {MARKETING_TABS.map((t) => (
-            <div
-              key={t.key}
-              className={`brain-sidebar-nav-item ${activeTab === t.key ? "brain-sidebar-nav-item--active-marketing" : ""}`}
-              onClick={() => onSelectTab(t.key)}
-            >
-              {t.label}
-            </div>
-          ))}
+          {MARKETING_TABS.map((t) =>
+            t.key === "chat" ? (
+              <div
+                key={t.key}
+                className={`brain-sidebar-nav-item brain-sidebar-nav-item--aiman ${activeTab === t.key ? "brain-sidebar-nav-item--active-marketing" : ""}`}
+                onClick={() => onSelectTab(t.key)}
+              >
+                <span className="brain-aiman-icon">🧑‍💼</span>
+                {t.label}
+              </div>
+            ) : (
+              <div
+                key={t.key}
+                className={`brain-sidebar-nav-item ${activeTab === t.key ? "brain-sidebar-nav-item--active-marketing" : ""}`}
+                onClick={() => onSelectTab(t.key)}
+              >
+                {t.label}
+              </div>
+            ),
+          )}
         </div>
       )}
     </aside>

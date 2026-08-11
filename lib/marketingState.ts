@@ -14,7 +14,6 @@ const WORKSPACE_STATE_ID = "marketing-workspace-state";
 export type WorkspaceState = {
   autonomyLevel: number;
   permissions: Record<string, string[]>;
-  queueApprovals: Record<string, "Approved">;
   working: string[];
   problems: string[];
   analysisUpdatedAt: Date | null;
@@ -24,6 +23,12 @@ export type WorkspaceState = {
 
 export type MarketingOpportunity = { title: string; why: string; action: string };
 export type MarketingChannel = "google" | "meta" | "website";
+
+// The full action-object status vocabulary (see prisma/schema.prisma ->
+// MarketingRecommendation.status). Approving only ever moves a row to
+// APPROVED - it never touches an external service. Only executeAction()
+// (lib/ai/actionExecutor.ts) can move a row into EXECUTING/EXECUTED/FAILED.
+export type ActionStatus = "RECOMMENDED" | "APPROVED" | "REJECTED" | "EXECUTING" | "EXECUTED" | "FAILED" | "CANCELLED";
 
 async function ensureWorkspaceRow() {
   return prisma.marketingWorkspaceState.upsert({
@@ -38,7 +43,6 @@ export async function getWorkspaceState(): Promise<WorkspaceState> {
   return {
     autonomyLevel: row.autonomyLevel,
     permissions: JSON.parse(row.permissionsJson || "{}"),
-    queueApprovals: JSON.parse(row.queueApprovalsJson || "{}"),
     working: JSON.parse(row.workingJson || "[]"),
     problems: JSON.parse(row.problemsJson || "[]"),
     analysisUpdatedAt: row.analysisUpdatedAt,
@@ -82,16 +86,6 @@ export async function setToolPermission(tool: string, permission: string, enable
   return permissions;
 }
 
-export async function approveQueueItem(id: string) {
-  const state = await getWorkspaceState();
-  const queueApprovals = { ...state.queueApprovals, [id]: "Approved" as const };
-  await prisma.marketingWorkspaceState.update({
-    where: { id: WORKSPACE_STATE_ID },
-    data: { queueApprovalsJson: JSON.stringify(queueApprovals) },
-  });
-  return queueApprovals;
-}
-
 export async function getRecommendations() {
   return prisma.marketingRecommendation.findMany({ orderBy: { createdAt: "asc" } });
 }
@@ -101,13 +95,18 @@ export async function replaceRecommendations(
 ) {
   await prisma.$transaction([
     prisma.marketingRecommendation.deleteMany({}),
-    prisma.marketingRecommendation.createMany({ data: list }),
+    prisma.marketingRecommendation.createMany({ data: list.map((r) => ({ ...r, status: "RECOMMENDED", type: "advisory" })) }),
   ]);
   return getRecommendations();
 }
 
-export async function setRecommendationStatus(id: string, status: "Approved" | "Rejected") {
-  return prisma.marketingRecommendation.update({ where: { id }, data: { status } }).catch(() => null);
+// Approve/reject only ever change status - never touch an external service.
+// Execution (EXECUTING/EXECUTED/FAILED) is handled exclusively by
+// executeAction() in lib/ai/actionExecutor.ts.
+export async function setRecommendationStatus(id: string, status: "APPROVED" | "REJECTED") {
+  return prisma.marketingRecommendation
+    .update({ where: { id }, data: { status, approvedAt: status === "APPROVED" ? new Date() : undefined } })
+    .catch(() => null);
 }
 
 export async function getInstructions() {

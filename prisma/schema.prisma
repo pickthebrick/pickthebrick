@@ -973,7 +973,6 @@ model MarketingWorkspaceState {
   id                 String    @id @default(cuid())
   autonomyLevel      Int       @default(1)
   permissionsJson    String    @default("{}")
-  queueApprovalsJson String    @default("{}")
   // Last-run analysis summary bullets (the recommendations themselves live
   // in MarketingRecommendation, since those need individual ids/status) -
   // cached here so re-opening the Overview page shows the last analysis
@@ -993,15 +992,31 @@ model MarketingWorkspaceState {
 // (not regenerated-and-thrown-away) so the chat agent can approve/reject a
 // specific recommendation by id and have the Overview page reflect it.
 // Replaced wholesale each time a fresh analysis runs (see
-// lib/marketingState.ts replaceRecommendations()).
+// lib/marketingState.ts replaceRecommendations()). Doubles as the generic
+// action-execution object (see lib/ai/actionExecutor.ts): approving a row
+// only ever changes `status` here, it never touches an external service -
+// only executeAction() does that, via the fields below. status is one of
+// RECOMMENDED | APPROVED | REJECTED | EXECUTING | EXECUTED | FAILED |
+// CANCELLED. type is "advisory" (no external effect, the historical/default
+// case) or a tool name like "google_ads.create_campaign".
 model MarketingRecommendation {
-  id        String   @id @default(cuid())
-  title     String
-  why       String
-  impact    String
-  risk      String
-  status    String   @default("Awaiting review")
-  createdAt DateTime @default(now())
+  id                   String    @id @default(cuid())
+  title                String
+  why                  String
+  impact               String
+  risk                 String
+  status               String    @default("RECOMMENDED")
+  type                 String    @default("advisory")
+  externalService      String?
+  externalId           String?
+  requestPayloadJson   String?
+  resultJson           String?
+  error                String?
+  mock                 Boolean   @default(true)
+  approvedAt           DateTime?
+  executionStartedAt   DateTime?
+  executionCompletedAt DateTime?
+  createdAt            DateTime  @default(now())
 }
 
 // Standing instructions the founder has given the Marketing employee (e.g.

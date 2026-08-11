@@ -34,7 +34,7 @@ export const BRAIN_TABS: { key: BrainTab; label: string }[] = [
 
 export const MARKETING_TABS: { key: MarketingTab; label: string }[] = [
   { key: "overview", label: "Overview" },
-  { key: "chat", label: "Chat" },
+  { key: "chat", label: "Aiman" },
   { key: "ai-manager", label: "AI Manager" },
   { key: "approvals", label: "Approvals" },
   { key: "usage", label: "AI Usage" },
@@ -235,19 +235,10 @@ export const MARKETING_KPIS: Kpi[] = [
   { label: "Marketing ROI", value: "6.7×", delta: "0.4×", deltaGood: true, deltaArrow: "▲" },
 ];
 
-export const QUEUE_ITEMS: {
-  id: string;
-  priority: "HIGH" | "MEDIUM" | "LOW";
-  title: string;
-  channel: string;
-  metric: string;
-}[] = [
-  { id: "q1", priority: "HIGH", title: "Pause expensive keyword", channel: "Google Ads", metric: "AED 380 spent / 0 qualified leads" },
-  { id: "q2", priority: "HIGH", title: "Fix Meta conversion tracking", channel: "Meta Ads", metric: "Pixel firing intermittently since Tue" },
-  { id: "q3", priority: "MEDIUM", title: "Approve 4 Instagram post drafts", channel: "Instagram", metric: "Queued since yesterday" },
-  { id: "q4", priority: "MEDIUM", title: "Increase campaign budget", channel: "Google Ads", metric: "CPA 34% below account average" },
-  { id: "q5", priority: "LOW", title: "Create landing page for \"office fit out cost Dubai\"", channel: "Website", metric: "Search demand rising +22% MoM" },
-];
+// The old "AI Action Queue" hardcoded sample list has been removed - it was
+// never wired to anything real (see lib/ai/actionExecutor.ts). The real
+// AI Marketing Manager recommendations (MarketingRecommendation) are the
+// single source of truth for both advisory and action-executing items now.
 
 export const ACTIVITY_LOG: {
   time: string;
