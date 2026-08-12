@@ -120,6 +120,7 @@ export default function FeaturesWizard({
 
   useEffect(() => {
     if (!showGhost) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGhostText("");
       return;
     }
