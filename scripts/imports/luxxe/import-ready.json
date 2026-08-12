@@ -1,0 +1,310 @@
+{
+  "categories": [
+    {
+      "label": "Lighting",
+      "unit": "count",
+      "types": [
+        {
+          "label": "Pendant Lights",
+          "subtypes": [
+            {
+              "label": "Single Pendant",
+              "products": [
+                {
+                  "name": "Rhodes Pendant Light - Gold (YUE-HYBO479-G)",
+                  "rate": 510,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/YUE-HYB0479-G1_2000x.jpg?v=1764169687"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Metal & Glass" },
+                    { "label": "Finish", "value": "Gold" },
+                    { "label": "Diameter", "value": "27cm" },
+                    { "label": "Bulb", "value": "G9 x 1 (not included)" },
+                    { "label": "Style", "value": "Single-shade minimal pendant" }
+                  ]
+                },
+                {
+                  "name": "Rhodes Pendant Light - Black (YUE-HYBO479-B)",
+                  "rate": 510,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/YUE-HYBO479-B-1_2000x.jpg?v=1760938407"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Metal & Glass" },
+                    { "label": "Finish", "value": "Black" },
+                    { "label": "Diameter", "value": "27cm" },
+                    { "label": "Bulb", "value": "G9 x 1 (not included)" },
+                    { "label": "Style", "value": "Single-shade minimal pendant" }
+                  ]
+                },
+                {
+                  "name": "Val Pendant Light (I-PL-CSC168)",
+                  "rate": 485,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-CSC168-1_2000x.jpg?v=1767423135"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Ceramic" },
+                    { "label": "Dimensions", "value": "11cm diameter x 22cm height" },
+                    { "label": "Bulb", "value": "E27 x 1 (not included)" },
+                    { "label": "Style", "value": "Single-shade minimal pendant" }
+                  ]
+                },
+                {
+                  "name": "June Pendant Light (I-PL-CSC172)",
+                  "rate": 425,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-CSC172-1_2000x.jpg?v=1769528797"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Glass & Wood" },
+                    { "label": "Dimensions", "value": "21cm diameter x 20cm height" },
+                    { "label": "Bulb", "value": "E27 x 1 (not included)" },
+                    { "label": "Style", "value": "Single-shade minimal pendant" }
+                  ]
+                },
+                {
+                  "name": "Toby Pendant Light - White (I-PL-CSC165)",
+                  "rate": 855,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-CSC165-1_2000x.jpg?v=1762071170"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Brass & Alabaster" },
+                    { "label": "Finish", "value": "White" },
+                    { "label": "Dimensions", "value": "15cm diameter x 40cm height" },
+                    { "label": "Bulb", "value": "E14 x 1 (not included)" },
+                    { "label": "Style", "value": "Single-head minimal pendant" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Cluster / Multi-Drop",
+              "products": [
+                {
+                  "name": "Harper Pendant Light - Black (I-PL-D8227-B)",
+                  "rate": 675,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-D8227-B-1_2000x.jpg?v=1754374967"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Iron & Glass" },
+                    { "label": "Finish", "value": "Black" },
+                    { "label": "Dimensions", "value": "33cm diameter x 28cm height" },
+                    { "label": "Bulb", "value": "E27 x 3 (not included)" },
+                    { "label": "Heads", "value": "3-head cluster on single canopy" }
+                  ]
+                },
+                {
+                  "name": "Sebastian Pendant Light - 77cm (I-PL-P121-25-77)",
+                  "rate": 815,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-P121-25-77-1_2000x.jpg?v=1754375104"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Stainless Steel & Glass" },
+                    { "label": "Length", "value": "77cm" },
+                    { "label": "Bulb", "value": "E14 x 2 (not included)" },
+                    { "label": "Heads", "value": "Dual-drop linear pendant" }
+                  ]
+                },
+                {
+                  "name": "Sebastian Pendant Light - 110cm (I-PL-P121-25-110)",
+                  "rate": 915,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-P121-25-110-1_2000x.jpg?v=1754375136"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Stainless Steel & Glass" },
+                    { "label": "Length", "value": "110cm" },
+                    { "label": "Bulb", "value": "E14 x 2 (not included)" },
+                    { "label": "Heads", "value": "Dual-drop linear pendant" }
+                  ]
+                },
+                {
+                  "name": "Sebastian Pendant Light - 130cm (I-PL-P121-25-130)",
+                  "rate": 965,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-P121-25-130-1_2000x.jpg?v=1754375152"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Stainless Steel & Glass" },
+                    { "label": "Length", "value": "130cm" },
+                    { "label": "Bulb", "value": "E14 x 2 (not included)" },
+                    { "label": "Heads", "value": "Dual-drop linear pendant" }
+                  ]
+                },
+                {
+                  "name": "Everett Chandelier - Small (I-PL-D8573-3)",
+                  "rate": 815,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-D8573-3-1_2000x.jpg?v=1754375001"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Metal" },
+                    { "label": "Diameter", "value": "70cm" },
+                    { "label": "Bulb", "value": "E27 x 3 (not included)" },
+                    { "label": "Heads", "value": "3-head geometric ring cluster" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Decorative / Feature Lighting",
+          "subtypes": [
+            {
+              "label": "Wall Sconce",
+              "products": [
+                {
+                  "name": "Kennedy Wall Light - Silver (I-PL-W127-SL)",
+                  "rate": 455,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-W127-SL-1_2000x.jpg?v=1769528933"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Aluminium" },
+                    { "label": "Finish", "value": "Silver" },
+                    { "label": "Dimensions", "value": "10cm diameter x 13cm height" },
+                    { "label": "Light Source", "value": "LED, 220/240V" },
+                    { "label": "Style", "value": "Minimal cylindrical sconce" }
+                  ]
+                },
+                {
+                  "name": "Kennedy Wall Light - Black (I-PL-W127-BL)",
+                  "rate": 455,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-W127-BL-1_2000x.jpg?v=1769528916"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Aluminium" },
+                    { "label": "Finish", "value": "Black" },
+                    { "label": "Dimensions", "value": "10cm diameter x 13cm height" },
+                    { "label": "Light Source", "value": "LED, 220/240V" },
+                    { "label": "Style", "value": "Minimal cylindrical sconce" }
+                  ]
+                },
+                {
+                  "name": "Rowan Wall Light (I-PL-W124)",
+                  "rate": 395,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-W124-1_2000x.jpg?v=1767423501"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Metal & Aluminium" },
+                    { "label": "Dimensions", "value": "10cm length x 5cm height" },
+                    { "label": "Light Source", "value": "LED, 220/240V" },
+                    { "label": "Style", "value": "Minimal streamlined sconce" }
+                  ]
+                },
+                {
+                  "name": "Silas Wall Light - Black (I-PL-W120-B)",
+                  "rate": 755,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-W120-B-1_2000x.jpg?v=1767423433"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Marble & Metal" },
+                    { "label": "Finish", "value": "Black" },
+                    { "label": "Dimensions", "value": "10 x 11 x 32cm" },
+                    { "label": "Bulb", "value": "G9 x 2 (not included)" },
+                    { "label": "Style", "value": "Minimal architectural sconce, mixed materials" }
+                  ]
+                },
+                {
+                  "name": "Tatum Wall Light (I-PL-W121)",
+                  "rate": 640,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-W121-1_2000x.jpg?v=1767423450"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Stone & Metal" },
+                    { "label": "Dimensions", "value": "8cm length x 32cm height" },
+                    { "label": "Bulb", "value": "G9 x 2 (not included)" },
+                    { "label": "Style", "value": "Minimal architectural sconce, mixed materials" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Feature Installation",
+              "products": [
+                {
+                  "name": "Cain Linear Pendant Light - Black (I-PL-CSC161-B)",
+                  "rate": 1150,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-CSC161-B-1_2000x.jpg?v=1754374689"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Aluminium & Glass" },
+                    { "label": "Finish", "value": "Black" },
+                    { "label": "Length", "value": "120cm" },
+                    { "label": "Light Source", "value": "Integrated LED, 220/240V" },
+                    { "label": "Use case", "value": "Reception desk / lobby ceiling feature" }
+                  ]
+                },
+                {
+                  "name": "Jensen Linear Pendant Light (I-PL-CSC160)",
+                  "rate": 1150,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-CSC160-1_2000x.jpg?v=1754374673"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Metal, Glass & Acrylic" },
+                    { "label": "Dimensions", "value": "110cm length x 4.5cm width x 10cm height" },
+                    { "label": "Light Source", "value": "Integrated LED, 220/240V" },
+                    { "label": "Use case", "value": "Reception desk / lobby ceiling feature" }
+                  ]
+                },
+                {
+                  "name": "Estelle Linear Pendant Light - Gold (I-PL-CSC157-G)",
+                  "rate": 1445,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-CSC157-G1_2000x.jpg?v=1754376059"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Metal & Glass" },
+                    { "label": "Finish", "value": "Gold" },
+                    { "label": "Dimensions", "value": "153cm length x 25cm width x 25cm height" },
+                    { "label": "Light Source", "value": "Integrated LED, 220/240V" },
+                    { "label": "Use case", "value": "Large-format reception / lobby feature installation" }
+                  ]
+                },
+                {
+                  "name": "Everett Chandelier - Large (I-PL-D8573-5)",
+                  "rate": 1110,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-D8573-5-1_2000x.jpg?v=1754375016"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Metal" },
+                    { "label": "Diameter", "value": "86cm" },
+                    { "label": "Bulb", "value": "E27 x 5 (not included)" },
+                    { "label": "Style", "value": "Large geometric ring feature installation" }
+                  ]
+                },
+                {
+                  "name": "Noah Chandelier - Black (I-PL-48-25-B)",
+                  "rate": 1545,
+                  "images": [
+                    "https://luxxelighting.com/cdn/shop/files/I-PL-48-25-B-1_2000x.jpg?v=1754373828"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Iron & Glass" },
+                    { "label": "Finish", "value": "Black" },
+                    { "label": "Dimensions", "value": "80cm diameter x 70cm height" },
+                    { "label": "Bulb", "value": "G9 x 7 (not included)" },
+                    { "label": "Style", "value": "Large geometric ring feature installation" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
