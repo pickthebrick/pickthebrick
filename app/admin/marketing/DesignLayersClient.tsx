@@ -51,9 +51,15 @@ export default function DesignLayersClient({
 
   async function handleMove(slot: string, direction: "up" | "down") {
     setBusySlot(slot);
-    await moveSpaceLayerImage(selectedSpace, slot, direction);
-    router.refresh();
-    setBusySlot(null);
+    setError(null);
+    try {
+      await moveSpaceLayerImage(selectedSpace, slot, direction);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not reorder layer");
+    } finally {
+      setBusySlot(null);
+    }
   }
 
   async function handleChange(slot: string, file: File | null) {
@@ -74,9 +80,15 @@ export default function DesignLayersClient({
 
   async function handleRemove(slot: string) {
     setBusySlot(slot);
-    await removeSpaceLayerImage(selectedSpace, slot);
-    router.refresh();
-    setBusySlot(null);
+    setError(null);
+    try {
+      await removeSpaceLayerImage(selectedSpace, slot);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not remove image");
+    } finally {
+      setBusySlot(null);
+    }
   }
 
   async function handleAddOption() {
@@ -175,7 +187,7 @@ export default function DesignLayersClient({
                     <button
                       type="button"
                       className="action"
-                      disabled={busy || moveIdx <= 0}
+                      disabled={busy || moveIdx === -1 || moveIdx >= orderedMoveableSlots.length - 1}
                       onClick={() => handleMove(slot, "up")}
                       title="Move this layer up (renders later, so it sits on top of layers below it)"
                     >
@@ -184,7 +196,7 @@ export default function DesignLayersClient({
                     <button
                       type="button"
                       className="action"
-                      disabled={busy || moveIdx === -1 || moveIdx >= orderedMoveableSlots.length - 1}
+                      disabled={busy || moveIdx <= 0}
                       onClick={() => handleMove(slot, "down")}
                       title="Move this layer down (renders earlier, so it sits behind layers above it)"
                     >
