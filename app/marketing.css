@@ -1147,7 +1147,7 @@
   max-width: 900px;
   margin: 0 auto 32px;
   display: grid;
-  grid-template-columns: 252px 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 28px;
   align-items: start;
 }
@@ -1163,7 +1163,7 @@
 }
 .ptb-marketing .features-graphic-icon {
   width: 100%;
-  max-width: 352px;
+  max-width: 420px;
   height: auto;
   transition: transform 0.2s;
 }
