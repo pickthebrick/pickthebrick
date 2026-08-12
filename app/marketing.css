@@ -1147,30 +1147,30 @@
   max-width: 900px;
   margin: 0 auto 32px;
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 252px 1fr;
   gap: 28px;
   align-items: start;
 }
 .ptb-marketing .features-graphic {
-  background: var(--surface);
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius);
-  padding: 20px;
+  background: none;
+  border: none;
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+  box-shadow: none;
+  overflow: visible;
 }
 .ptb-marketing .features-graphic-icon {
   width: 100%;
-  max-width: 220px;
+  max-width: 352px;
   height: auto;
   transition: transform 0.2s;
 }
 .ptb-marketing .features-graphic-layers {
   position: relative;
   width: 100%;
-  max-width: 320px;
+  max-width: 512px;
   aspect-ratio: 4 / 3;
 }
 .ptb-marketing .features-graphic-layer {
@@ -1299,6 +1299,9 @@
   color: var(--muted);
   margin: 20px 0 8px;
 }
+.ptb-marketing .features-notes-wrap {
+  position: relative;
+}
 .ptb-marketing .features-notes {
   width: 100%;
   border: 1.5px solid var(--line);
@@ -1309,6 +1312,33 @@
   resize: vertical;
   background: var(--bg);
   color: var(--fg);
+  position: relative;
+}
+.ptb-marketing .features-notes-ghost {
+  position: absolute;
+  inset: 1.5px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: normal;
+  color: var(--muted);
+  font-style: italic;
+  white-space: pre-wrap;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ptb-marketing .features-notes-ghost-cursor {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--muted);
+  animation: features-ghost-blink 0.9s step-end infinite;
+}
+@keyframes features-ghost-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 
 .ptb-marketing .placeholder-note {
@@ -1945,7 +1975,7 @@
     grid-template-columns: 1fr;
   }
   .ptb-marketing .features-graphic-icon {
-    max-width: 160px;
+    max-width: 256px;
   }
 }
 
