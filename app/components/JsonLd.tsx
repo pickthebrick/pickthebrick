@@ -5,7 +5,6 @@
 // payload can never prematurely close the surrounding <script> tag.
 export default function JsonLd({ data }: { data: object }) {
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
-  // eslint-disable-next-line react/no-danger
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />;
 }
 

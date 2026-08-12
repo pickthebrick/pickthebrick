@@ -36,7 +36,16 @@ const PUBLIC_ROUTES = ["/"];
 // Handlers under app/api/** have no browser session to redirect (they're
 // hit by scripts/webhooks, e.g. app/api/admin/products/import), so each one
 // enforces its own auth (API key, etc.) instead of relying on this gate.
-const PUBLIC_NO_REDIRECT_PREFIXES = ["/landing/", "/ask-ai", "/careers", "/api/", "/forgot-password", "/reset-password"];
+const PUBLIC_NO_REDIRECT_PREFIXES = [
+  "/landing/",
+  "/ask-ai",
+  "/careers",
+  "/api/",
+  "/forgot-password",
+  "/reset-password",
+  "/sitemap.xml",
+  "/robots.txt",
+];
 // Build and Design used to force login before a visitor could even start;
 // now both work fully anonymously (see lib/anonSession.ts / lib/actor.ts)
 // and only ask for contact info at the end of the flow. Unlike the prefixes
