@@ -7,6 +7,7 @@ import DesignStepper from "../DesignStepper";
 import SpaceIcon from "../SpaceIcon";
 import { mergedSpaceQuestions, type CustomQuestionRow } from "@/lib/spaceQuestions";
 import { resolveLayerImages } from "@/lib/spaceLayers";
+import { SPECIAL_REQUIREMENT_SUGGESTIONS } from "@/lib/specialRequirementSuggestions";
 import { saveDesignRequestSpaceAnswers, deleteDesignRequestSpace, submitDesignRequest } from "@/app/actions/design";
 import AuthGate from "@/app/components/AuthGate";
 import PhoneVerifyStep from "@/app/components/PhoneVerifyStep";
@@ -97,6 +98,57 @@ export default function FeaturesWizard({
   const notes = notesDrafts[current.id] ?? "";
   const liveFeatures = Object.fromEntries(Object.entries(answers).map(([k, v]) => [k, v === "true"]));
   const layers = resolveLayerImages(questions, answers, layerImages[current.spaceKey] ?? {});
+
+  // A typed-out example sentence (e.g. "Add a trophy display stand.") shown
+  // as a ghost overlay behind the empty Special requirements textarea, to
+  // prompt the kind of detail worth adding - hidden the instant the field is
+  // focused or has real text, so it's never mistaken for a real value or
+  // fought over with the client's own typing.
+  const suggestions = SPECIAL_REQUIREMENT_SUGGESTIONS[current.spaceKey] ?? [];
+  const [notesFocused, setNotesFocused] = useState(false);
+  const [ghostText, setGhostText] = useState("");
+  const showGhost = !notesFocused && notes.trim() === "" && suggestions.length > 0;
+
+  useEffect(() => {
+    if (!showGhost) {
+      setGhostText("");
+      return;
+    }
+    let phraseIdx = 0;
+    let charIdx = 0;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    function typeStep() {
+      if (cancelled) return;
+      const phrase = suggestions[phraseIdx % suggestions.length];
+      if (charIdx <= phrase.length) {
+        setGhostText(phrase.slice(0, charIdx));
+        charIdx++;
+        timer = setTimeout(typeStep, 45);
+      } else {
+        timer = setTimeout(eraseStep, 1400);
+      }
+    }
+    function eraseStep() {
+      if (cancelled) return;
+      const phrase = suggestions[phraseIdx % suggestions.length];
+      if (charIdx > 0) {
+        charIdx--;
+        setGhostText(phrase.slice(0, charIdx));
+        timer = setTimeout(eraseStep, 22);
+      } else {
+        phraseIdx++;
+        timer = setTimeout(typeStep, 300);
+      }
+    }
+    timer = setTimeout(typeStep, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showGhost, current.spaceKey]);
 
   function setAnswer(key: string, value: string) {
     setDrafts((prev) => ({ ...prev, [current.id]: { ...prev[current.id], [key]: value } }));
@@ -339,14 +391,24 @@ export default function FeaturesWizard({
             <label className="features-notes-label" htmlFor="special-requirements">
               Special requirements
             </label>
-            <textarea
-              id="special-requirements"
-              className="features-notes"
-              rows={3}
-              placeholder="Anything else we should know about this space?"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
+            <div className="features-notes-wrap">
+              <textarea
+                id="special-requirements"
+                className="features-notes"
+                rows={3}
+                placeholder={showGhost ? "" : "Anything else we should know about this space?"}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                onFocus={() => setNotesFocused(true)}
+                onBlur={() => setNotesFocused(false)}
+              />
+              {showGhost && (
+                <div className="features-notes-ghost" aria-hidden="true">
+                  {ghostText}
+                  <span className="features-notes-ghost-cursor" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
