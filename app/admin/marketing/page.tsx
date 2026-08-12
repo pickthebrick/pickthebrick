@@ -13,7 +13,7 @@ export default async function MarketingPage() {
   if (!session) redirect("/login");
   if (!isAdminRole(session.role) && session.role !== Role.marketing) redirect(ROLE_HOME[session.role]);
 
-  const [banners, aiDesignerBanner, categories, caseStudyCards, spaceLayerImages, spaceCustomQuestions, styleFinderImages] =
+  const [banners, aiDesignerBanner, categories, caseStudyCards, spaceLayerImages, spaceCustomQuestions, spaceQuestionHidden, styleFinderImages] =
     await Promise.all([
       prisma.banner.findMany({ orderBy: { sortOrder: "asc" } }),
       prisma.aiDesignerBanner.upsert({
@@ -29,6 +29,7 @@ export default async function MarketingPage() {
       ),
       prisma.spaceLayerImage.findMany({ select: { spaceKey: true, slot: true, imageUrl: true, sortOrder: true } }),
       prisma.spaceCustomQuestion.findMany({ orderBy: { sortOrder: "asc" } }),
+      prisma.spaceQuestionHidden.findMany(),
       prisma.styleFinderImage.findMany({ select: { styleKey: true, slot: true, imageUrl: true } }),
     ]);
 
@@ -58,6 +59,7 @@ export default async function MarketingPage() {
         caseStudyCards={caseStudyCards}
         spaceLayerImages={spaceLayerImages}
         spaceCustomQuestions={spaceCustomQuestions}
+        spaceQuestionHidden={spaceQuestionHidden}
         styleFinderImages={styleFinderImages}
         packageFeatureItems={packageFeatureItems}
       />

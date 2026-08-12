@@ -29,6 +29,7 @@ export default function FeaturesWizard({
   initialPhone,
   layerImages = {},
   customQuestions = {},
+  hiddenQuestions = {},
 }: {
   designRequestId: string;
   instances: SpaceInstance[];
@@ -49,6 +50,10 @@ export default function FeaturesWizard({
   // so a marketer's new option ("Bean bag seating") renders as a real switch
   // here, same as any built-in one.
   customQuestions?: Record<string, CustomQuestionRow[]>;
+  // Hardcoded questions an admin has deleted per space (see
+  // SpaceQuestionHidden / hideSpaceQuestion) - filtered out of
+  // mergedSpaceQuestions() below so a deleted layer is never asked about.
+  hiddenQuestions?: Record<string, string[]>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,7 +97,11 @@ export default function FeaturesWizard({
   }, []);
 
   const current = spaceList[index];
-  const questions = mergedSpaceQuestions(current.spaceKey, customQuestions[current.spaceKey] ?? []);
+  const questions = mergedSpaceQuestions(
+    current.spaceKey,
+    customQuestions[current.spaceKey] ?? [],
+    hiddenQuestions[current.spaceKey] ?? [],
+  );
   const answers = drafts[current.id] ?? {};
   const notes = notesDrafts[current.id] ?? "";
   const liveFeatures = Object.fromEntries(Object.entries(answers).map(([k, v]) => [k, v === "true"]));

@@ -3,21 +3,24 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { setSpaceLayerImage, removeSpaceLayerImage, moveSpaceLayerImage } from "@/app/actions/spaceLayers";
-import { addCustomSpaceQuestion, deleteCustomSpaceQuestion } from "@/app/actions/spaceQuestions";
-import { slotsForSpace, featureSlot } from "@/lib/spaceLayers";
+import { addCustomSpaceQuestion, deleteCustomSpaceQuestion, hideSpaceQuestion } from "@/app/actions/spaceQuestions";
+import { slotsForSpace, featureSlot, type LayerSlotDescriptor } from "@/lib/spaceLayers";
 import { mergedSpaceQuestions } from "@/lib/spaceQuestions";
 import { SPACES } from "@/lib/spaces";
 import ImageCropper from "@/app/components/ImageCropper";
 
 type LayerRow = { spaceKey: string; slot: string; imageUrl: string; sortOrder: number };
 type CustomQuestionRow = { id: string; spaceKey: string; key: string; label: string; sortOrder: number };
+type HiddenQuestionRow = { id: string; spaceKey: string; key: string };
 
 export default function DesignLayersClient({
   images,
   customQuestions,
+  hiddenQuestions,
 }: {
   images: LayerRow[];
   customQuestions: CustomQuestionRow[];
+  hiddenQuestions: HiddenQuestionRow[];
 }) {
   const router = useRouter();
   const [selectedSpace, setSelectedSpace] = useState(SPACES[0].key);
@@ -35,20 +38,39 @@ export default function DesignLayersClient({
   const currentImages = bySpace[selectedSpace] ?? {};
 
   const currentCustomQuestions = customQuestions.filter((q) => q.spaceKey === selectedSpace);
-  const questions = mergedSpaceQuestions(selectedSpace, currentCustomQuestions);
+  const currentHiddenKeys = hiddenQuestions.filter((q) => q.spaceKey === selectedSpace).map((q) => q.key);
+  const questions = mergedSpaceQuestions(selectedSpace, currentCustomQuestions, currentHiddenKeys);
   const slots = slotsForSpace(questions);
   // Maps a feature slot back to the custom question it came from, if any -
-  // only custom options get a delete-this-option control; the hardcoded
-  // SPACE_QUESTIONS set is fixed in code and isn't removable here.
+  // custom options get a "Delete this option" control that removes the
+  // question entirely (see handleDeleteOption); hardcoded SPACE_QUESTIONS
+  // ones get the same control via handleHideBuiltIn instead, since the
+  // question itself can't be deleted from code (see hideSpaceQuestion).
   const customBySlot = new Map(currentCustomQuestions.map((q) => [featureSlot(q.key), q]));
 
   // Stacking order among uploaded feature/choice layers only (button/base
   // aren't reorderable - see moveSpaceLayerImage's comment) - used to
-  // disable the top/bottom move arrows.
+  // disable the top/bottom move arrows, and to render the cards themselves
+  // in actual stacking order below so Bring forward/Send backward visibly
+  // move a card instead of only changing an invisible database field.
   const orderedMoveableSlots = Object.values(currentImages)
     .filter((r) => slots.find((s) => s.slot === r.slot)?.group !== "button" && r.slot !== "base")
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((r) => r.slot);
+
+  const pinnedSlots = slots.filter((s) => s.group === "button" || s.slot === "base");
+  const restSlots = slots.filter((s) => s.group !== "button" && s.slot !== "base");
+  const displaySlots: LayerSlotDescriptor[] = [
+    ...pinnedSlots,
+    ...[...restSlots].sort((a, b) => {
+      const aIdx = orderedMoveableSlots.indexOf(a.slot);
+      const bIdx = orderedMoveableSlots.indexOf(b.slot);
+      if (aIdx === -1 && bIdx === -1) return 0;
+      if (aIdx === -1) return 1;
+      if (bIdx === -1) return -1;
+      return aIdx - bIdx;
+    }),
+  ];
 
   async function handleMove(slot: string, direction: "up" | "down") {
     setBusySlot(slot);
@@ -121,6 +143,27 @@ export default function DesignLayersClient({
     setBusySlot(null);
   }
 
+  async function handleHideBuiltIn(key: string, slot: string) {
+    if (
+      !confirm(
+        "Delete this layer entirely? Clients will no longer be asked this question for this space, and its uploaded image (if any) will be removed. This can only be undone by a developer.",
+      )
+    )
+      return;
+    setBusySlot(slot);
+    setError(null);
+    setSuccess(null);
+    try {
+      await hideSpaceQuestion(selectedSpace, key);
+      router.refresh();
+      setSuccess("Layer deleted.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete layer");
+    } finally {
+      setBusySlot(null);
+    }
+  }
+
   return (
     <div>
       <p className="empty" style={{ padding: "0 0 12px" }}>
@@ -152,13 +195,18 @@ export default function DesignLayersClient({
         </p>
       )}
       <div className="banner-grid" style={{ marginTop: 14 }}>
-        {slots.map(({ slot, label, group }) => {
+        {displaySlots.map(({ slot, label, group }) => {
           const row = currentImages[slot];
           const imageUrl = row?.imageUrl;
           const busy = busySlot === slot;
           const moveable = imageUrl && group !== "button" && slot !== "base";
           const moveIdx = moveable ? orderedMoveableSlots.indexOf(slot) : -1;
           const customQuestion = customBySlot.get(slot);
+          // A hardcoded (non-custom) boolean feature question - only these
+          // and custom questions get a "Delete this option" control; choice
+          // slots (chair/desk counts) are structural, not deletable here.
+          const builtInKey =
+            group === "feature" && !customQuestion && slot.startsWith("feature:") ? slot.slice("feature:".length) : null;
           return (
             <div key={slot} className="banner-card">
               <div className="banner-card-img-wrap">
@@ -228,6 +276,18 @@ export default function DesignLayersClient({
                       onClick={() => handleDeleteOption(customQuestion.id, slot)}
                     >
                       Delete this option
+                    </button>
+                  </div>
+                )}
+                {builtInKey && (
+                  <div className="banner-card-actions" style={{ marginTop: 6 }}>
+                    <button
+                      type="button"
+                      className="action danger"
+                      disabled={busy}
+                      onClick={() => handleHideBuiltIn(builtInKey, slot)}
+                    >
+                      Delete this layer
                     </button>
                   </div>
                 )}
