@@ -7,6 +7,7 @@ import { getSession } from "@/lib/auth";
 import { Role } from "@/app/generated/prisma/enums";
 import { deleteFromStorage } from "@/lib/storage";
 import { featureSlot } from "@/lib/spaceLayers";
+import { SPACE_QUESTIONS } from "@/lib/spaceQuestions";
 
 async function requireAdminOrMarketing() {
   const session = await getSession();
@@ -59,6 +60,35 @@ export async function deleteCustomSpaceQuestion(id: string) {
     where: { spaceKey_slot: { spaceKey: question.spaceKey, slot: featureSlot(question.key) } },
   });
   await prisma.spaceCustomQuestion.delete({ where: { id } });
+  if (layerImage) {
+    await prisma.spaceLayerImage.delete({ where: { id: layerImage.id } });
+    await deleteFromStorage(layerImage.imageUrl).catch(() => {});
+  }
+  revalidateDesignLayers();
+}
+
+// Deletes a hardcoded boolean question (e.g. "Storage credenza") from a
+// space, from the admin's point of view - the question is defined in code
+// (SPACE_QUESTIONS) and can't be removed from there, so this records it as
+// hidden instead; mergedSpaceQuestions() filters it out everywhere from then
+// on (survey, layer-image slots, SpaceIcon toggle), same end result as
+// deleteCustomSpaceQuestion above. Choice-type questions (chair/desk counts)
+// are structural to the room and aren't offered this control - see the
+// group !== "choice" check in DesignLayersClient.tsx.
+export async function hideSpaceQuestion(spaceKey: string, key: string) {
+  await requireAdminOrMarketing();
+  const question = (SPACE_QUESTIONS[spaceKey] ?? []).find((q) => q.key === key);
+  if (!question || question.type !== "boolean") throw new Error("This option can't be deleted");
+
+  await prisma.spaceQuestionHidden.upsert({
+    where: { spaceKey_key: { spaceKey, key } },
+    create: { spaceKey, key },
+    update: {},
+  });
+
+  const layerImage = await prisma.spaceLayerImage.findUnique({
+    where: { spaceKey_slot: { spaceKey, slot: featureSlot(key) } },
+  });
   if (layerImage) {
     await prisma.spaceLayerImage.delete({ where: { id: layerImage.id } });
     await deleteFromStorage(layerImage.imageUrl).catch(() => {});

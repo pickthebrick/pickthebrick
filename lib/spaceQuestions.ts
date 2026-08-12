@@ -80,6 +80,19 @@ export type CustomQuestionRow = { id: string; key: string; label: string };
 // (the survey, the layer-image slots, the designer's answer readout) calls
 // this instead of reading SPACE_QUESTIONS directly, so a marketer's new
 // question shows up everywhere without a code change.
-export function mergedSpaceQuestions(spaceKey: string, custom: CustomQuestionRow[] = []): SpaceQuestion[] {
-  return [...(SPACE_QUESTIONS[spaceKey] ?? []), ...custom.map((c) => ({ key: c.key, label: c.label, type: "boolean" as const }))];
+// `hiddenKeys` drops hardcoded boolean questions an admin has deleted (see
+// SpaceQuestionHidden in prisma/schema.prisma / hideSpaceQuestion in
+// app/actions/spaceQuestions.ts) - the code-defined question still exists,
+// but stops being asked/shown/uploadable anywhere, same end result as
+// deleting a custom one.
+export function mergedSpaceQuestions(
+  spaceKey: string,
+  custom: CustomQuestionRow[] = [],
+  hiddenKeys: string[] = [],
+): SpaceQuestion[] {
+  const hidden = new Set(hiddenKeys);
+  return [
+    ...(SPACE_QUESTIONS[spaceKey] ?? []).filter((q) => !hidden.has(q.key)),
+    ...custom.map((c) => ({ key: c.key, label: c.label, type: "boolean" as const })),
+  ];
 }

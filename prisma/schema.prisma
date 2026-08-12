@@ -911,6 +911,21 @@ model SpaceCustomQuestion {
   @@unique([spaceKey, key])
 }
 
+// Marks a hardcoded boolean question from SPACE_QUESTIONS (lib/spaceQuestions.ts)
+// as deleted for a given space - the question itself lives in code and can't
+// be removed from the database, so this is the admin-facing equivalent of
+// deleting a SpaceCustomQuestion row: mergedSpaceQuestions() filters it out
+// everywhere (the survey, the layer-image slots, the SpaceIcon feature-layer
+// toggle), so it stops being asked/shown/uploadable entirely. Choice-type
+// questions (chair/desk counts) are structural and aren't hideable this way.
+model SpaceQuestionHidden {
+  id       String @id @default(cuid())
+  spaceKey String
+  key      String
+
+  @@unique([spaceKey, key])
+}
+
 enum PackageTier {
   essential
   advanced

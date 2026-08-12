@@ -45,6 +45,7 @@ export default function MarketingClient({
   caseStudyCards,
   spaceLayerImages,
   spaceCustomQuestions,
+  spaceQuestionHidden,
   styleFinderImages,
   packageFeatureItems,
 }: {
@@ -54,6 +55,7 @@ export default function MarketingClient({
   caseStudyCards: CaseStudyCard[];
   spaceLayerImages: { spaceKey: string; slot: string; imageUrl: string; sortOrder: number }[];
   spaceCustomQuestions: { id: string; spaceKey: string; key: string; label: string; sortOrder: number }[];
+  spaceQuestionHidden: { id: string; spaceKey: string; key: string }[];
   styleFinderImages: { styleKey: string; slot: number; imageUrl: string }[];
   packageFeatureItems: PackageFeatureItemRow[];
 }) {
@@ -397,7 +399,7 @@ export default function MarketingClient({
       </AdminPanel>
 
       <AdminPanel title="Design space layer images" count={spaceLayerImages.length} defaultOpen={false}>
-        <DesignLayersClient images={spaceLayerImages} customQuestions={spaceCustomQuestions} />
+        <DesignLayersClient images={spaceLayerImages} customQuestions={spaceCustomQuestions} hiddenQuestions={spaceQuestionHidden} />
       </AdminPanel>
 
       <AdminPanel title="Style Finder photos" count={styleFinderImages.length} defaultOpen={false}>
