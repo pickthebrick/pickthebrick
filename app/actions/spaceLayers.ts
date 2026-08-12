@@ -64,6 +64,10 @@ export async function setSpaceLayerImage(spaceKey: string, slot: string, formDat
 // feature/choice slots only (button/base aren't part of the reorderable
 // stack: button is a standalone picker icon, base always renders at the
 // very bottom regardless of sortOrder - see resolveLayerImages()).
+// resolveLayerImages() sorts ascending by sortOrder and the wizard renders
+// that array in DOM order, so a HIGHER sortOrder paints later/on top - "up"
+// (bring forward) must therefore increase this layer's sortOrder (swap with
+// its next-higher neighbor), and "down" (send backward) must decrease it.
 export async function moveSpaceLayerImage(spaceKey: string, slot: string, direction: "up" | "down") {
   await requireAdminOrMarketing();
   const layers = await prisma.spaceLayerImage.findMany({
@@ -72,7 +76,7 @@ export async function moveSpaceLayerImage(spaceKey: string, slot: string, direct
   });
   const idx = layers.findIndex((l) => l.slot === slot);
   if (idx === -1) return;
-  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+  const swapIdx = direction === "up" ? idx + 1 : idx - 1;
   if (swapIdx < 0 || swapIdx >= layers.length) return;
   const a = layers[idx];
   const b = layers[swapIdx];
