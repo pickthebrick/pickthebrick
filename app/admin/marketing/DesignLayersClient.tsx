@@ -23,6 +23,7 @@ export default function DesignLayersClient({
   const [selectedSpace, setSelectedSpace] = useState(SPACES[0].key);
   const [busySlot, setBusySlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [cropTarget, setCropTarget] = useState<{ file: File; onDone: (f: File) => void } | null>(null);
   const [newOptionLabel, setNewOptionLabel] = useState("");
   const [addingOption, setAddingOption] = useState(false);
@@ -52,6 +53,7 @@ export default function DesignLayersClient({
   async function handleMove(slot: string, direction: "up" | "down") {
     setBusySlot(slot);
     setError(null);
+    setSuccess(null);
     try {
       await moveSpaceLayerImage(selectedSpace, slot, direction);
       router.refresh();
@@ -66,11 +68,13 @@ export default function DesignLayersClient({
     if (!file) return;
     setBusySlot(slot);
     setError(null);
+    setSuccess(null);
     const formData = new FormData();
     formData.set("image", file);
     try {
       await setSpaceLayerImage(selectedSpace, slot, formData);
       router.refresh();
+      setSuccess("Image uploaded.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not upload image");
     } finally {
@@ -81,9 +85,11 @@ export default function DesignLayersClient({
   async function handleRemove(slot: string) {
     setBusySlot(slot);
     setError(null);
+    setSuccess(null);
     try {
       await removeSpaceLayerImage(selectedSpace, slot);
       router.refresh();
+      setSuccess("Image removed.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not remove image");
     } finally {
@@ -135,7 +141,16 @@ export default function DesignLayersClient({
           </button>
         ))}
       </div>
-      {error && <p style={{ color: "#b91c1c", fontSize: 13, margin: "10px 0" }}>{error}</p>}
+      {error && (
+        <p style={{ color: "#b91c1c", fontSize: 14, fontWeight: 600, margin: "10px 0", padding: "8px 12px", background: "#fef2f2", border: "1px solid #b91c1c", borderRadius: 6 }}>
+          {error}
+        </p>
+      )}
+      {success && (
+        <p style={{ color: "#166534", fontSize: 14, fontWeight: 600, margin: "10px 0", padding: "8px 12px", background: "#f0fdf4", border: "1px solid #166534", borderRadius: 6 }}>
+          {success}
+        </p>
+      )}
       <div className="banner-grid" style={{ marginTop: 14 }}>
         {slots.map(({ slot, label, group }) => {
           const row = currentImages[slot];
