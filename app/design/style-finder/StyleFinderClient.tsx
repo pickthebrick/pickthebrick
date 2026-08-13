@@ -336,14 +336,19 @@ export default function StyleFinderClient({
                   {saving ? "Saving…" : "Continue →"}
                 </Link>
               ) : justAuthed ? (
-                <>
-                  <p className="sqft-hint" style={{ textAlign: "center", marginBottom: 12 }}>
-                    ✓ Saved — your style profile is linked to your account and your designer will be able to see it.
-                  </p>
-                  <Link href="/design" className="sf-go">
-                    Continue to package selection →
-                  </Link>
-                </>
+                <div className="auth-gate-overlay">
+                  <div className="auth-gate" style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>✓</div>
+                    <h3 style={{ margin: "0 0 8px" }}>Style profile saved</h3>
+                    <p className="auth-gate-hint" style={{ margin: "0 0 20px" }}>
+                      It&apos;s linked to your account now, so your designer will be able to see it. You can pick your
+                      package next.
+                    </p>
+                    <Link href="/design" className="sf-go" style={{ display: "block" }}>
+                      Continue to package selection →
+                    </Link>
+                  </div>
+                </div>
               ) : showAuth ? (
                 <AuthGate
                   context="Create an account to save your style profile and start your design"
