@@ -6,12 +6,11 @@
 export type StyleFinderStyle = { key: string; name: string; desc: string; hex: string };
 
 export const STYLE_FINDER_STYLES: StyleFinderStyle[] = [
-  { key: "modern-minimalist", name: "Modern Minimalist", desc: "Clean lines, neutral palette, glass, negative space.", hex: "D6D2C4" },
   { key: "industrial", name: "Industrial", desc: "Exposed ceilings, black steel, concrete floors, Edison bulbs.", hex: "4A4A4A" },
   { key: "biophilic", name: "Biophilic", desc: "Living walls, natural wood and stone, abundant greenery.", hex: "7A9B6E" },
-  { key: "scandinavian", name: "Scandinavian", desc: "Light wood, white walls, soft textiles, airy and functional.", hex: "E8E2D0" },
+  { key: "scandinavian", name: "Scandinavian", desc: "Clean lines, light wood, white walls, soft textiles, airy and functional.", hex: "E8E2D0" },
   { key: "mid-century-modern", name: "Mid-Century Modern", desc: "Warm wood tones, tan leather, brass, retro geometry.", hex: "B5794A" },
-  { key: "japandi", name: "Japandi", desc: "Japanese x Scandinavian — low furniture, quiet minimalism.", hex: "C9BBA5" },
+  { key: "japandi", name: "Japandi", desc: "Japanese x Scandinavian — dark wood, low furniture, wabi-sabi warmth.", hex: "C9BBA5" },
   { key: "contemporary-arabic", name: "Contemporary Arabic", desc: "Mashrabiya screens, brass, rich textiles, regional prestige.", hex: "6E4A2E" },
   { key: "bold-playful", name: "Bold & Playful", desc: "Vibrant color, expressive furniture, brand-forward energy.", hex: "D9724A" },
 ];
