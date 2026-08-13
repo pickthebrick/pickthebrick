@@ -133,8 +133,12 @@ export default function DesignPageClient({
           <span className="hero-eyebrow">Design Packages</span>
           <h1>Design your office, the easy way</h1>
           <p>Tell us your office size, pick a package, and see your price instantly.</p>
-          <Link href="/design/style-finder" className="design-side-quest">
-            🧭 Not sure of your style? Swipe through looks — 2 min
+        </div>
+
+        <div className="style-finder-banner">
+          <p className="style-finder-banner-text">Swipe through real office looks — takes 2 minutes</p>
+          <Link href="/design/style-finder" className="style-finder-banner-cta">
+            Find my style →
           </Link>
         </div>
 
