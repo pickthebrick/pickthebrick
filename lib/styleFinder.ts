@@ -13,6 +13,7 @@ export const STYLE_FINDER_STYLES: StyleFinderStyle[] = [
   { key: "japandi", name: "Japandi", desc: "Japanese x Scandinavian — dark wood, low furniture, wabi-sabi warmth.", hex: "C9BBA5" },
   { key: "contemporary-arabic", name: "Contemporary Arabic", desc: "Mashrabiya screens, brass, rich textiles, regional prestige.", hex: "6E4A2E" },
   { key: "bold-playful", name: "Bold & Playful", desc: "Vibrant color, expressive furniture, brand-forward energy.", hex: "D9724A" },
+  { key: "old-money", name: "Old Money", desc: "Dark wood wainscoting, leather chesterfields, brass, private-club gravitas.", hex: "4A3728" },
 ];
 
 export const IMAGES_PER_STYLE = 5;
