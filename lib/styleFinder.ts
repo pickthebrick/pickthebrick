@@ -8,15 +8,15 @@ export type StyleFinderStyle = { key: string; name: string; desc: string; hex: s
 export const STYLE_FINDER_STYLES: StyleFinderStyle[] = [
   { key: "industrial", name: "Industrial", desc: "Exposed ceilings, black steel, concrete floors, Edison bulbs.", hex: "4A4A4A" },
   { key: "biophilic", name: "Biophilic", desc: "Living walls, natural wood and stone, abundant greenery.", hex: "7A9B6E" },
-  { key: "scandinavian", name: "Scandinavian", desc: "Clean lines, light wood, white walls, soft textiles, airy and functional.", hex: "E8E2D0" },
-  { key: "mid-century-modern", name: "Mid-Century Modern", desc: "Warm wood tones, tan leather, brass, retro geometry.", hex: "B5794A" },
+  { key: "mid-century-modern", name: "Mid-Century Modern", desc: "Warm wood tones, tan leather, brass, clean lines, retro geometry.", hex: "B5794A" },
   { key: "japandi", name: "Japandi", desc: "Japanese x Scandinavian — dark wood, low furniture, wabi-sabi warmth.", hex: "C9BBA5" },
   { key: "contemporary-arabic", name: "Contemporary Arabic", desc: "Mashrabiya screens, brass, rich textiles, regional prestige.", hex: "6E4A2E" },
   { key: "bold-playful", name: "Bold & Playful", desc: "Vibrant color, expressive furniture, brand-forward energy.", hex: "D9724A" },
   { key: "old-money", name: "Old Money", desc: "Dark wood wainscoting, leather chesterfields, brass, private-club gravitas.", hex: "4A3728" },
+  { key: "french-victorian", name: "French Victorian", desc: "White crown mouldings, tall French windows, elegant traditional refinement.", hex: "EDE7DA" },
 ];
 
-export const IMAGES_PER_STYLE = 5;
+export const IMAGES_PER_STYLE = 10;
 export const DECK_SIZE = 20;
 // A style needs this many images shown before its % is trusted as the "top pick".
 export const MIN_SHOWN_FOR_CONFIDENT_PICK = 3;
