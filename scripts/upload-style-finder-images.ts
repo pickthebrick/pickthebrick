@@ -33,12 +33,12 @@ const ROOT = "C:\\Users\\husai\\Desktop\\PTB Final\\Style Picker images";
 const FOLDER_TO_STYLE_KEY: Record<string, string> = {
   Industrial: "industrial",
   Biophilic: "biophilic",
-  Scandinavian: "scandinavian",
   "Mid-Century Modern": "mid-century-modern",
   Japandi: "japandi",
   "Contemporary Arabic": "contemporary-arabic",
   "Bold & Playful": "bold-playful",
   "Old Money": "old-money",
+  "French Victorian": "french-victorian",
 };
 
 const CONTENT_TYPES: Record<string, string> = {
