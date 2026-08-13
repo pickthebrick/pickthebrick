@@ -163,7 +163,14 @@ export default function HomeClient({
                 </p>
               </div>
 
-              <HeroQuoteDemo />
+              <div className="home-hero-iso">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/isometric-office.png"
+                  alt="Isometric illustration of a PickTheBrick crew fitting out an office"
+                  className="home-hero-iso-img"
+                />
+              </div>
             </div>
           </section>
 
@@ -231,12 +238,7 @@ export default function HomeClient({
                   </p>
                 </div>
                 <div className="home-iso-section">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/isometric-office.png"
-                    alt="Isometric illustration of a PickTheBrick crew fitting out an office"
-                    className="home-iso-img"
-                  />
+                  <HeroQuoteDemo />
                 </div>
               </div>
             </div>
@@ -300,25 +302,6 @@ export default function HomeClient({
             </div>
           </section>
 
-          {/* ---------- why choose us ---------- */}
-          <section className="home-section tight">
-            <div className="home-section-inner">
-              <div className="home-section-head">
-                <div className="home-section-eyebrow">Why PickTheBrick</div>
-                <h2 className="home-section-title">Four real reasons, not one repeated</h2>
-              </div>
-              <div className="home-why-grid">
-                {WHY_CARDS.map((c) => (
-                  <div key={c.title} className="home-why-card">
-                    <div className="home-why-icon">{c.icon}</div>
-                    <h3>{c.title}</h3>
-                    <p>{c.body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
           {/* ---------- case studies ---------- */}
           <section className="home-section tight">
             <div className="home-section-inner">
@@ -359,6 +342,25 @@ export default function HomeClient({
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </section>
+
+          {/* ---------- why choose us ---------- */}
+          <section className="home-section tight">
+            <div className="home-section-inner">
+              <div className="home-section-head">
+                <div className="home-section-eyebrow">Why PickTheBrick</div>
+                <h2 className="home-section-title">Four real reasons, not one repeated</h2>
+              </div>
+              <div className="home-why-grid">
+                {WHY_CARDS.map((c) => (
+                  <div key={c.title} className="home-why-card">
+                    <div className="home-why-icon">{c.icon}</div>
+                    <h3>{c.title}</h3>
+                    <p>{c.body}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </section>
