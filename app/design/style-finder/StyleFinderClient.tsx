@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   STYLE_FINDER_STYLES,
   DECK_SIZE,
@@ -63,6 +63,7 @@ export default function StyleFinderClient({
   images: StyleImageRow[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const imagePool = buildImagePool(images);
   // Shuffle order depends on Math.random(), which must never run during SSR
   // (the server and the client's hydration pass would pick different
@@ -86,6 +87,25 @@ export default function StyleFinderClient({
   // visitor is anonymous - the pitch is "create an account, we'll keep your
   // profile, then start your design", not a hard gate (see onCancel below).
   const [showAuth, setShowAuth] = useState(false);
+  // True right after AuthGate succeeds - shows an explicit "saved" confirmation
+  // instead of silently navigating to /design, so the visitor isn't left
+  // wondering whether their swipes actually registered (see the confirmation
+  // block below, which is the sole next step out of this state).
+  const [justAuthed, setJustAuthed] = useState(false);
+
+  // Resumes straight to the confirmation screen after a Google OAuth
+  // round-trip - that's a full-page navigation away and back (see
+  // BuildClient.tsx's identical effect), which would otherwise lose `done`
+  // and drop the visitor back on an empty swipe deck even though their
+  // result was already saved server-side before they ever left.
+  useEffect(() => {
+    if (searchParams.get("resume") !== "auth") return;
+    router.replace("/design/style-finder", { scroll: false });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDone(true);
+    setJustAuthed(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ startX: 0, currentX: 0, dragging: false });
@@ -315,10 +335,23 @@ export default function StyleFinderClient({
                 <Link href={returnTo} className="sf-go">
                   {saving ? "Saving…" : "Continue →"}
                 </Link>
+              ) : justAuthed ? (
+                <>
+                  <p className="sqft-hint" style={{ textAlign: "center", marginBottom: 12 }}>
+                    ✓ Saved — your style profile is linked to your account and your designer will be able to see it.
+                  </p>
+                  <Link href="/design" className="sf-go">
+                    Continue to package selection →
+                  </Link>
+                </>
               ) : showAuth ? (
                 <AuthGate
                   context="Create an account to save your style profile and start your design"
-                  onSuccess={() => router.push("/design")}
+                  onSuccess={() => {
+                    setShowAuth(false);
+                    setJustAuthed(true);
+                  }}
+                  googleNext="/design/style-finder?resume=auth"
                   onCancel={() => setShowAuth(false)}
                 />
               ) : isAnonymous ? (
