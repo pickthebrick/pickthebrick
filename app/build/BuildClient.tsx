@@ -375,14 +375,31 @@ export default function BuildClient({
     doRemoveCartItem(quoteId, productId).catch((e) => setError(e.message));
   }
 
-  function handleAiAssistAddLines(lines: CartLine[]) {
-    setCart((prev) => {
-      const map = new Map(prev.map((l) => [l.productId, l]));
-      for (const line of lines) map.set(line.productId, line);
-      return Array.from(map.values());
-    });
-    for (const line of lines) {
-      doUpsertCartItem(quoteId, line).catch((e) => setError(e.message));
+  // Awaits every save before touching cart state or reporting success back to
+  // AiAssistPanel - these can be 8-10 concurrent writes, and the old
+  // fire-and-forget version let the panel close and report success the
+  // instant setCart() ran, even if some of those background saves later
+  // failed. That left the client staring at a cart that looked right until
+  // their next reload silently dropped whatever hadn't actually persisted.
+  // Promise.allSettled so a partial failure still keeps whatever succeeded
+  // (upsert is idempotent, so re-adding on retry is harmless) instead of an
+  // all-or-nothing throw.
+  async function handleAiAssistAddLines(lines: CartLine[]) {
+    const results = await Promise.allSettled(lines.map((line) => doUpsertCartItem(quoteId, line)));
+    const succeeded = lines.filter((_, i) => results[i].status === "fulfilled");
+    const failed = lines.length - succeeded.length;
+
+    if (succeeded.length > 0) {
+      setCart((prev) => {
+        const map = new Map(prev.map((l) => [l.productId, l]));
+        for (const line of succeeded) map.set(line.productId, line);
+        return Array.from(map.values());
+      });
+    }
+    if (failed > 0) {
+      const message = `Could not save ${failed} of ${lines.length} item${lines.length !== 1 ? "s" : ""} to your quote - please try again.`;
+      setError(message);
+      throw new Error(message);
     }
   }
 

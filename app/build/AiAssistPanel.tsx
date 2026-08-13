@@ -47,7 +47,7 @@ export default function AiAssistPanel({
   // saveQuoteDetails) - filling this in here also fills in "Add details" on
   // the main build page, instead of asking for it a second time there.
   onSaveDetails: (location: string, officeSize: string) => Promise<void>;
-  onAddLines: (lines: CartLine[]) => void;
+  onAddLines: (lines: CartLine[]) => Promise<void>;
   onClose: () => void;
 }) {
   const [step, setStep] = useState<Step>("intake");
@@ -176,13 +176,21 @@ export default function AiAssistPanel({
     const lines = result.suggestions.filter((s) => included[s.categoryKey]).map(resolvedLine);
     if (lines.length === 0) return;
     setAdding(true);
+    setError(null);
     try {
       recordAiAssistAcceptance(
         result.sessionId,
         lines.map((l) => l.productId)
       ).catch(() => {});
-      onAddLines(lines);
+      // Only closes once every item is confirmed saved - see
+      // handleAiAssistAddLines in BuildClient.tsx for why this must be
+      // awaited rather than fired-and-forgotten. On failure the panel stays
+      // open with the suggestions still checked, so re-clicking retries
+      // (upsert is idempotent - already-saved items are just rewritten).
+      await onAddLines(lines);
       onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not add these items to your quote - please try again.");
     } finally {
       setAdding(false);
     }
@@ -357,6 +365,8 @@ export default function AiAssistPanel({
                 );
               })}
             </div>
+
+            {error && <div className="ai-assist-error">{error}</div>}
 
             <div className="ai-assist-footer">
               <div className="ai-assist-footer-total">
