@@ -136,6 +136,13 @@
   font-size: 14.5px;
   font-weight: 700;
   color: #4b6666;
+  margin: 0 0 2px;
+}
+.ptb-marketing .style-finder-banner-sub {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #4b6666;
+  opacity: 0.75;
   margin: 0;
 }
 .ptb-marketing .style-finder-banner-cta {

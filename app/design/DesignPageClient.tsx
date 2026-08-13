@@ -136,7 +136,10 @@ export default function DesignPageClient({
         </div>
 
         <div className="style-finder-banner">
-          <p className="style-finder-banner-text">Swipe through real office looks — takes 2 minutes</p>
+          <div>
+            <p className="style-finder-banner-text">Not sure of your style yet?</p>
+            <p className="style-finder-banner-sub">Swipe through real office looks — takes 2 minutes.</p>
+          </div>
           <Link href="/design/style-finder" className="style-finder-banner-cta">
             Find my style →
           </Link>

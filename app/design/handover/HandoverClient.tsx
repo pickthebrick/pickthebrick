@@ -179,7 +179,10 @@ export default function HandoverClient({
         </div>
 
         <div className="style-finder-banner" style={{ maxWidth: 480, margin: "0 auto 24px" }}>
-          <p className="style-finder-banner-text">Swipe through real office looks — takes 2 minutes</p>
+          <div>
+            <p className="style-finder-banner-text">Not sure of your style yet?</p>
+            <p className="style-finder-banner-sub">Swipe through real office looks — takes 2 minutes.</p>
+          </div>
           <Link
             href={`/design/style-finder?return=${encodeURIComponent(`/design/handover?id=${designRequestId}`)}`}
             className="style-finder-banner-cta"
