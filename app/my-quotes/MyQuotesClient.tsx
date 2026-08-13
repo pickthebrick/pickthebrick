@@ -364,9 +364,9 @@ export default function MyQuotesClient({
                         className="action"
                         disabled={duplicating === q.id}
                         onClick={() => handleDuplicateQuote(q.id)}
-                        title="Duplicate this quote as a new draft so you can add items you forgot"
+                        title="Copy this quote into a new draft - this one stays as-is, so you can try a different price option"
                       >
-                        {duplicating === q.id ? "..." : "Forgot to add something?"}
+                        {duplicating === q.id ? "..." : "Duplicate"}
                       </button>
                       {q.status === "submitted" && <DeleteButton label="Delete" onConfirm={() => handleDeleteQuote(q.id)} />}
                     </td>
