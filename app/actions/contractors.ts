@@ -16,6 +16,8 @@ import { sendTemplatedWhatsApp } from "@/lib/whatsapp";
 import { uploadToStorage } from "@/lib/storage";
 
 const LICENSE_EXTENSIONS = new Set(["pdf", "jpg", "jpeg", "png"]);
+const LOGO_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
+const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
 async function requireSession() {
   const session = await getSession();
@@ -79,7 +81,20 @@ export async function submitContractorApplication(categoryIds: string[], typeIds
   }
   if (!licenseFilePath) throw new Error("Please upload your trade license");
 
-  await prisma.user.update({ where: { id: session.id }, data: { fullName: name } });
+  // Optional - a contractor may not have a logo ready yet, and can always
+  // add/replace one later from Profile (see updateContractorLogo below).
+  const logoFile = formData.get("logo") as File | null;
+  let logoUrl: string | undefined;
+  if (logoFile && logoFile.size > 0) {
+    if (logoFile.size > MAX_LOGO_BYTES) throw new Error("Logo is too large - please keep it under 5MB");
+    const ext = logoFile.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!LOGO_EXTENSIONS.has(ext)) throw new Error("Please upload a JPG, PNG, or WEBP file for your logo");
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const buffer = Buffer.from(await logoFile.arrayBuffer());
+    logoUrl = await uploadToStorage("contractor-logos", filename, buffer, logoFile.type);
+  }
+
+  await prisma.user.update({ where: { id: session.id }, data: { fullName: name, ...(logoUrl ? { logoUrl } : {}) } });
 
   if (existing) {
     await prisma.contractorApplicationCategory.deleteMany({ where: { applicationId: existing.id } });
@@ -128,6 +143,30 @@ export async function submitContractorApplication(categoryIds: string[], typeIds
     }
   }
   revalidateContractors();
+}
+
+// Lets a contractor set/replace their own logo any time after registration
+// (see the apply form's own optional logo field above for the other entry
+// point) - shown in place of the PickTheBrick logo on their dashboard and
+// while building a quote for their own client (see BrandMark.tsx's logoUrl
+// prop and editAsContractor in app/build/BuildClient.tsx).
+export async function updateContractorLogo(formData: FormData) {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Only contractor accounts have a logo");
+
+  const file = formData.get("logo") as File | null;
+  if (!file || file.size === 0) throw new Error("Please choose a logo file");
+  if (file.size > MAX_LOGO_BYTES) throw new Error("Logo is too large - please keep it under 5MB");
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (!LOGO_EXTENSIONS.has(ext)) throw new Error("Please upload a JPG, PNG, or WEBP file");
+
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const logoUrl = await uploadToStorage("contractor-logos", filename, buffer, file.type);
+
+  await prisma.user.update({ where: { id: session.id }, data: { logoUrl } });
+  revalidatePath("/contractor");
+  revalidatePath("/profile");
 }
 
 // Lets a contractor withdraw their own application (at any status) and

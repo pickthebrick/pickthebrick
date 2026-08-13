@@ -113,6 +113,12 @@ model User {
   // this step every time, with no way out once WhatsApp OTP delivery failed
   // - this field is what makes the skip decision stick).
   whatsappSkippedAt DateTime?
+  // A contractor's own branding, set at registration (apply form) or later
+  // from Profile - shown in place of the PickTheBrick logo on their
+  // dashboard and while using the quote builder on a contractor-owned quote
+  // (see BrandMark.tsx, app/build/BuildClient.tsx's brandLogoUrl prop).
+  // Not meaningful for any other role today.
+  logoUrl      String?
   role         Role     @default(client)
   createdAt    DateTime @default(now())
 
@@ -331,9 +337,14 @@ model Quote {
   clientId       String?
   client         User?       @relation("ClientQuotes", fields: [clientId], references: [id])
   anonymousSessionId String?
-  // Not currently written anywhere (submission requires a real account) -
-  // kept for a future OTP-verified WhatsApp capture step and as a display
-  // fallback (see lib/contactLabel.ts) in case that ever changes.
+  // Manually entered by a contractor building this quote for their own end
+  // client (see contractorSetClientContact in app/actions/quotes.ts) - that
+  // client never gets a PickTheBrick account, so this is purely a label/
+  // record, not tied to a User row. Otherwise not written anywhere (a real
+  // client submission requires a real account) - contactPhone/contactEmail
+  // also double as a future OTP-verified WhatsApp capture step and a display
+  // fallback (see lib/contactLabel.ts).
+  contactName    String?
   contactPhone   String?
   contactEmail   String?
   status         QuoteStatus @default(draft)

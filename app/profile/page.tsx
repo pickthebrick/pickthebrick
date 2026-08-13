@@ -21,6 +21,7 @@ export default async function ProfilePage() {
       passwordHash: true,
       googleId: true,
       role: true,
+      logoUrl: true,
     },
   });
   if (!user) redirect("/login");
@@ -42,6 +43,7 @@ export default async function ProfilePage() {
       hasGoogle={!!user.googleId}
       role={user.role}
       dashboardHref={dashboardHref}
+      logoUrl={user.logoUrl}
     />
   );
 }

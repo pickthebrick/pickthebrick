@@ -202,6 +202,125 @@ export async function captainSetQuoteDetails(quoteId: string, location: string, 
   revalidatePath("/my-quotes");
 }
 
+// A contractor building a quote for their own client - never a real
+// PickTheBrick-brokered project, so no status restriction here (unlike
+// assertCaptainOwnsQuote's captain_confirmed gate): a contractor-owned quote
+// stays in `draft` for its whole life and is freely re-editable.
+async function assertContractorOwnsQuote(quoteId: string, contractorId: string) {
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  if (!quote || quote.contractorId !== contractorId) {
+    throw new Error("Quote is not one you can edit");
+  }
+  return quote;
+}
+
+// Always creates a brand-new quote rather than reusing an existing draft the
+// way getOrCreateDraftQuote does - a contractor needs several independent
+// in-progress quotes for different clients at once, not a single shared
+// cart. Never goes through submitQuote: it's a free-to-use pricing tool for
+// the contractor's own client, not a PickTheBrick-brokered project, so it
+// has no captain/admin notification path and no reference number.
+export async function createContractorQuote() {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Contractor only");
+
+  const created = await prisma.quote.create({ data: { contractorId: session.id, status: QuoteStatus.draft } });
+  revalidatePath("/contractor");
+  return created.id;
+}
+
+export async function contractorUpsertCartItem(quoteId: string, line: CartLineInput) {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Contractor only");
+  await assertContractorOwnsQuote(quoteId, session.id);
+
+  const category = await prisma.category.findFirst({ where: { label: line.categoryLabel } });
+
+  await prisma.quoteItem.upsert({
+    where: { quoteId_productId: { quoteId, productId: line.productId } },
+    create: {
+      quoteId,
+      productId: line.productId,
+      categoryId: category?.id,
+      name: line.name,
+      categoryLabel: line.categoryLabel,
+      typeLabel: line.typeLabel,
+      subtypeLabel: line.subtypeLabel,
+      rate: line.rate,
+      unit: line.unit,
+      qty: line.qty,
+      amount: line.rate * line.qty,
+    },
+    update: {
+      qty: line.qty,
+      amount: line.rate * line.qty,
+    },
+  });
+  await recalcTotals(quoteId);
+  revalidatePath("/contractor");
+}
+
+export async function contractorRemoveCartItem(quoteId: string, productId: string) {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Contractor only");
+  await assertContractorOwnsQuote(quoteId, session.id);
+
+  await prisma.quoteItem.delete({ where: { quoteId_productId: { quoteId, productId } } }).catch(() => {});
+  await recalcTotals(quoteId);
+  revalidatePath("/contractor");
+}
+
+export async function contractorSetQuoteDetails(quoteId: string, location: string, officeSize: string) {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Contractor only");
+  await assertContractorOwnsQuote(quoteId, session.id);
+
+  if (!location.trim() || !officeSize.trim()) {
+    throw new Error("Please fill in both the location and the office size");
+  }
+
+  await prisma.quote.update({
+    where: { id: quoteId },
+    data: { location: location.trim(), officeSize: officeSize.trim() },
+  });
+  revalidatePath("/contractor");
+}
+
+// Optional record of who this quote is actually for - the end client never
+// gets a PickTheBrick account (see createContractorQuote), so this is the
+// only place their name/phone/email live. All optional: a contractor may
+// not have these on hand yet when they start pricing. Doubles as the
+// "PREPARED FOR" name on the downloaded PDF (see downloadPdf in
+// BuildClient.tsx) and the label shown per-row in the contractor's own
+// quote list.
+export async function contractorSetClientContact(quoteId: string, name: string, phone: string, email: string) {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Contractor only");
+  await assertContractorOwnsQuote(quoteId, session.id);
+
+  await prisma.quote.update({
+    where: { id: quoteId },
+    data: {
+      contactName: name.trim() || null,
+      contactPhone: phone.trim() || null,
+      contactEmail: email.trim() || null,
+    },
+  });
+  revalidatePath("/contractor");
+}
+
+// A contractor-owned quote never enters the real project pipeline, so unlike
+// deleteQuote (client-facing, status-restricted) this can be deleted freely
+// at any time.
+export async function deleteContractorQuote(quoteId: string) {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Contractor only");
+  await assertContractorOwnsQuote(quoteId, session.id);
+
+  await prisma.quote.delete({ where: { id: quoteId } });
+  revalidatePath("/contractor");
+}
+
 // Clears every line item plus the saved location/office-size off the
 // caller's draft quote, leaving the same draft row so a fresh cart can be
 // rebuilt against it - used by the build page's "Start over" button.

@@ -78,6 +78,7 @@ export default function ContractorApplyClient({
   const [selected, setSelected] = useState<Set<string>>(new Set(application?.categoryIds ?? []));
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(application?.typeIds ?? []));
   const [fileName, setFileName] = useState<string | null>(null);
+  const [logoFileName, setLogoFileName] = useState<string | null>(null);
   const [name, setName] = useState(defaults.name);
   const [company, setCompany] = useState(application?.companyName ?? defaults.company);
   const [phone, setPhone] = useState(application?.contactPhone ?? defaults.phone);
@@ -253,6 +254,23 @@ export default function ContractorApplyClient({
               name="license"
               accept=".pdf,.jpg,.jpeg,.png"
               onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+            />
+          </label>
+        </div>
+
+        <div className="apply-card">
+          <div className="apply-card-title">🏢 Company logo (optional)</div>
+          <p className="apply-card-hint">
+            Shown in place of the PickTheBrick logo on your dashboard and when building quotes for your own clients -
+            you can add or change this later from your Profile too.
+          </p>
+          <label className="file-picker">
+            {logoFileName ?? "Choose file (JPG, PNG, or WEBP)"}
+            <input
+              type="file"
+              name="logo"
+              accept=".jpg,.jpeg,.png,.webp"
+              onChange={(e) => setLogoFileName(e.target.files?.[0]?.name ?? null)}
             />
           </label>
         </div>
