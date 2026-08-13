@@ -17,6 +17,8 @@ export default function PdfDownloadButton({
   officeSize,
   referenceNumber,
   clientName,
+  brandLogoUrl,
+  poweredByPickTheBrick,
 }: {
   items: {
     name: string;
@@ -32,6 +34,9 @@ export default function PdfDownloadButton({
   officeSize: string | null;
   referenceNumber: string | null;
   clientName?: string | null;
+  // Contractor-only - see buildQuotePdf's matching params in lib/quotePdf.ts.
+  brandLogoUrl?: string | null;
+  poweredByPickTheBrick?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -53,8 +58,14 @@ export default function PdfDownloadButton({
         officeSize,
         referenceNumber,
         clientName,
+        brandLogoUrl,
+        poweredByPickTheBrick,
       });
-      doc.save(`PickTheBrick-Quotation-${referenceNumber?.replace(/\//g, "-") ?? "draft"}.pdf`);
+      doc.save(
+        brandLogoUrl
+          ? `Quotation-${referenceNumber?.replace(/\//g, "-") ?? "draft"}.pdf`
+          : `PickTheBrick-Quotation-${referenceNumber?.replace(/\//g, "-") ?? "draft"}.pdf`,
+      );
     } finally {
       setBusy(false);
     }

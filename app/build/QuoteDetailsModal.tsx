@@ -22,21 +22,40 @@ export default function QuoteDetailsModal({
   onClose,
   onSkip,
   dismissable,
+  showClientContact = false,
+  initialClientName = "",
+  initialClientPhone = "",
+  initialClientEmail = "",
 }: {
   initialLocation: string;
   initialOfficeSize: string;
-  onSave: (location: string, officeSize: string) => Promise<void>;
+  onSave: (
+    location: string,
+    officeSize: string,
+    clientContact?: { name: string; phone: string; email: string },
+  ) => Promise<void>;
   onClose: () => void;
   // Only passed when this modal opened because "Review my quote" needed it
   // first (see BuildClient's pendingReview) - lets the client go straight to
   // review without filling this in now, rather than being stuck here.
   onSkip?: () => void;
   dismissable: boolean;
+  // Contractor-only: asks for the end client's name/phone/email alongside
+  // the usual location/size, since that client never gets a PickTheBrick
+  // account of their own to fill this in - see editAsContractor in
+  // BuildClient.tsx. All three fields stay optional either way.
+  showClientContact?: boolean;
+  initialClientName?: string;
+  initialClientPhone?: string;
+  initialClientEmail?: string;
 }) {
   const [location, setLocation] = useState(initialLocation);
   const parsedSize = parseOfficeSize(initialOfficeSize);
   const [sizeValue, setSizeValue] = useState(parsedSize.size);
   const [unit, setUnit] = useState<"sqft" | "sqm">(parsedSize.unit);
+  const [clientName, setClientName] = useState(initialClientName);
+  const [clientPhone, setClientPhone] = useState(initialClientPhone);
+  const [clientEmail, setClientEmail] = useState(initialClientEmail);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -60,7 +79,11 @@ export default function QuoteDetailsModal({
     setSaving(true);
     setError(null);
     try {
-      await onSave(location.trim(), `${size.toLocaleString()} ${unit}`);
+      await onSave(
+        location.trim(),
+        `${size.toLocaleString()} ${unit}`,
+        showClientContact ? { name: clientName.trim(), phone: clientPhone.trim(), email: clientEmail.trim() } : undefined,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save details");
     } finally {
@@ -73,7 +96,7 @@ export default function QuoteDetailsModal({
       <div className="modal-card" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <div className="modal-title" style={{ marginBottom: 0 }}>
-            Tell us about your space
+            {showClientContact ? "Tell us about this quote" : "Tell us about your space"}
           </div>
           {dismissable && (
             <div className="modal-close" onClick={onClose}>
@@ -83,7 +106,9 @@ export default function QuoteDetailsModal({
         </div>
         <div className="modal-body">
           <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 18 }}>
-            This helps your Captain scope the fitout accurately - you can edit it any time.
+            {showClientContact
+              ? "Optional, but helps you tell this quote apart from others in your dashboard - you can edit it any time."
+              : "This helps your Captain scope the fitout accurately - you can edit it any time."}
           </p>
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
@@ -131,6 +156,72 @@ export default function QuoteDetailsModal({
                 </div>
               </div>
             </div>
+            {showClientContact && (
+              <>
+                <div>
+                  <div className="modal-section-label" style={{ margin: "0 0 6px" }}>
+                    Client name
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. Ahmed Al Maktoum"
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      fontSize: 13,
+                      border: "1px solid var(--line)",
+                      borderRadius: "var(--radius)",
+                      background: "var(--bg)",
+                      color: "var(--fg)",
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <div className="modal-section-label" style={{ margin: "0 0 6px" }}>
+                      Client phone
+                    </div>
+                    <input
+                      type="tel"
+                      placeholder="+971 5X XXX XXXX"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        fontSize: 13,
+                        border: "1px solid var(--line)",
+                        borderRadius: "var(--radius)",
+                        background: "var(--bg)",
+                        color: "var(--fg)",
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div className="modal-section-label" style={{ margin: "0 0 6px" }}>
+                      Client email
+                    </div>
+                    <input
+                      type="email"
+                      placeholder="client@email.com"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        fontSize: 13,
+                        border: "1px solid var(--line)",
+                        borderRadius: "var(--radius)",
+                        background: "var(--bg)",
+                        color: "var(--fg)",
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
             {error && <p style={{ color: "#b91c1c", fontSize: 13 }}>{error}</p>}
             <button type="submit" className="modal-addbtn" style={{ marginTop: 6 }} disabled={saving}>
               {saving ? "Saving..." : "Continue"}

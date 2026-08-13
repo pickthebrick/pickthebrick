@@ -164,8 +164,14 @@ export async function proxy(request: NextRequest) {
   const isCaptainEditingQuote =
     role === "captain" && pathname === "/build" && request.nextUrl.searchParams.has("editQuote");
 
+  // Same idea, for a contractor building a quote for their own client (see
+  // ContractorClient.tsx's "New quote for a client" link and
+  // app/build/page.tsx's contractorQuote handling) - never the bare /build.
+  const isContractorBuildingQuote =
+    role === "contractor" && pathname === "/build" && request.nextUrl.searchParams.has("contractorQuote");
+
   const areaMatch = pathname.match(/^\/(build|my-quotes|captain|contractor|admin|designer)(\/|$)/);
-  if (areaMatch && !isCaptainEditingQuote && !ROLE_AREAS[role].includes(areaMatch[1])) {
+  if (areaMatch && !isCaptainEditingQuote && !isContractorBuildingQuote && !ROLE_AREAS[role].includes(areaMatch[1])) {
     const url = request.nextUrl.clone();
     url.pathname = ROLE_HOME[role];
     return NextResponse.redirect(url);

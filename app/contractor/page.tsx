@@ -13,7 +13,7 @@ export default async function ContractorPage() {
   if (!session) redirect("/login");
   if (session.role !== Role.contractor) redirect(ROLE_HOME[session.role]);
 
-  const [assignments, contractorApp] = await Promise.all([
+  const [assignments, contractorApp, contractor, myQuotes] = await Promise.all([
     prisma.projectTimelineItem.findMany({
       where: { contractorId: session.id, status: TimelineItemStatus.assigned },
       select: {
@@ -64,6 +64,34 @@ export default async function ContractorPage() {
     prisma.contractorApplication.findUnique({
       where: { contractorId: session.id },
       select: { categories: { select: { categoryId: true } } },
+    }),
+    prisma.user.findUnique({ where: { id: session.id }, select: { logoUrl: true } }),
+    // A contractor's own quotes for their own clients - never a real
+    // PickTheBrick-brokered project (see createContractorQuote in
+    // app/actions/quotes.ts), so this is a separate list from `assignments`
+    // above, which is real PTB project work assigned to this contractor.
+    prisma.quote.findMany({
+      where: { contractorId: session.id },
+      select: {
+        id: true,
+        contactName: true,
+        location: true,
+        officeSize: true,
+        grandTotal: true,
+        createdAt: true,
+        items: {
+          select: {
+            name: true,
+            categoryLabel: true,
+            rate: true,
+            qty: true,
+            unit: true,
+            productId: true,
+            product: { select: { images: { select: { path: true }, take: 1 } } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -123,12 +151,23 @@ export default async function ContractorPage() {
     };
   });
 
+  const myQuotesForClient = myQuotes.map((q) => ({
+    id: q.id,
+    clientName: q.contactName,
+    location: q.location,
+    officeSize: q.officeSize,
+    grandTotal: q.grandTotal,
+    createdAt: q.createdAt,
+    itemCount: q.items.length,
+    items: q.items,
+  }));
+
   return (
     <div className="ptb-dash">
       <header>
-        <BrandMark role="Contractor" />
+        <BrandMark role="Contractor" logoUrl={contractor?.logoUrl} />
       </header>
-      <ContractorClient assignments={assignments} openJobs={openJobsForClient} />
+      <ContractorClient assignments={assignments} openJobs={openJobsForClient} myQuotes={myQuotesForClient} />
     </div>
   );
 }

@@ -12,6 +12,10 @@ import {
   captainUpsertCartItem,
   captainRemoveCartItem,
   captainSetQuoteDetails,
+  contractorUpsertCartItem,
+  contractorRemoveCartItem,
+  contractorSetQuoteDetails,
+  contractorSetClientContact,
 } from "@/app/actions/quotes";
 import type { Catalog, CatalogProduct } from "@/lib/catalog";
 import type { CartLine } from "@/lib/quotes";
@@ -80,6 +84,11 @@ export default function BuildClient({
   initialLocation,
   initialOfficeSize,
   editAsCaptain = false,
+  editAsContractor = false,
+  brandLogoUrl = null,
+  initialClientName,
+  initialClientPhone,
+  initialClientEmail,
   clientLabel,
   isAnonymous = false,
   hasVerifiedWhatsapp = true,
@@ -93,6 +102,23 @@ export default function BuildClient({
   initialLocation: string | null;
   initialOfficeSize: string | null;
   editAsCaptain?: boolean;
+  // A contractor building a quote for their own end client (see
+  // app/build/page.tsx's contractorQuote branch) - never a real
+  // PickTheBrick-brokered project, so this skips phone verification and the
+  // whole "submit to PTB" ending in favor of a simple Download PDF / Back to
+  // dashboard pair (see the view === "preview" branch below).
+  editAsContractor?: boolean;
+  // The contractor's own logo (User.logoUrl), shown in the header and on the
+  // downloaded PDF instead of PickTheBrick's when set - null for every path
+  // except editAsContractor with a logo actually uploaded.
+  brandLogoUrl?: string | null;
+  // Contractor-only: the end client's own name/phone/email, manually entered
+  // since that client never gets a PickTheBrick account (see
+  // contractorSetClientContact in app/actions/quotes.ts). Undefined for
+  // every other path.
+  initialClientName?: string;
+  initialClientPhone?: string;
+  initialClientEmail?: string;
   clientLabel?: string;
   // No session at all - see lib/actor.ts. Hides account-only chrome (the
   // "My quotes" link, which would just bounce an anonymous visitor to
@@ -119,6 +145,12 @@ export default function BuildClient({
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState(initialLocation ?? "");
   const [officeSize, setOfficeSize] = useState(initialOfficeSize ?? "");
+  // Contractor-only - see initialClientName's comment above. Kept as local
+  // state (not re-derived from props) so the PDF download and dashboard
+  // label reflect an edit immediately, without waiting on a server round-trip.
+  const [clientContactName, setClientContactName] = useState(initialClientName ?? "");
+  const [clientContactPhone, setClientContactPhone] = useState(initialClientPhone ?? "");
+  const [clientContactEmail, setClientContactEmail] = useState(initialClientEmail ?? "");
   // Auto-opens once on page load when these are still missing, same as
   // before - but now it's never a hard block: "Skip for later" (see
   // QuoteDetailsModal's onSkip) always lets the client dismiss it and fill
@@ -128,12 +160,13 @@ export default function BuildClient({
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // A Captain editing a client's already-confirmed quote uses a parallel set
-  // of scoped actions (see assertCaptainOwnsQuote in app/actions/quotes.ts)
-  // instead of the client's own draft-only ones - same request shapes, so
-  // the rest of this component never needs to branch on editAsCaptain again.
-  const doUpsertCartItem = editAsCaptain ? captainUpsertCartItem : upsertCartItem;
-  const doRemoveCartItem = editAsCaptain ? captainRemoveCartItem : removeCartItem;
-  const doSetQuoteDetails = editAsCaptain ? captainSetQuoteDetails : setQuoteDetails;
+  // of scoped actions (see assertCaptainOwnsQuote/assertContractorOwnsQuote
+  // in app/actions/quotes.ts) instead of the client's own draft-only ones -
+  // same request shapes, so the rest of this component never needs to
+  // branch on editAsCaptain/editAsContractor again.
+  const doUpsertCartItem = editAsCaptain ? captainUpsertCartItem : editAsContractor ? contractorUpsertCartItem : upsertCartItem;
+  const doRemoveCartItem = editAsCaptain ? captainRemoveCartItem : editAsContractor ? contractorRemoveCartItem : removeCartItem;
+  const doSetQuoteDetails = editAsCaptain ? captainSetQuoteDetails : editAsContractor ? contractorSetQuoteDetails : setQuoteDetails;
 
   const initialCategory = catalog.enabledCategories[0] ?? null;
   const initialType = initialCategory ? firstTypeKey(catalog, initialCategory) : null;
@@ -254,8 +287,18 @@ export default function BuildClient({
     setOfficeSize(size);
   }
 
-  async function handleSaveDetails(loc: string, size: string) {
+  async function handleSaveDetails(
+    loc: string,
+    size: string,
+    clientContact?: { name: string; phone: string; email: string },
+  ) {
     await saveQuoteDetails(loc, size);
+    if (editAsContractor && clientContact) {
+      await contractorSetClientContact(quoteId, clientContact.name, clientContact.phone, clientContact.email);
+      setClientContactName(clientContact.name);
+      setClientContactPhone(clientContact.phone);
+      setClientContactEmail(clientContact.email);
+    }
     setShowDetailsModal(false);
     if (pendingReview) {
       setPendingReview(false);
@@ -491,9 +534,11 @@ export default function BuildClient({
       grandTotal: grand,
       location,
       officeSize,
-      clientName: clientLabel,
+      clientName: editAsContractor ? clientContactName || undefined : clientLabel,
+      brandLogoUrl,
+      poweredByPickTheBrick: editAsContractor,
     });
-    doc.save("PickTheBrick-Quotation.pdf");
+    doc.save(editAsContractor ? "Quotation.pdf" : "PickTheBrick-Quotation.pdf");
   }
 
   // Fires once AuthGate reports a successful sign up/in - refreshes the
@@ -536,15 +581,30 @@ export default function BuildClient({
     <div className="ptb-build">
       {isAnonymous && <SignInBar />}
       <header>
-        <Link href="/" className="brand-mark">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="PickTheBrick" />
-        </Link>
+        {editAsContractor ? (
+          // Not a link home - a contractor's session here is scoped to
+          // their own quote, not the public site, and brandLogoUrl (when
+          // set) is their own logo, not something a PickTheBrick "/" link
+          // makes sense under.
+          <span className="brand-mark">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={brandLogoUrl || "/logo.png"} alt={brandLogoUrl ? "" : "PickTheBrick"} />
+          </span>
+        ) : (
+          <Link href="/" className="brand-mark">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="PickTheBrick" />
+          </Link>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           {editAsCaptain ? (
             <span style={{ fontSize: 13, fontWeight: 600 }}>
               Editing {clientLabel ?? "client"}&apos;s quote
             </span>
+          ) : editAsContractor ? (
+            <a href="/contractor" style={{ fontSize: 13, fontWeight: 600 }}>
+              ← Back to dashboard
+            </a>
           ) : (
             !isAnonymous && (
               <a href="/my-quotes" style={{ fontSize: 13, fontWeight: 600 }}>
@@ -554,6 +614,13 @@ export default function BuildClient({
           )}
         </div>
       </header>
+
+      {editAsContractor && (
+        <div style={{ padding: "8px 34px", background: "var(--accent-soft, #fff4e5)", fontSize: 12.5 }}>
+          This quote is for your own client - it&apos;s free to use and won&apos;t be submitted to PickTheBrick.
+          Download the PDF once you&apos;re happy with it and share it however you normally would.
+        </div>
+      )}
 
       {editAsCaptain && (
         <div style={{ padding: "8px 34px", background: "var(--accent-soft, #fff4e5)", fontSize: 12.5 }}>
@@ -566,6 +633,11 @@ export default function BuildClient({
 
       {location && officeSize ? (
         <div className="quote-meta" style={{ margin: "0 34px", borderTop: "none" }}>
+          {editAsContractor && clientContactName && (
+            <span>
+              👤 <b>{clientContactName}</b>
+            </span>
+          )}
           <span>
             📍 <b>{location}</b>
           </span>
@@ -598,6 +670,10 @@ export default function BuildClient({
           }}
           onSkip={handleSkipDetails}
           dismissable
+          showClientContact={editAsContractor}
+          initialClientName={clientContactName}
+          initialClientPhone={clientContactPhone}
+          initialClientEmail={clientContactEmail}
         />
       )}
 
@@ -797,6 +873,7 @@ export default function BuildClient({
             </button>
 
             {!editAsCaptain &&
+              !editAsContractor &&
               (!confirmingStartOver ? (
                 <button
                   className="start-over-btn"
@@ -926,7 +1003,24 @@ export default function BuildClient({
               </div>
             )}
 
-            {editAsCaptain ? (
+            {editAsContractor ? (
+              // No AuthGate, no phone verification, no submitQuote - this
+              // never becomes a real PickTheBrick-brokered project (see
+              // createContractorQuote in app/actions/quotes.ts). Cart items
+              // are already persisted as they're added, so there's no
+              // separate "submit" step - just download and go back.
+              <div className="action-row">
+                <button className="action-btn secondary" onClick={downloadPdf}>
+                  Download PDF
+                </button>
+                <button className="action-btn secondary" onClick={() => setView("build")}>
+                  &larr; Back to editing
+                </button>
+                <button className="action-btn primary" onClick={() => router.push("/contractor")}>
+                  Back to dashboard
+                </button>
+              </div>
+            ) : editAsCaptain ? (
               <div className="action-row">
                 <button className="action-btn secondary" onClick={downloadPdf}>
                   Download PDF

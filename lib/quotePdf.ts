@@ -46,6 +46,8 @@ export async function buildQuotePdf({
   officeSize,
   referenceNumber,
   clientName,
+  brandLogoUrl,
+  poweredByPickTheBrick,
 }: {
   items: QuotePdfItem[];
   grandTotal: number;
@@ -55,6 +57,15 @@ export async function buildQuotePdf({
   // "Name" or "Name - Company", matching the label already shown to the
   // captain when editing a client's quote (see app/build/page.tsx).
   clientName?: string | null;
+  // A contractor's own logo (User.logoUrl), shown instead of PickTheBrick's
+  // when set - see editAsContractor in app/build/BuildClient.tsx. Falls back
+  // to the normal PickTheBrick logo/wordmark when omitted or it fails to load.
+  brandLogoUrl?: string | null;
+  // Only meaningful alongside brandLogoUrl - adds a small "Powered by
+  // PickTheBrick" line under the contractor's logo. Kept behind one flag in
+  // one place (see the isolated block right after the logo below) so it's a
+  // one-line removal if the business drops this later.
+  poweredByPickTheBrick?: boolean;
 }) {
   const { jsPDF } = await import("jspdf");
   const { TERMS_AND_CONDITIONS } = await import("@/lib/terms");
@@ -111,15 +122,35 @@ export async function buildQuotePdf({
 
   let y = 48;
 
-  const logo = await loadImageAsDataUrl("/logo.png");
+  const usingBrandLogo = !!brandLogoUrl;
+  const logo = await loadImageAsDataUrl(brandLogoUrl || "/logo.png");
+  // Fit within an 82x40 box rather than a fixed width - a contractor's own
+  // logo could be any aspect ratio (square, portrait), unlike PickTheBrick's
+  // own wide wordmark, so this keeps it from growing tall enough to collide
+  // with the divider line/"powered by" mark below.
+  const LOGO_BOX_W = 82;
+  const LOGO_BOX_H = 40;
+  let logoH = LOGO_BOX_H;
   if (logo) {
-    const logoWidth = 82;
-    doc.addImage(logo.dataUrl, "PNG", MARGIN, y - 20, logoWidth, logoWidth / logo.ratio);
-  } else {
+    const logoW = Math.min(LOGO_BOX_W, LOGO_BOX_H * logo.ratio);
+    logoH = logoW / logo.ratio;
+    const logoFormat = logo.dataUrl.startsWith("data:image/png") ? "PNG" : logo.dataUrl.startsWith("data:image/webp") ? "WEBP" : "JPEG";
+    doc.addImage(logo.dataUrl, logoFormat, MARGIN, y - 20, logoW, logoH);
+  } else if (!usingBrandLogo) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.setTextColor(...INK);
     doc.text("PickTheBrick", MARGIN, y);
+  }
+  // "Powered by PickTheBrick" mark - isolated in this one block so it's a
+  // one-line removal (drop the `if`) if the business drops this later. Only
+  // shown once a real contractor logo actually rendered above - never on a
+  // plain PickTheBrick-branded quote.
+  if (poweredByPickTheBrick && usingBrandLogo && logo) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text("Powered by PickTheBrick", MARGIN, y - 20 + logoH + 10);
   }
 
   doc.setFont("helvetica", "normal");

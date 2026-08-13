@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { updateProfile, changeEmail, setOrChangePassword } from "@/app/actions/profile";
+import { updateContractorLogo } from "@/app/actions/contractors";
 import PhoneVerifyStep from "@/app/components/PhoneVerifyStep";
 import { Role } from "@/app/generated/prisma/enums";
 import "./profile.css";
@@ -28,6 +29,7 @@ export default function ProfileClient({
   hasGoogle,
   role,
   dashboardHref,
+  logoUrl,
 }: {
   email: string;
   fullName: string | null;
@@ -39,6 +41,8 @@ export default function ProfileClient({
   hasGoogle: boolean;
   role: Role;
   dashboardHref: string;
+  // Contractor-only - see updateContractorLogo in app/actions/contractors.ts.
+  logoUrl?: string | null;
 }) {
   const [nameDraft, setNameDraft] = useState(fullName ?? "");
   const [companyDraft, setCompanyDraft] = useState(company ?? "");
@@ -59,6 +63,12 @@ export default function ProfileClient({
 
   const [verifiedAt, setVerifiedAt] = useState(whatsappVerifiedAt);
   const [showPhoneVerify, setShowPhoneVerify] = useState(false);
+
+  const [logoPreview, setLogoPreview] = useState(logoUrl ?? null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoMsg, setLogoMsg] = useState<string | null>(null);
+  const [logoErr, setLogoErr] = useState<string | null>(null);
 
   async function handleNameSave(e: React.FormEvent) {
     e.preventDefault();
@@ -118,6 +128,33 @@ export default function ProfileClient({
     setVerifiedAt(new Date());
   }
 
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setLogoFile(file);
+    setLogoMsg(null);
+    setLogoErr(null);
+    if (file) setLogoPreview(URL.createObjectURL(file));
+  }
+
+  async function handleLogoSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!logoFile) return;
+    setLogoBusy(true);
+    setLogoErr(null);
+    setLogoMsg(null);
+    try {
+      const formData = new FormData();
+      formData.set("logo", logoFile);
+      await updateContractorLogo(formData);
+      setLogoMsg("Saved.");
+      setLogoFile(null);
+    } catch (err) {
+      setLogoErr(err instanceof Error ? err.message : "Could not save logo");
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
   return (
     <div className="profile-page">
       <header className="profile-header">
@@ -157,6 +194,37 @@ export default function ProfileClient({
             </div>
           </form>
         </section>
+
+        {role === Role.contractor && (
+          <section className="profile-card">
+            <h2>Company logo</h2>
+            <p className="profile-hint">
+              Shown in place of the PickTheBrick logo on your dashboard and when building quotes for your own
+              clients.
+            </p>
+            <form onSubmit={handleLogoSave} className="profile-form">
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                {logoPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logoPreview} alt="" style={{ maxWidth: 140, maxHeight: 60, objectFit: "contain" }} />
+                ) : (
+                  <span className="profile-muted">No logo uploaded yet</span>
+                )}
+              </div>
+              <label>
+                {logoUrl ? "Replace logo" : "Upload a logo"}
+                <input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={handleLogoChange} />
+              </label>
+              <div className="profile-form-actions">
+                {logoErr && <span className="profile-err">{logoErr}</span>}
+                {logoMsg && <span className="profile-msg">{logoMsg}</span>}
+                <button type="submit" className="profile-btn-primary" disabled={logoBusy || !logoFile}>
+                  {logoBusy ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
 
         <section className="profile-card">
           <h2>Email</h2>

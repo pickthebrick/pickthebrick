@@ -8,8 +8,12 @@ import { fetchCartLines } from "@/lib/quotes";
 import { getOrCreateDraftQuote } from "@/app/actions/quotes";
 import BuildClient from "./BuildClient";
 
-export default async function BuildPage({ searchParams }: { searchParams: Promise<{ editQuote?: string }> }) {
-  const { editQuote } = await searchParams;
+export default async function BuildPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ editQuote?: string; contractorQuote?: string }>;
+}) {
+  const { editQuote, contractorQuote } = await searchParams;
   const session = await getSession();
 
   // A Captain opens this in a new tab from CaptainClient.tsx's "Edit
@@ -58,6 +62,55 @@ export default async function BuildPage({ searchParams }: { searchParams: Promis
         initialOfficeSize={quote.officeSize}
         editAsCaptain
         clientLabel={clientLabel}
+      />
+    );
+  }
+
+  // A contractor opens this from ContractorClient.tsx's "New quote for a
+  // client" / "Continue editing" links - a quote they originated themselves
+  // for their own end client, never a real PickTheBrick-brokered project
+  // (see createContractorQuote in app/actions/quotes.ts). No client account
+  // exists for the end customer, so there's no clientLabel to resolve, no
+  // phone verification, and no submit-to-PTB step.
+  if (contractorQuote) {
+    if (!session) redirect("/login");
+    if (session.role !== Role.contractor) redirect(ROLE_HOME[session.role]);
+
+    const [quote, contractor] = await Promise.all([
+      prisma.quote.findUnique({
+        where: { id: contractorQuote },
+        select: {
+          contractorId: true,
+          location: true,
+          officeSize: true,
+          contactName: true,
+          contactPhone: true,
+          contactEmail: true,
+        },
+      }),
+      prisma.user.findUnique({ where: { id: session.id }, select: { logoUrl: true } }),
+    ]);
+    if (!quote || quote.contractorId !== session.id) redirect("/contractor");
+
+    const [catalog, initialCart, banners] = await Promise.all([
+      fetchCatalog(),
+      fetchCartLines(contractorQuote),
+      prisma.banner.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+    ]);
+
+    return (
+      <BuildClient
+        catalog={catalog}
+        quoteId={contractorQuote}
+        initialCart={initialCart}
+        banners={banners}
+        initialLocation={quote.location}
+        initialOfficeSize={quote.officeSize}
+        editAsContractor
+        brandLogoUrl={contractor?.logoUrl ?? null}
+        initialClientName={quote.contactName ?? undefined}
+        initialClientPhone={quote.contactPhone ?? undefined}
+        initialClientEmail={quote.contactEmail ?? undefined}
       />
     );
   }

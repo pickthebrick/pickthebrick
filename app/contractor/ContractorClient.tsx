@@ -3,10 +3,12 @@
 import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { QuoteStatus } from "@/app/generated/prisma/enums";
+import type { QuoteStatus, Unit } from "@/app/generated/prisma/enums";
 import { reportProgress, requestSiteInspection, requestPaymentClaim } from "@/app/actions/progress";
 import { applyForOpenJob } from "@/app/actions/timeline";
+import { createContractorQuote, deleteContractorQuote } from "@/app/actions/quotes";
 import { applyContractorReduction, blendedReductionPercent } from "@/lib/contractorPricing";
+import PdfDownloadButton from "@/app/my-quotes/PdfDownloadButton";
 
 const STATUS_LABEL: Record<QuoteStatus, string> = {
   draft: "Draft",
@@ -127,17 +129,82 @@ function ProgressTrack({
   );
 }
 
-type Selection = { kind: "project"; id: string } | { kind: "open-jobs" };
+type MyQuoteItem = {
+  name: string;
+  categoryLabel: string;
+  rate: number;
+  qty: number;
+  unit: Unit;
+  productId: string | null;
+  product: { images: { path: string }[] } | null;
+};
+type MyQuote = {
+  id: string;
+  clientName: string | null;
+  location: string | null;
+  officeSize: string | null;
+  grandTotal: number;
+  createdAt: Date;
+  itemCount: number;
+  items: MyQuoteItem[];
+};
+
+function DeleteButton({ label, onConfirm }: { label: string; onConfirm: () => Promise<void> }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  if (!confirming) {
+    return (
+      <button className="action danger" onClick={() => setConfirming(true)}>
+        {label}
+      </button>
+    );
+  }
+  return (
+    <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+      <span style={{ fontSize: 12, color: "var(--muted)" }}>Sure?</span>
+      <button className="action" disabled={busy} onClick={() => setConfirming(false)}>
+        No
+      </button>
+      <button
+        className="action danger"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          await onConfirm();
+        }}
+      >
+        {busy ? "..." : "Yes, delete"}
+      </button>
+    </span>
+  );
+}
+
+type Selection = { kind: "project"; id: string } | { kind: "open-jobs" } | { kind: "my-quotes" };
 
 // Left-nav shell (same .admin-shell/.admin-sidebar markup the captain
-// dashboard uses) with two sections: "My projects" - one entry per assigned
-// project, mirroring the captain's project list - and "Open jobs", a single
-// nav item for browsing/applying to unassigned work matching this
-// contractor's approved types. Mobile-first: this dashboard is the one most
-// likely used one-handed on a phone on-site, so touch targets stay large
-// and everything stacks in a single column (see the @media rules in
-// dashboard.css).
-export default function ContractorClient({ assignments, openJobs }: { assignments: Assignment[]; openJobs: OpenJob[] }) {
+// dashboard uses) with three sections: "My projects" - one entry per
+// assigned project, mirroring the captain's project list; "Open jobs", a
+// single nav item for browsing/applying to unassigned work matching this
+// contractor's approved types; and "My client quotes" - quotes this
+// contractor builds for their own clients using the same catalog/pricing
+// engine, entirely separate from real PickTheBrick project work (see
+// createContractorQuote in app/actions/quotes.ts - these never enter the
+// assignment/progress/payment machinery above). Mobile-first: this
+// dashboard is the one most likely used one-handed on a phone on-site, so
+// touch targets stay large and everything stacks in a single column (see
+// the @media rules in dashboard.css).
+export default function ContractorClient({
+  assignments,
+  openJobs,
+  myQuotes,
+  logoUrl,
+}: {
+  assignments: Assignment[];
+  openJobs: OpenJob[];
+  myQuotes: MyQuote[];
+  logoUrl?: string | null;
+}) {
   const router = useRouter();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -145,6 +212,24 @@ export default function ContractorClient({ assignments, openJobs }: { assignment
   const [inspectionNotes, setInspectionNotes] = useState<Record<string, string>>({});
   const [inspectionDates, setInspectionDates] = useState<Record<string, string>>({});
   const [claimNotes, setClaimNotes] = useState<Record<string, string>>({});
+  const [creatingQuote, setCreatingQuote] = useState(false);
+
+  async function handleNewQuote() {
+    setCreatingQuote(true);
+    setError(null);
+    try {
+      const id = await createContractorQuote();
+      router.push(`/build?contractorQuote=${id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start a new quote");
+      setCreatingQuote(false);
+    }
+  }
+
+  async function handleDeleteMyQuote(id: string) {
+    await deleteContractorQuote(id);
+    router.refresh();
+  }
 
   const projects = useMemo(() => {
     const byQuote = new Map<string, { quote: Quote; assignments: Assignment[] }>();
@@ -218,6 +303,12 @@ export default function ContractorClient({ assignments, openJobs }: { assignment
               </span>
             )}
           </button>
+          <button
+            className={selection.kind === "my-quotes" ? "active" : ""}
+            onClick={() => setSelection({ kind: "my-quotes" })}
+          >
+            My client quotes
+          </button>
           <Link href="/profile">Profile</Link>
         </nav>
       </aside>
@@ -262,6 +353,57 @@ export default function ContractorClient({ assignments, openJobs }: { assignment
                       ))}
                     </div>
                   )}
+                </div>
+              ))
+            )}
+          </>
+        ) : selection.kind === "my-quotes" ? (
+          <>
+            <div className="contractor-project-head" style={{ marginTop: 0 }}>
+              <div>
+                <h1 style={{ marginBottom: 4 }}>My client quotes</h1>
+                <p className="sub" style={{ marginBottom: 0 }}>
+                  Price a fit-out for your own client using the full PickTheBrick catalog - free to use, and never
+                  submitted as a PickTheBrick project.
+                </p>
+              </div>
+              <button className="action" disabled={creatingQuote} onClick={handleNewQuote}>
+                {creatingQuote ? "Starting..." : "+ New quote for a client"}
+              </button>
+            </div>
+            {myQuotes.length === 0 ? (
+              <div className="empty">No client quotes yet - start one above.</div>
+            ) : (
+              myQuotes.map((q) => (
+                <div key={q.id} className="contractor-project-card">
+                  <div className="contractor-project-head">
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{q.clientName || "Untitled client"}</div>
+                      <span className="sub" style={{ marginBottom: 0 }}>
+                        {[q.location, q.officeSize].filter(Boolean).join(" · ") || "No details yet"} &middot;{" "}
+                        {q.itemCount} item{q.itemCount !== 1 ? "s" : ""} &middot; AED {q.grandTotal.toLocaleString()}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <Link href={`/build?contractorQuote=${q.id}`} className="action">
+                        Continue editing
+                      </Link>
+                      <PdfDownloadButton
+                        items={q.items}
+                        grandTotal={q.grandTotal}
+                        location={q.location}
+                        officeSize={q.officeSize}
+                        referenceNumber={null}
+                        clientName={q.clientName}
+                        brandLogoUrl={logoUrl}
+                        poweredByPickTheBrick
+                      />
+                      <DeleteButton label="Delete" onConfirm={() => handleDeleteMyQuote(q.id)} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                    Started {new Date(q.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
               ))
             )}

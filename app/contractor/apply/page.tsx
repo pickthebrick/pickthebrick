@@ -13,7 +13,7 @@ export default async function ContractorApplyPage() {
   if (session.role !== Role.contractor) redirect(ROLE_HOME[session.role]);
 
   const [me, application, categories, types] = await Promise.all([
-    prisma.user.findUnique({ where: { id: session.id }, select: { fullName: true, company: true, phone: true } }),
+    prisma.user.findUnique({ where: { id: session.id }, select: { fullName: true, company: true, phone: true, logoUrl: true } }),
     prisma.contractorApplication.findUnique({
       where: { contractorId: session.id },
       select: {
@@ -37,7 +37,7 @@ export default async function ContractorApplyPage() {
   return (
     <div className="ptb-dash">
       <header>
-        <BrandMark role="Contractor" />
+        <BrandMark role="Contractor" logoUrl={me?.logoUrl} />
       </header>
       <main>
         <div className="apply-hero">
