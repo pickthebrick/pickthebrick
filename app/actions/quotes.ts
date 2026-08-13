@@ -217,8 +217,9 @@ export async function startOverDraftQuote(quoteId: string) {
   revalidatePath("/build");
 }
 
-// Lets a client add forgotten items to an already-submitted quote without
-// touching the original record - copies its items/location/office-size onto
+// Lets a client copy an already-submitted quote into a new draft without
+// touching the original record - e.g. to try a different price option while
+// keeping the one they already have. Copies items/location/office-size onto
 // a fresh draft (reusing the client's existing draft row if they happen to
 // have one, exactly like getOrCreateDraftQuote, so there's never more than
 // one draft for /build's own getOrCreateDraftQuote() to pick up next).
