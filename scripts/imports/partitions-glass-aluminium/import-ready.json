@@ -1,0 +1,230 @@
+{
+  "categories": [
+    {
+      "label": "Partitions",
+      "unit": "sqm",
+      "types": [
+        {
+          "label": "Glass Partitions",
+          "subtypes": [
+            {
+              "label": "Single Glazed",
+              "products": [
+                {
+                  "name": "Kaprel Alpha 23 Single Glazed Partition System",
+                  "rate": 480,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Glass Thickness", "value": "12mm toughened (13.4mm laminated option also offered)" },
+                    { "label": "Acoustic Rating", "value": "Rw 38dB" },
+                    { "label": "Frame", "value": "Slim aluminium mullion/transom, single glazed" },
+                    { "label": "Brand / System", "value": "Kaprel Alpha 23" }
+                  ]
+                },
+                {
+                  "name": "Kaprel Alpha 30 Single Glazed Partition System",
+                  "rate": 560,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Glass Thickness", "value": "13.4mm laminated glass" },
+                    { "label": "Acoustic Rating", "value": "Rw 40dB" },
+                    { "label": "Frame", "value": "Slim aluminium mullion/transom, single glazed" },
+                    { "label": "Brand / System", "value": "Kaprel Alpha 30" }
+                  ]
+                },
+                {
+                  "name": "Kaprel SG Milano Series Single Glazed Partition",
+                  "rate": 520,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Acoustic Rating", "value": "Rw 38dB" },
+                    { "label": "System", "value": "Milano modular single-glazed collection, compatible with Kaprel Milano doors" },
+                    { "label": "Brand / System", "value": "Kaprel SG Milano" }
+                  ]
+                },
+                {
+                  "name": "ABCD International Single-Glazed Partition (ID-1), supplied by Opus BM",
+                  "rate": 460,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Glass Thickness", "value": "10mm or 12mm tempered glass" },
+                    { "label": "Frame", "value": "Edge-to-edge glazing, minimised runners/micro-profiles" },
+                    { "label": "Manufacturer", "value": "ABCD International (France), distributed in UAE by Opus Business Management (Opus BM)" }
+                  ]
+                },
+                {
+                  "name": "Riaz Glass Dubai Frameless Glass Partition",
+                  "rate": 450,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Glass Thickness", "value": "10-12mm tempered glass" },
+                    { "label": "Frame", "value": "Frameless, minimal hardware" },
+                    { "label": "Supplier", "value": "Riaz Glass Dubai" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Double Glazed",
+              "products": [
+                {
+                  "name": "Kaprel Akustik 56 Double Glazed Acoustic Partition",
+                  "rate": 950,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Leaf Thickness", "value": "26mm or 41mm" },
+                    { "label": "Acoustic Rating", "value": "Up to Rw 46dB" },
+                    { "label": "System", "value": "Mullion-free, non-structural double glazed partition" },
+                    { "label": "Brand / System", "value": "Kaprel Akustik 56" }
+                  ]
+                },
+                {
+                  "name": "Kaprel Akustik 99 EVO 5 Double Glazed Acoustic Partition",
+                  "rate": 1250,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Acoustic Rating", "value": "Up to Rw 55dB" },
+                    { "label": "System", "value": "Mullion-free double glazed acoustic partition, top tier of the Akustik 99 range" },
+                    { "label": "Brand / System", "value": "Kaprel Akustik 99 EVO 5" }
+                  ]
+                },
+                {
+                  "name": "Kaprel DG Milano Series Double Glazed Partition",
+                  "rate": 1050,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Acoustic Rating", "value": "Rw 50dB" },
+                    { "label": "System", "value": "Milano modular double-glazed collection, compatible with Kaprel Milano doors" },
+                    { "label": "Brand / System", "value": "Kaprel DG Milano" }
+                  ]
+                },
+                {
+                  "name": "ABCD International Double-Glazed Partition (ID-2), supplied by Opus BM",
+                  "rate": 850,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Glass Thickness", "value": "10mm or 12mm toughened glass (twin pane)" },
+                    { "label": "System Depth", "value": "100mm overall" },
+                    { "label": "Acoustic Rating", "value": "44dB sound insulation" },
+                    { "label": "Manufacturer", "value": "ABCD International (France), distributed in UAE by Opus Business Management (Opus BM)" }
+                  ]
+                },
+                {
+                  "name": "Riaz Glass Dubai Soundproof Glass Partition",
+                  "rate": 500,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Glass Thickness", "value": "10-12mm" },
+                    { "label": "Type", "value": "Double glazed, soundproof" },
+                    { "label": "Supplier", "value": "Riaz Glass Dubai" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Aluminium Framed Partitions",
+          "subtypes": [
+            {
+              "label": "Full Glass Framed",
+              "products": [
+                {
+                  "name": "Mahmayi Black Aluminium Glass Partition - Full Frosted Glass (No Tile)",
+                  "rate": 1145,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Frame Material", "value": "Aluminium" },
+                    { "label": "Frame Finish", "value": "Black powder-coated" },
+                    { "label": "Glass Type", "value": "Full frosted glass, floor-to-ceiling" },
+                    { "label": "Brand", "value": "Mahmayi" }
+                  ]
+                },
+                {
+                  "name": "Mahmayi Grey Aluminium Glass Partition - Full Frosted Glass (No Tile)",
+                  "rate": 1145,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Frame Material", "value": "Aluminium" },
+                    { "label": "Frame Finish", "value": "Grey powder-coated" },
+                    { "label": "Glass Type", "value": "Full frosted glass, floor-to-ceiling" },
+                    { "label": "Brand", "value": "Mahmayi" }
+                  ]
+                },
+                {
+                  "name": "Babar Dawood Aluminium-Framed 12mm Toughened Glass Partition",
+                  "rate": 600,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Glass Thickness", "value": "12mm toughened glass" },
+                    { "label": "Frame", "value": "Aluminium framed, full glass infill" },
+                    { "label": "Supplier", "value": "Babar Dawood Aluminium & Glass, Dubai" }
+                  ]
+                },
+                {
+                  "name": "Riaz Glass Dubai Aluminium-Framed Glass Partition (8mm)",
+                  "rate": 325,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Glass Thickness", "value": "8mm tempered glass" },
+                    { "label": "Frame", "value": "Aluminium framed, full glass infill" },
+                    { "label": "Supplier", "value": "Riaz Glass Dubai" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Glass-Gypsum Combo Framed",
+              "products": [
+                {
+                  "name": "Mahmayi Black Aluminium Glass Partition - Full Clear Glass with Solid Dado Band",
+                  "rate": 1275,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Frame Material", "value": "Aluminium" },
+                    { "label": "Frame Finish", "value": "Black powder-coated" },
+                    { "label": "Panel Layout", "value": "Clear glass upper section over a tiled solid dado band at the base" },
+                    { "label": "Brand", "value": "Mahmayi" }
+                  ]
+                },
+                {
+                  "name": "Mahmayi Black Aluminium Glass Partition - Center Frost Glass with Solid Dado Band",
+                  "rate": 1275,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Frame Material", "value": "Aluminium" },
+                    { "label": "Frame Finish", "value": "Black powder-coated" },
+                    { "label": "Panel Layout", "value": "Clear glass top and bottom with a frosted privacy band at mid-height, over a tiled solid dado band at the base" },
+                    { "label": "Brand", "value": "Mahmayi" }
+                  ]
+                },
+                {
+                  "name": "Mahmayi Grey Aluminium Glass Partition - Fabric Clear Glass",
+                  "rate": 1275,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Frame Material", "value": "Aluminium" },
+                    { "label": "Frame Finish", "value": "Grey powder-coated" },
+                    { "label": "Panel Layout", "value": "Fabric-wrapped solid lower panel at seated eye level, clear glass above for daylight" },
+                    { "label": "Brand", "value": "Mahmayi" }
+                  ]
+                },
+                {
+                  "name": "Mahmayi Black Aluminium Glass Partition - Fabric Clear Glass",
+                  "rate": 1275,
+                  "unit": "sqm",
+                  "specs": [
+                    { "label": "Frame Material", "value": "Aluminium" },
+                    { "label": "Frame Finish", "value": "Black powder-coated" },
+                    { "label": "Panel Layout", "value": "Fabric-wrapped solid lower panel at seated eye level, clear glass above for daylight" },
+                    { "label": "Brand", "value": "Mahmayi" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

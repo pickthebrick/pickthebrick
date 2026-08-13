@@ -1,0 +1,286 @@
+{
+  "categories": [
+    {
+      "label": "Partitions",
+      "unit": "sqm",
+      "types": [
+        {
+          "label": "Gypsum Partitions",
+          "subtypes": [
+            {
+              "label": "Standard Drywall",
+              "products": [
+                {
+                  "name": "Knauf W111 Partition System (Single Frame, Single Layer 12.5mm RG Board)",
+                  "rate": 110,
+                  "unit": "sqm",
+                  "description": "Knauf's standard single-frame, single-layer partition system: one C-channel metal stud with a single layer of 12.5mm Knauf Regular (RG) gypsum board screwed to each face. The base non-fire-rated, non-acoustic partition used throughout Dubai commercial fit-outs wherever a simple room divider is needed.",
+                  "images": [
+                    "https://media.knauf.com/a/9iYqSBcrvRJfLgiGyzPd1x?fit=wrap&fmt=webp&hei=400"
+                  ],
+                  "specs": [
+                    { "label": "Board", "value": "Knauf Regular (RG) 12.5mm gypsum board, both faces" },
+                    { "label": "Frame", "value": "Single C-channel metal stud (DC 50-75mm), studs at 400-600mm centres" },
+                    { "label": "Max partition height", "value": "Up to 4.35m (DC75 studs at 300mm centres, unrated)" },
+                    { "label": "Standard", "value": "EN 520 / BS 1230" }
+                  ],
+                  "downloads": [
+                    { "label": "Knauf RG Board Datasheet - Regular Gypsum Board (ENBS)", "kind": "datasheet", "url": "https://knauf.com/api/download-center/v1/assets/d5caac59-bcf8-4eaf-b90a-471b96a4cd8e?download=true&country=ae" }
+                  ]
+                },
+                {
+                  "name": "Knauf W112 Partition System (Single Frame, Double Layer 12.5mm RG Board)",
+                  "rate": 140,
+                  "unit": "sqm",
+                  "description": "Knauf's single-frame, double-layer variant of W111: two layers of 12.5mm Knauf Regular (RG) gypsum board per face on the same single C-stud frame, giving a stiffer, more impact-resistant wall and better sound reduction than the single-layer W111 without moving to a twin-frame system.",
+                  "images": [
+                    "https://media.knauf.com/a/9iYqSBcrvRJfLgiGyzPd1x?fit=wrap&fmt=webp&hei=400"
+                  ],
+                  "specs": [
+                    { "label": "Board", "value": "2x Knauf Regular (RG) 12.5mm gypsum board, both faces (4 layers total)" },
+                    { "label": "Frame", "value": "Single C-channel metal stud (DC 50-75mm), studs at 400-600mm centres" },
+                    { "label": "Max partition height", "value": "Up to 5.95m (DC75 studs at 300mm centres, unrated)" },
+                    { "label": "Standard", "value": "EN 520 / BS 1230" }
+                  ],
+                  "downloads": [
+                    { "label": "Knauf RG Board Datasheet - Regular Gypsum Board (ENBS)", "kind": "datasheet", "url": "https://knauf.com/api/download-center/v1/assets/d5caac59-bcf8-4eaf-b90a-471b96a4cd8e?download=true&country=ae" }
+                  ]
+                },
+                {
+                  "name": "Knauf Pro HD Partition System (High-Density Impact-Resistant 12.5mm Board)",
+                  "rate": 160,
+                  "unit": "sqm",
+                  "description": "Standard single-frame partition built with Knauf Pro HD board in place of regular board - a high-density core board (36-45kg per sheet vs ~21-27kg for regular board) offering markedly better impact and abrasion resistance, used in corridors, back-of-house areas and other high-traffic office zones where a plain board partition would dent or crack.",
+                  "images": [
+                    "https://media.knauf.com/a/YEQiDNqYqXuB38E9EXQSgf?fit=wrap&fmt=webp&hei=400"
+                  ],
+                  "specs": [
+                    { "label": "Board", "value": "Knauf Pro HD 12.5mm high-density gypsum board, both faces" },
+                    { "label": "Board weight", "value": "36kg (2400mm sheet) / 45kg (3000mm sheet)" },
+                    { "label": "Frame", "value": "Single C-channel metal stud (DC 50-75mm)" },
+                    { "label": "Performance", "value": "Enhanced impact, abrasion, sound and humidity resistance vs regular board" }
+                  ],
+                  "downloads": [
+                    { "label": "Knauf Pro HD Board Datasheet - High Performance Gypsum Board (ENBS)", "kind": "datasheet", "url": "https://knauf.com/api/download-center/v1/assets/628296f3-3311-42bb-9472-24bdc7fb347c?download=true&country=ae" }
+                  ]
+                },
+                {
+                  "name": "Dubai Standard Economy Partition (Unbranded Single-Layer Board)",
+                  "rate": 100,
+                  "unit": "sqm",
+                  "description": "The economy end of Dubai's drywall partition market: a single-frame, single-layer gypsum board partition built with unbranded/generic board rather than a named manufacturer system, offered by most Dubai gypsum contractors as their base-tier option. No manufacturer datasheet applies since the board is not brand-specified at this price point.",
+                  "specs": [
+                    { "label": "Board", "value": "Generic 12.5mm gypsum board (unbranded), both faces" },
+                    { "label": "Frame", "value": "Single C-channel metal stud, studs at 600mm centres" },
+                    { "label": "Fire rating", "value": "None (standard partition only)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Fire Rated Drywall",
+              "products": [
+                {
+                  "name": "Knauf Fire Wall Partition System (Single Layer 12.5mm FR Board, 1-Hour Rating)",
+                  "rate": 130,
+                  "unit": "sqm",
+                  "description": "Knauf single-frame partition built with one layer of 12.5mm Knauf Fire Resistant (FR) board per face in place of regular board. FR board's glass-fibre-reinforced core keeps its integrity under fire exposure, giving roughly 1-hour fire resistance in this single-layer configuration - Knauf's entry-level fire-rated partition.",
+                  "images": [
+                    "https://media.knauf.com/a/8FXWLsf6NaenR23yb51B3Y?fit=wrap&fmt=webp&hei=400"
+                  ],
+                  "specs": [
+                    { "label": "Board", "value": "Knauf Fire Resistant (FR) 12.5mm gypsum board, both faces" },
+                    { "label": "Fire rating", "value": "~1 hour (single layer)" },
+                    { "label": "Frame", "value": "Single C-channel metal stud (DC 50-75mm)" },
+                    { "label": "Standard", "value": "EN 520 / BS 1230, glass-fibre reinforced core" }
+                  ],
+                  "downloads": [
+                    { "label": "Knauf FR Gypsum Board Datasheet - Fire Resistant (ENBS)", "kind": "datasheet", "url": "https://knauf.com/api/download-center/v1/assets/82b3a7cc-8615-432c-bc9b-7a327087ad69?download=true&country=ae" }
+                  ]
+                },
+                {
+                  "name": "Knauf Fire Wall Partition System (Double Layer 12.5mm FR Board, 2-Hour Rating)",
+                  "rate": 185,
+                  "unit": "sqm",
+                  "description": "Knauf's higher fire-duration partition: two layers of 12.5mm Knauf FR board per face on a single stud frame (or twin-stud frame for taller/higher-load walls), used where Dubai Civil Defence requires a 2-hour rated separation - typically riser cupboards, escape corridors and compartment walls in commercial fit-outs.",
+                  "images": [
+                    "https://media.knauf.com/a/8FXWLsf6NaenR23yb51B3Y?fit=wrap&fmt=webp&hei=400"
+                  ],
+                  "specs": [
+                    { "label": "Board", "value": "2x Knauf Fire Resistant (FR) 12.5mm gypsum board, both faces (4 layers total)" },
+                    { "label": "Fire rating", "value": "Up to 2 hours (double layer)" },
+                    { "label": "Frame", "value": "Single or twin C-channel metal stud, studs at 400-600mm centres" },
+                    { "label": "Standard", "value": "EN 520 / BS 1230, glass-fibre reinforced core" }
+                  ],
+                  "downloads": [
+                    { "label": "Knauf FR Gypsum Board Datasheet - Fire Resistant (ENBS)", "kind": "datasheet", "url": "https://knauf.com/api/download-center/v1/assets/82b3a7cc-8615-432c-bc9b-7a327087ad69?download=true&country=ae" }
+                  ]
+                },
+                {
+                  "name": "Knauf FM Fire & Moisture-Resistant Partition System (12.5mm FM Board)",
+                  "rate": 145,
+                  "unit": "sqm",
+                  "description": "Fire-rated partition using Knauf's combined Fire & Moisture Resistant (FM) board - mineral-fibre-reinforced core for fire integrity plus a reduced water-absorption facing - for fire-rated partitions that also enclose wet areas such as pantries, toilets and shower rooms in an office fit-out.",
+                  "images": [
+                    "https://media.knauf.com/a/Hih8ZVd16N7YmLXWt3pU2W?fit=wrap&fmt=webp&hei=400"
+                  ],
+                  "specs": [
+                    { "label": "Board", "value": "Knauf Fire & Moisture Resistant (FM) 12.5mm gypsum board, both faces" },
+                    { "label": "Fire rating", "value": "~1 hour (single layer)" },
+                    { "label": "Moisture resistance", "value": "Reduced water absorption core and facing paper" },
+                    { "label": "Frame", "value": "Single C-channel metal stud (DC 50-75mm)" }
+                  ],
+                  "downloads": [
+                    { "label": "Knauf FR/MR Gypsum Board Datasheet - Fire and Moisture Resistant (ENBS)", "kind": "datasheet", "url": "https://knauf.com/api/download-center/v1/assets/f11976de-500a-4046-b774-6ad3a35b21df?download=true&country=ae" }
+                  ]
+                },
+                {
+                  "name": "Dubai Fire-Rated Partition - Contractor Grade (Single-Layer FR Board)",
+                  "rate": 165,
+                  "unit": "sqm",
+                  "description": "Fire-rated drywall partition as commonly quoted by Dubai interior fit-out contractors using generic (non-Knauf) fire-rated board rather than a named manufacturer system - the typical mid-market option between the cheapest unbranded fire board and a fully specified branded fire-wall system.",
+                  "specs": [
+                    { "label": "Board", "value": "Generic 12.5mm fire-rated (FR) gypsum board, both faces" },
+                    { "label": "Fire rating", "value": "1 hour (contractor-stated, no third-party test certificate supplied)" },
+                    { "label": "Frame", "value": "Single C-channel metal stud, studs at 600mm centres" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Solid Walls",
+          "subtypes": [
+            {
+              "label": "Block Wall",
+              "products": [
+                {
+                  "name": "Exeed Litecrete AAC Block Wall - E2 (100mm, 500kg/m3)",
+                  "rate": 150,
+                  "unit": "sqm",
+                  "description": "Non-load-bearing AAC (autoclaved aerated concrete) block wall built with Exeed Litecrete's E2-grade block, manufactured at the company's Abu Dhabi (ICAD 2) plant. Large-format blocks (0.6m x 0.25m) cut installation time and mortar use versus conventional concrete block; plastered and painted both faces for an office partition finish.",
+                  "specs": [
+                    { "label": "Block density", "value": "500 +/- 20 kg/m3" },
+                    { "label": "Compressive strength", "value": "Minimum 3.2 N/mm2" },
+                    { "label": "Thermal conductivity", "value": "0.125-0.135 W/mK" },
+                    { "label": "Block size", "value": "600mm x 250mm x 100mm (thickness range 50-400mm available)" }
+                  ]
+                },
+                {
+                  "name": "Exeed Litecrete AAC Block Wall - E4 (100mm, 650kg/m3, Higher Strength)",
+                  "rate": 168,
+                  "unit": "sqm",
+                  "description": "Higher-density AAC block from Exeed Litecrete's range, used where a more load-tolerant or higher-strength partition is needed (e.g. walls carrying wall-hung fixtures or joinery) than the standard E2 grade provides.",
+                  "specs": [
+                    { "label": "Block density", "value": "650 +/- 20 kg/m3" },
+                    { "label": "Compressive strength", "value": "Higher than E2/E3 grades (manufacturer-rated, exact MPa not publicly listed)" },
+                    { "label": "Block size", "value": "600mm x 250mm x 100mm (thickness range 50-400mm available)" },
+                    { "label": "Manufacturer", "value": "Exeed Litecrete, Industrial City of Abu Dhabi (ICAD 2)" }
+                  ]
+                },
+                {
+                  "name": "Zarei Group 100mm (4-inch) Hollow Concrete Block Partition Wall",
+                  "rate": 120,
+                  "unit": "sqm",
+                  "description": "Standard 4-inch hollow concrete block partition wall using Zarei Group's Dubai-manufactured hollow blocks, plastered and painted both faces - the traditional block partition still used in Dubai fit-outs where a block wall (rather than drywall) is specified for durability or acoustic mass.",
+                  "images": [
+                    "https://zarei-group.com/wp-content/uploads/2025/05/hollowblock.webp"
+                  ],
+                  "specs": [
+                    { "label": "Block size", "value": "400mm x 100mm x 200mm (4-inch)" },
+                    { "label": "Compressive strength", "value": ">= 7.5 MPa" },
+                    { "label": "Density", "value": "1700-2100 kg/m3" },
+                    { "label": "Standard", "value": "ASTM C90 / BS 6073-1" }
+                  ]
+                },
+                {
+                  "name": "Zarei Group 150mm (6-inch) Hollow Concrete Block Partition Wall",
+                  "rate": 142,
+                  "unit": "sqm",
+                  "description": "6-inch hollow concrete block partition wall, Zarei Group Dubai, used where a thicker/heavier block wall is needed for acoustic separation or added structural mass compared to the 4-inch option.",
+                  "images": [
+                    "https://zarei-group.com/wp-content/uploads/2025/05/hollowblock.webp"
+                  ],
+                  "specs": [
+                    { "label": "Block size", "value": "400mm x 150mm x 200mm (6-inch)" },
+                    { "label": "Compressive strength", "value": ">= 7.5 MPa" },
+                    { "label": "Density", "value": "1700-2100 kg/m3" },
+                    { "label": "Standard", "value": "ASTM C90 / BS 6073-1" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Cement Board",
+              "products": [
+                {
+                  "name": "Everest Fiber Cement Board Partition - 12mm",
+                  "rate": 165,
+                  "unit": "sqm",
+                  "description": "Partition wall built with 12mm Everest fibre cement board (Everest Industries, distributed in the UAE by Thermal Building Products) on a metal stud frame - a cement-based alternative to gypsum board for partitions needing higher water, fire and impact resistance, such as wet-area walls or exterior-facing partitions.",
+                  "images": [
+                    "https://thermal.ae/wp-content/uploads/2020/09/Everest-Fiber-Cement-Board-01-600x600.jpg"
+                  ],
+                  "specs": [
+                    { "label": "Board thickness", "value": "12mm" },
+                    { "label": "Sheet size", "value": "1.22m x 2.44m" },
+                    { "label": "Density", "value": "850 kg/m3" },
+                    { "label": "Compressive strength", "value": "> 30 MPa" },
+                    { "label": "Water & fire resistance", "value": "Water resistant, fire resistant, no fungal growth" }
+                  ],
+                  "downloads": [
+                    { "label": "Everest Fibre Cement Board Technical Data Sheet", "kind": "datasheet", "url": "https://www.everestind.com/public/boards-and-panels-assets/pdfs/Everest-SuperHD-Brochure.pdf" }
+                  ]
+                },
+                {
+                  "name": "Everest Fiber Cement Board Partition - 9mm",
+                  "rate": 142,
+                  "unit": "sqm",
+                  "description": "Lighter 9mm-board version of the same Everest fibre cement partition, used where the full 12mm board's weight or cost isn't needed - a thinner cement-board option for internal, non-wet-area partitions.",
+                  "images": [
+                    "https://thermal.ae/wp-content/uploads/2020/09/Everest-Fiber-Cement-Board-01-600x600.jpg"
+                  ],
+                  "specs": [
+                    { "label": "Board thickness", "value": "9mm" },
+                    { "label": "Sheet size", "value": "1.22m x 2.44m" },
+                    { "label": "Density", "value": "850 kg/m3" },
+                    { "label": "Water & fire resistance", "value": "Water resistant, fire resistant, no fungal growth" }
+                  ],
+                  "downloads": [
+                    { "label": "Everest Fibre Cement Board Technical Data Sheet", "kind": "datasheet", "url": "https://www.everestind.com/public/boards-and-panels-assets/pdfs/Everest-SuperHD-Brochure.pdf" }
+                  ]
+                },
+                {
+                  "name": "FEPY 12mm Cement Board Partition (Generic Brand)",
+                  "rate": 150,
+                  "unit": "sqm",
+                  "description": "Partition built with FEPY's generic-brand 12mm cement board on a metal stud frame - FEPY is a real UAE building-materials e-commerce supplier with published AED pricing, used here as the mid-market/unbranded cement board option distinct from the Everest branded line.",
+                  "images": [
+                    "https://ik.imagekit.io/fepy/cdn/catalog/product/C/E/CementBoard-1.png?format=webp&tr=w-128,h-128,fo-auto"
+                  ],
+                  "specs": [
+                    { "label": "Board thickness", "value": "12mm" },
+                    { "label": "Sheet size", "value": "1220mm x 2440mm (4' x 8')" },
+                    { "label": "Sheet weight", "value": "46.08 kg" }
+                  ]
+                },
+                {
+                  "name": "Al Khashab Cement Board Partition - 9mm",
+                  "rate": 122,
+                  "unit": "sqm",
+                  "description": "9mm cement board partition using Al Khashab Building Materials' (AKBMC, Abu Dhabi) cement board line - a UAE-based supplier of drywall, gypsum and cement board products - used as the thinner/economy option in this subtype.",
+                  "specs": [
+                    { "label": "Board thickness", "value": "9mm (also available in 6mm, 12mm, 18mm)" },
+                    { "label": "Use", "value": "Wall cladding, partitions, ceilings" },
+                    { "label": "Supplier", "value": "Al Khashab Building Materials (AKBMC), Abu Dhabi, UAE" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

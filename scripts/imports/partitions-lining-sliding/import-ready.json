@@ -1,0 +1,349 @@
+{
+  "categories": [
+    {
+      "label": "Partitions",
+      "unit": "sqm",
+      "types": [
+        {
+          "label": "Wall Lining (Cladding)",
+          "subtypes": [
+            {
+              "label": "Acoustic Lining",
+              "products": [
+                {
+                  "name": "MUTE Plain PET Felt Acoustic Wall Panel - 2400x1200x12mm",
+                  "rate": 340,
+                  "unit": "sqm",
+                  "description": "100% recycled PET felt acoustic wall panel from MUTE (Dubai), plain finish. Sold as a 2400x1200mm sheet; rate below is MUTE's listed AED 980 per-panel price divided by its 2.88 sqm coverage. Suitable for open-plan offices, meeting rooms and breakout areas.",
+                  "images": [
+                    "https://mute.ae/cdn/shop/files/Thumbnail-1_b02d83db-02f3-4e73-8463-7d02c3dcdcf6.jpg"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "100% recycled PET felt" },
+                    { "label": "Thickness", "value": "12mm" },
+                    { "label": "NRC Rating", "value": "0.4 - 0.8" },
+                    { "label": "Fire Rating", "value": "EN13501 Class B" },
+                    { "label": "Panel Size", "value": "2400 x 1200mm" }
+                  ]
+                },
+                {
+                  "name": "MUTE Tiles Patterned PET Felt Acoustic Wall Panel - 2400x1200x12mm",
+                  "rate": 380,
+                  "unit": "sqm",
+                  "description": "Geometric 'Tiles' pattern PET felt acoustic panel from MUTE (Dubai). Rate is MUTE's listed AED 1,095 per-panel price divided by its 2.88 sqm coverage.",
+                  "images": [
+                    "https://mute.ae/cdn/shop/files/Home_Office_32.jpg?v=1778750846&width=1946"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "100% recycled PET felt" },
+                    { "label": "Thickness", "value": "12mm" },
+                    { "label": "NRC Rating", "value": "0.4 - 0.8" },
+                    { "label": "Pattern", "value": "Tiles (geometric relief)" },
+                    { "label": "Fire Rating", "value": "EN13501 Class B" }
+                  ]
+                },
+                {
+                  "name": "Trepanel Oak Acoustic Wood Slat Wall Panel",
+                  "rate": 328,
+                  "unit": "sqm",
+                  "description": "Real oak-veneer MDF slat panel on an interlocking black acoustic felt backing, sold in the UAE via Trepanel/Tile Mountain. Rate is the listed AED 449 per-panel price divided by the panel's 1.37 sqm coverage.",
+                  "images": [
+                    "https://m2.tilemountain.ae/media/catalog/2300X2300/t/r/trepanel-oak-2300-px_1.webp"
+                  ],
+                  "specs": [
+                    { "label": "Wood Finish", "value": "Oak (real wood veneer, matt)" },
+                    { "label": "Panel Dimensions", "value": "2850 x 480 x 21mm" },
+                    { "label": "Slat Size", "value": "27mm wide x 12mm thick" },
+                    { "label": "Acoustic Backing", "value": "Interlocking rigid black felt" }
+                  ],
+                  "downloads": [
+                    { "label": "Trepanel Dubai Datasheet", "kind": "datasheet", "url": "https://m2.trepanel.ae/media/amasty/amfile/attach/Trepanel_Dubai_Datasheet_1_.pdf" }
+                  ]
+                },
+                {
+                  "name": "Trepanel Walnut Brown Acoustic Wood Slat Wall Panel",
+                  "rate": 328,
+                  "unit": "sqm",
+                  "description": "Walnut Brown veneer variant of Trepanel's acoustic wood slat wall panel, same construction and UAE pricing as the Oak finish (AED 449 per 1.37 sqm panel).",
+                  "images": [
+                    "https://m2.trepanel.ae/media/catalog/350X350/t/r/trepanel_-walnut-brown-acoustic-wood-wall-panels-media-wall-2300-3.webp"
+                  ],
+                  "specs": [
+                    { "label": "Wood Finish", "value": "Walnut Brown (real wood veneer)" },
+                    { "label": "Panel Dimensions", "value": "2850 x 480 x 21mm" },
+                    { "label": "Slat Size", "value": "27mm wide x 12mm thick" },
+                    { "label": "Acoustic Backing", "value": "Interlocking rigid black felt" }
+                  ],
+                  "downloads": [
+                    { "label": "Trepanel Dubai Datasheet", "kind": "datasheet", "url": "https://m2.trepanel.ae/media/amasty/amfile/attach/Trepanel_Dubai_Datasheet_1_.pdf" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Wood Lining",
+              "products": [
+                {
+                  "name": "Arborelle Natural Oak Fluted Wood Wall Panel",
+                  "rate": 155,
+                  "unit": "sqm",
+                  "description": "Real oak wood veneer on a solid MDF core with a fluted (grooved) profile, from UK brand Naturewall, sold in the UAE via wallpaneldubai.com at AED 223 per 2400x600mm (1.44 sqm) panel.",
+                  "images": [
+                    "https://www.naturewall.com/cdn/shop/files/arborelle-natural-oak-fluted-wall-panel-6_e3673a31-5e46-485b-8c9b-065fdc15eb4c.jpg?v=1747137930&width=1946"
+                  ],
+                  "specs": [
+                    { "label": "Wood Species", "value": "Natural Oak (real wood veneer)" },
+                    { "label": "Core", "value": "Solid MDF" },
+                    { "label": "Panel Size", "value": "2400 x 600 x 15mm" },
+                    { "label": "Flute Profile", "value": "32mm wide x 7.5mm deep, 18 flutes/panel" }
+                  ],
+                  "downloads": [
+                    { "label": "Arborelle Fitting Guide", "kind": "datasheet", "url": "https://cdn.shopify.com/s/files/1/0002/2557/4918/files/Arborelle_Fitting_Guide.pdf?v=1732111330" }
+                  ]
+                },
+                {
+                  "name": "Arborelle Natural Oak Reeded Wood Wall Panel",
+                  "rate": 177,
+                  "unit": "sqm",
+                  "description": "Reeded-profile sibling of the Arborelle Fluted panel - same real oak veneer/MDF construction, sold in the UAE via wallpaneldubai.com at AED 255 per 2400x600mm (1.44 sqm) panel.",
+                  "images": [
+                    "https://www.naturewall.com/cdn/shop/files/arborelle-natural-oak-reeded-wall-panel-1_1c62dca8-231c-47d8-a068-cabb932c78b4.jpg?v=1774620850&width=1946"
+                  ],
+                  "specs": [
+                    { "label": "Wood Species", "value": "Natural Oak (real wood veneer)" },
+                    { "label": "Core", "value": "Solid MDF" },
+                    { "label": "Panel Size", "value": "2400 x 600 x 15mm" },
+                    { "label": "Profile", "value": "Reeded (fine rounded ridges)" }
+                  ],
+                  "downloads": [
+                    { "label": "Arborelle Fitting Guide", "kind": "datasheet", "url": "https://cdn.shopify.com/s/files/1/0002/2557/4918/files/Arborelle_Fitting_Guide.pdf?v=1732111330" }
+                  ]
+                },
+                {
+                  "name": "Arborelle Walnut Reeded Wood Wall Panel",
+                  "rate": 184,
+                  "unit": "sqm",
+                  "description": "Walnut veneer version of the Arborelle Reeded panel. UAE retail price not directly found; estimated at AED 265/panel (AED 184/sqm) - a ~4% premium over the confirmed AED 255 Natural Oak Reeded UAE price, consistent with Naturewall's own GBP price parity between the two species (both list at GBP 79.99) and the small walnut premiums seen elsewhere in this file (e.g. ebarza's walnut vs oak MDF panels).",
+                  "images": [
+                    "https://www.naturewall.com/cdn/shop/files/arborelle-walnut-reeded-wall-panel-2.jpg?v=1774620883&width=1946"
+                  ],
+                  "specs": [
+                    { "label": "Wood Species", "value": "Walnut (real wood veneer)" },
+                    { "label": "Core", "value": "Solid MDF" },
+                    { "label": "Panel Size", "value": "2400 x 600 x 15mm" },
+                    { "label": "Profile", "value": "Reeded (fine rounded ridges)" }
+                  ],
+                  "downloads": [
+                    { "label": "Arborelle Fitting Guide", "kind": "datasheet", "url": "https://cdn.shopify.com/s/files/1/0002/2557/4918/files/Arborelle_Fitting_Guide.pdf?v=1732111330" }
+                  ]
+                },
+                {
+                  "name": "Walnut Veneer MDF Flat Slat Wall Panel - 280x122x1.8cm",
+                  "rate": 344,
+                  "unit": "sqm",
+                  "description": "Flat decorative wood cladding panel, MDF core with natural walnut veneer, sold by Dubai retailer ebarza at AED 1,175 per 2800x1220mm (3.42 sqm) panel.",
+                  "images": [
+                    "https://www.ebarza.com/cdn/shop/files/280x122x1-8cm-slat-acoustic-flat-decoration-panel-walnut-mdf-wall-panels-32947336970391.jpg?v=1773281768&width=1600"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "MDF core with natural walnut veneer" },
+                    { "label": "Panel Size", "value": "2800 x 1220 x 18mm" },
+                    { "label": "Style", "value": "Flat decorative cladding panel" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Glass Lining",
+              "products": [
+                {
+                  "name": "Mirodec Back-Painted (Lacquered) Glass Wall Cladding",
+                  "rate": 300,
+                  "unit": "sqm",
+                  "description": "Custom-tinted back-painted (lacquered) glass wall cladding from Mirodec, a 40-year UAE glass manufacturer (Jebel Ali, Dubai) supplying the GCC/MENA region. Colour is matched to RAL, Pantone or Jotun charts, including metallic and transparent tones. No public per-sqm price is published (bespoke/quote-based product) - rate is estimated from general Dubai decorative-glass market bands (Laminated Glass AED 120-250/sqm, Frosted Glass AED 90-200/sqm per Al Intethar Glass's own published price table), positioned toward the upper-mid range to account for the lacquer/painting process and tempering.",
+                  "specs": [
+                    { "label": "Colour Matching", "value": "RAL / Pantone / Jotun custom match, incl. metallics" },
+                    { "label": "Finish", "value": "Glossy lacquered (back-painted)" },
+                    { "label": "Application", "value": "Feature walls, partitions, reception cladding" }
+                  ]
+                },
+                {
+                  "name": "Al Intethar Clear/Frosted Fluted Glass Wall Panel",
+                  "rate": 260,
+                  "unit": "sqm",
+                  "description": "Ribbed/fluted architectural glass panel from Al Intethar Glass (UAE), used as a decorative feature-wall lining. No unit price published on the product page; estimated within Al Intethar's own published Fluted Glass band of AED 150-350/sqm (mid-point, standard clear/frosted finish).",
+                  "images": [
+                    "https://alintetharglass.com/wp-content/uploads/2026/03/Fluted-Glass-for-Product-1024x1024.png"
+                  ],
+                  "specs": [
+                    { "label": "Thickness Options", "value": "4mm, 6mm, 8mm, 10mm, 12mm" },
+                    { "label": "Finish", "value": "Clear, Frosted/Acid-Etched, or Laminated Fluted" },
+                    { "label": "Profile", "value": "Vertical parallel flutes/ridges" }
+                  ]
+                },
+                {
+                  "name": "Al Intethar Bronze Fluted Tinted Glass Panel",
+                  "rate": 330,
+                  "unit": "sqm",
+                  "description": "Metallic bronze-tinted fluted glass panel from Al Intethar Glass (UAE), first-grade tempered/annealed stock sourced from Guardian, Belgium, Turkey and China. No unit price published; estimated at the upper end of Al Intethar's own AED 150-350/sqm Fluted Glass band to reflect the tint and first-grade import sourcing.",
+                  "images": [
+                    "https://intetharglass.com/wp-content/uploads/2026/04/BronzeFlutedGlass.jpeg"
+                  ],
+                  "specs": [
+                    { "label": "Thickness Options", "value": "5mm, 6mm, 8mm, 10mm, 12mm" },
+                    { "label": "Tint", "value": "Metallic bronze" },
+                    { "label": "Sheet Size", "value": "2440 x 3660mm or 3300 x 2140mm (custom cut available)" },
+                    { "label": "Grade / Source", "value": "First Grade, Guardian / Belgium / Turkey / China" }
+                  ]
+                },
+                {
+                  "name": "Safinat Nooh Reeded Glass Wall Panel",
+                  "rate": 270,
+                  "unit": "sqm",
+                  "description": "Linear reeded glass panel from Safinat Nooh Glass (Dubai), marketed for office partitions and room dividers where diffused privacy is wanted. No unit price published; estimated on the same basis as Al Intethar's fluted glass band (AED 150-350/sqm).",
+                  "images": [
+                    "https://imagedelivery.net/WefzwPpyYAgz4nGrybaw0Q/c5977bcd-938a-4167-bf02-18bad9603100/w=1920,sharpen=1"
+                  ],
+                  "specs": [
+                    { "label": "Profile", "value": "Reeded (linear ribbed)" },
+                    { "label": "Application", "value": "Office partitions, room dividers, feature walls" },
+                    { "label": "Sizing", "value": "Custom cut to order" }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Green Wall",
+              "products": [
+                {
+                  "name": "SkyGrow WM 5x1 Modular Living Wall System",
+                  "rate": 650,
+                  "unit": "sqm",
+                  "description": "Prefabricated fabric-pocket living wall structure from SkyTech Engineering (Dubai), Italian-made UV-stabilised polypropylene felt with built-in drip irrigation - a genuine modular planted living wall, not a printed/artificial panel. No unit price published; estimated from Dubai green-wall market bands for irrigated living wall systems (AED 450-700/sqm standard, AED 700-1,000+/sqm premium, per Flowers Yard Landscaping's published 2026 cost guide), positioned mid-range.",
+                  "images": [
+                    "https://www.skytechen.com/wp-content/uploads/2022/10/IMG_0510_800x800.png"
+                  ],
+                  "specs": [
+                    { "label": "System Type", "value": "Prefabricated fabric-pocket living wall" },
+                    { "label": "Panel Size", "value": "1756 x 1080mm (60 planting pockets)" },
+                    { "label": "Irrigation", "value": "Built-in drip irrigation, 2 LPH per pocket" },
+                    { "label": "Fabric", "value": "UV-stabilised polypropylene (Italian-made)" }
+                  ]
+                },
+                {
+                  "name": "Artificial Green Wall Panel - UV-Protected Foliage",
+                  "rate": 300,
+                  "unit": "sqm",
+                  "description": "Zero-maintenance artificial green wall panel sold by Green Art Factory (Dubai) at a listed 'starting from' AED 300, which this file treats as the per-sqm rate (this Dubai retail segment typically quotes per-sqm starting prices rather than fixed panel sizes - exact panel dimensions aren't published). Real, in-stock product with confirmed photography.",
+                  "images": [
+                    "https://www.greenartfactory.com/cdn/shop/files/EcoFriendlyGreenWallDubai.jpg?v=1700677832&width=1945"
+                  ],
+                  "specs": [
+                    { "label": "Type", "value": "UV-protected artificial foliage" },
+                    { "label": "Maintenance", "value": "Zero maintenance, no irrigation needed" },
+                    { "label": "Application", "value": "Reception / breakout area feature walls" }
+                  ]
+                },
+                {
+                  "name": "Preserved Moss Wall Panel",
+                  "rate": 500,
+                  "unit": "sqm",
+                  "description": "Preserved (not live) natural moss wall panel sold by Green Art Factory (Dubai) at a listed 'starting from' AED 500, treated here as the per-sqm rate on the same basis noted above for the artificial green wall panel.",
+                  "images": [
+                    "https://www.greenartfactory.com/cdn/shop/products/MOSSWALLINSHOWROOM.jpg?v=1648976059&width=1946"
+                  ],
+                  "specs": [
+                    { "label": "Material", "value": "Preserved real moss (chemically stabilised, not live)" },
+                    { "label": "Maintenance", "value": "Zero maintenance - no water, soil or light required" },
+                    { "label": "Application", "value": "Reception and showroom feature walls" }
+                  ]
+                },
+                {
+                  "name": "Live Green Wall System with Drip Irrigation",
+                  "rate": 550,
+                  "unit": "sqm",
+                  "description": "Genuine living (planted) wall system from Planters (Dubai/UAE), which has installed over 65,000 sqm of green walls across 100+ UAE projects, using drip irrigation and species selected per site light conditions. No unit price published on their site; estimated mid-range within Flowers Yard Landscaping's published Dubai standard living-wall band of AED 450-700/sqm. No confirmed product photo was found on Planters' site suitable for this specific system (their imagery is project/hero photography, not a discrete SKU shot), so no image is included - see README.",
+                  "specs": [
+                    { "label": "System Type", "value": "Live planted wall (natural, not artificial)" },
+                    { "label": "Irrigation", "value": "Automated drip irrigation" },
+                    { "label": "Plant Selection", "value": "Custom, selected per site light conditions" },
+                    { "label": "Track Record", "value": "65,000+ sqm installed across 100+ UAE projects" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Sliding Partitions",
+          "subtypes": [
+            {
+              "label": "Sliding Panel",
+              "products": [
+                {
+                  "name": "Hufcor 600 Series Operable Wall",
+                  "rate": 1400,
+                  "unit": "sqm",
+                  "description": "Top-hung movable/operable wall system, world-leading Hufcor brand, supplied and installed in the UAE by GFI UAE (Gibca). Acoustic panels up to STC 56 for confidential meeting-room separation. No public price; estimated from real Dubai sliding-partition project pricing (Riaz Glass Dubai's quoted AED 14,000-22,000 for a fully installed acoustic/soundproof 3x3m [9 sqm] partition, i.e. roughly AED 1,550-2,450/sqm for glass acoustic systems), positioned toward the lower end since Hufcor's opaque operable-wall panels are typically more cost-efficient per sqm at the larger scale (ballrooms/conference centres) they're usually specified for.",
+                  "images": [
+                    "https://www.gfiuae.com/_next/image?url=%2Fwp-content%2Fuploads%2F2025%2F08%2FDOHA-convention-centre-2-scaled.webp&w=3840&q=80"
+                  ],
+                  "specs": [
+                    { "label": "Acoustic Rating", "value": "Up to STC 56 (ASTM E-90)" },
+                    { "label": "Panel Configuration", "value": "Omni-directional, paired, or electric continuous hinged" },
+                    { "label": "Seals", "value": "Quick-Set mechanical seals, half-turn handle operation" },
+                    { "label": "Typical Use", "value": "Ballrooms, conference centres, corporate divisible spaces" }
+                  ]
+                },
+                {
+                  "name": "Hufcor Frameless Glass Wall",
+                  "rate": 1600,
+                  "unit": "sqm",
+                  "description": "Frameless sliding/movable glass wall system, Hufcor brand via GFI UAE (Gibca). No public price; estimated from Riaz Glass Dubai's quoted AED 12,000-18,000 for a fully installed frameless 3x3m (9 sqm) sliding glass partition (roughly AED 1,330-2,000/sqm), rounded to a mid-range figure.",
+                  "images": [
+                    "https://www.gfiuae.com/_next/image?url=%2Fwp-content%2Fuploads%2F2025%2F08%2FKohlerGLPnls.jpg.jpg&w=3840&q=80"
+                  ],
+                  "specs": [
+                    { "label": "Track", "value": "Aluminium track, life-cycle tested to ~161km of travel" },
+                    { "label": "Max Height", "value": "~3.5m" },
+                    { "label": "Closure Method", "value": "Flipper panel, pivot panel, or pocket door" },
+                    { "label": "Glass Finish Options", "value": "Sandblasted, etched, ceramic print, or switchable smart glass" }
+                  ]
+                },
+                {
+                  "name": "Hufcor Acoustic Glass Wall",
+                  "rate": 1750,
+                  "unit": "sqm",
+                  "description": "Transparent movable glass wall system with acoustic sealing, Hufcor brand via GFI UAE (Gibca). No public price; estimated toward the upper end of Riaz Glass Dubai's quoted acoustic/soundproof sliding partition range (roughly AED 1,550-2,450/sqm derived from their AED 14,000-22,000 per 3x3m room quote), reflecting the added acoustic engineering.",
+                  "images": [
+                    "https://www.gfiuae.com/_next/image?url=%2Fwp-content%2Fuploads%2F2025%2F09%2Fimgi_34_862d9e_8b8e2469bfca4233aab0247f705ed81emv2.jpg&w=3840&q=80"
+                  ],
+                  "specs": [
+                    { "label": "Acoustic Rating", "value": "Up to STC 46 (system), STC 44 (single panel) per AS1191-1985" },
+                    { "label": "Track", "value": "Clear anodized aluminium, 6063-T6" },
+                    { "label": "Max Height", "value": "~4m" },
+                    { "label": "Seal Type", "value": "Deep tongue-and-groove with dual vinyl gaskets" }
+                  ]
+                },
+                {
+                  "name": "Aluminium-Framed Sliding Glass Partition - 10mm Tempered",
+                  "rate": 1100,
+                  "unit": "sqm",
+                  "description": "Standard aluminium-framed sliding glass office partition, 10mm tempered glass, supplied and installed by Riaz Glass Dubai. Rate derived directly from their published fully-installed project price of AED 8,000-12,000 for a 3x3m (9 sqm) meeting room, i.e. roughly AED 890-1,330/sqm - midpoint used here.",
+                  "images": [
+                    "https://www.riazglassdubai.com/wp-content/uploads/2026/05/Sliding-Glass-Partition-Dubai.webp"
+                  ],
+                  "specs": [
+                    { "label": "Glass Thickness", "value": "10mm tempered (8mm budget / 12mm premium also offered)" },
+                    { "label": "Frame", "value": "Aluminium framed, top-hung track" },
+                    { "label": "Space Saving", "value": "Up to 15% floor space vs. swing doors" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
