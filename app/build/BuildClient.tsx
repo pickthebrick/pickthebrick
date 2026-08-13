@@ -31,6 +31,16 @@ const SQM_TO_SQFT = 10.7639;
 
 type BannerData = { id: string; imagePath: string; linkUrl: string | null; title: string | null };
 
+// So a client never lands on (or switches into) an empty Step 2/3 - picks
+// the first type of a category, and the first style of a type, same order
+// they're rendered in the tab-row/chip-row below.
+function firstTypeKey(catalog: Catalog, categoryKey: string): string | null {
+  return Object.keys(catalog.catalog[categoryKey] ?? {})[0] ?? null;
+}
+function firstSubtypeKey(catalog: Catalog, categoryKey: string, typeKey: string): string | null {
+  return Object.keys(catalog.catalog[categoryKey]?.[typeKey]?.subtypes ?? {})[0] ?? null;
+}
+
 // Per-product unit helpers - a subtype can mix units (e.g. mostly sqm with one
 // count item), so these take the line/product's own unit instead of closing
 // over a single category-wide unit.
@@ -125,9 +135,12 @@ export default function BuildClient({
   const doRemoveCartItem = editAsCaptain ? captainRemoveCartItem : removeCartItem;
   const doSetQuoteDetails = editAsCaptain ? captainSetQuoteDetails : setQuoteDetails;
 
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(catalog.enabledCategories[0] ?? null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
+  const initialCategory = catalog.enabledCategories[0] ?? null;
+  const initialType = initialCategory ? firstTypeKey(catalog, initialCategory) : null;
+  const initialSubtype = initialCategory && initialType ? firstSubtypeKey(catalog, initialCategory, initialType) : null;
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory);
+  const [selectedType, setSelectedType] = useState<string | null>(initialType);
+  const [selectedSubtype, setSelectedSubtype] = useState<string | null>(initialSubtype);
   const [displayUnit, setDisplayUnit] = useState<"sqm" | "sqft">("sqm");
   const [qtyDraft, setQtyDraft] = useState<Record<string, number>>({});
 
@@ -288,12 +301,13 @@ export default function BuildClient({
 
   function selectCategory(key: string) {
     setSelectedCategory(key);
-    setSelectedType(null);
-    setSelectedSubtype(null);
+    const typeKey = firstTypeKey(catalog, key);
+    setSelectedType(typeKey);
+    setSelectedSubtype(typeKey ? firstSubtypeKey(catalog, key, typeKey) : null);
   }
   function selectType(key: string) {
     setSelectedType(key);
-    setSelectedSubtype(null);
+    setSelectedSubtype(selectedCategory ? firstSubtypeKey(catalog, selectedCategory, key) : null);
   }
   function categoryHasItems(key: string) {
     const label = catalog.categoryMeta[key]?.label;
