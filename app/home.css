@@ -410,6 +410,18 @@
   }
 }
 
+/* ---------- hero isometric illustration (swapped in from the estimator row) ---------- */
+.home-hero-iso {
+  display: flex;
+  justify-content: center;
+}
+.home-hero-iso-img {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  display: block;
+}
+
 /* ---------- closing parallax band (shared: home + design) ---------- */
 .parallax-cta {
   position: relative;
@@ -479,6 +491,13 @@
 .home-iso-section {
   display: flex;
   justify-content: flex-end;
+}
+/* The demo card's width used to come for free from the hero's equal 1fr/1fr
+   grid columns - here it's the wider side of an asymmetric grid, so give it
+   an explicit cap instead of letting it shrink to its content's minimum. */
+.home-iso-section .hero-demo-card {
+  width: 100%;
+  max-width: 480px;
 }
 .home-iso-img {
   width: 100%;
