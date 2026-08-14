@@ -88,7 +88,7 @@ export default async function BuildPage({
           contactEmail: true,
         },
       }),
-      prisma.user.findUnique({ where: { id: session.id }, select: { logoUrl: true } }),
+      prisma.user.findUnique({ where: { id: session.id }, select: { logoUrl: true, company: true } }),
     ]);
     if (!quote || quote.contractorId !== session.id) redirect("/contractor");
 
@@ -108,6 +108,7 @@ export default async function BuildPage({
         initialOfficeSize={quote.officeSize}
         editAsContractor
         brandLogoUrl={contractor?.logoUrl ?? null}
+        brandCompanyName={contractor?.company ?? null}
         initialClientName={quote.contactName ?? undefined}
         initialClientPhone={quote.contactPhone ?? undefined}
         initialClientEmail={quote.contactEmail ?? undefined}

@@ -18,7 +18,9 @@ export default function PdfDownloadButton({
   referenceNumber,
   clientName,
   brandLogoUrl,
+  brandCompanyName,
   poweredByPickTheBrick,
+  onDownloaded,
 }: {
   items: {
     name: string;
@@ -36,7 +38,12 @@ export default function PdfDownloadButton({
   clientName?: string | null;
   // Contractor-only - see buildQuotePdf's matching params in lib/quotePdf.ts.
   brandLogoUrl?: string | null;
+  brandCompanyName?: string | null;
   poweredByPickTheBrick?: boolean;
+  // Contractor-only - fires after a successful download so the caller can
+  // mark the quote completed (see contractorMarkQuoteCompleted in
+  // app/actions/quotes.ts). Not used by the plain client my-quotes list.
+  onDownloaded?: () => void;
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -59,6 +66,7 @@ export default function PdfDownloadButton({
         referenceNumber,
         clientName,
         brandLogoUrl,
+        brandCompanyName,
         poweredByPickTheBrick,
       });
       doc.save(
@@ -66,6 +74,7 @@ export default function PdfDownloadButton({
           ? `Quotation-${referenceNumber?.replace(/\//g, "-") ?? "draft"}.pdf`
           : `PickTheBrick-Quotation-${referenceNumber?.replace(/\//g, "-") ?? "draft"}.pdf`,
       );
+      onDownloaded?.();
     } finally {
       setBusy(false);
     }

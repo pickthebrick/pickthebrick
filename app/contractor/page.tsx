@@ -65,13 +65,13 @@ export default async function ContractorPage() {
       where: { contractorId: session.id },
       select: { categories: { select: { categoryId: true } } },
     }),
-    prisma.user.findUnique({ where: { id: session.id }, select: { logoUrl: true } }),
+    prisma.user.findUnique({ where: { id: session.id }, select: { logoUrl: true, company: true } }),
     // A contractor's own quotes for their own clients - never a real
     // PickTheBrick-brokered project (see createContractorQuote in
     // app/actions/quotes.ts), so this is a separate list from `assignments`
     // above, which is real PTB project work assigned to this contractor.
     prisma.quote.findMany({
-      where: { contractorId: session.id },
+      where: { contractorId: session.id, contractorHiddenAt: null },
       select: {
         id: true,
         contactName: true,
@@ -167,7 +167,13 @@ export default async function ContractorPage() {
       <header>
         <BrandMark role="Contractor" logoUrl={contractor?.logoUrl} />
       </header>
-      <ContractorClient assignments={assignments} openJobs={openJobsForClient} myQuotes={myQuotesForClient} />
+      <ContractorClient
+        assignments={assignments}
+        openJobs={openJobsForClient}
+        myQuotes={myQuotesForClient}
+        logoUrl={contractor?.logoUrl}
+        companyName={contractor?.company}
+      />
     </div>
   );
 }

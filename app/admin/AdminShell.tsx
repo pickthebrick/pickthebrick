@@ -12,6 +12,7 @@ export type AdminSection =
   | "designer"
   | "applications"
   | "contractorPricing"
+  | "contractorQuotes"
   | "projects"
   | "database"
   | "notifications"
@@ -29,6 +30,7 @@ const NAV_ITEMS: { key: AdminSection; label: string; href: string; superAdminOnl
   { key: "designer", label: "Designer", href: "/admin/designer" },
   { key: "applications", label: "Applications", href: "/admin/applications" },
   { key: "contractorPricing", label: "Contractor Pricing", href: "/admin/contractor-pricing", superAdminOnly: true },
+  { key: "contractorQuotes", label: "Contractor Quotes", href: "/admin/contractor-quotes" },
   { key: "projects", label: "Projects", href: "/admin/projects" },
   { key: "database", label: "Database", href: "/admin/database" },
   { key: "notifications", label: "Notifications", href: "/admin/notifications" },
