@@ -12,6 +12,8 @@ import {
   captainUpsertCartItem,
   captainRemoveCartItem,
   captainSetQuoteDetails,
+  captainUpsertManualItem,
+  captainRemoveManualItem,
   contractorUpsertCartItem,
   contractorRemoveCartItem,
   contractorSetQuoteDetails,
@@ -183,6 +185,11 @@ export default function BuildClient({
   const doUpsertCartItem = editAsCaptain ? captainUpsertCartItem : editAsContractor ? contractorUpsertCartItem : upsertCartItem;
   const doRemoveCartItem = editAsCaptain ? captainRemoveCartItem : editAsContractor ? contractorRemoveCartItem : removeCartItem;
   const doSetQuoteDetails = editAsCaptain ? captainSetQuoteDetails : editAsContractor ? contractorSetQuoteDetails : setQuoteDetails;
+  // "Add a custom item" is Captain/contractor-only (see canAddManualItem
+  // below) - a plain client never reaches these, so there's no third branch.
+  const doUpsertManualItem = editAsCaptain ? captainUpsertManualItem : contractorUpsertManualItem;
+  const doRemoveManualItem = editAsCaptain ? captainRemoveManualItem : contractorRemoveManualItem;
+  const canAddManualItem = editAsCaptain || editAsContractor;
 
   const initialCategory = catalog.enabledCategories[0] ?? null;
   const initialType = initialCategory ? firstTypeKey(catalog, initialCategory) : null;
@@ -410,15 +417,16 @@ export default function BuildClient({
   }
 
   // A catalog line persists through the usual upsert-by-productId actions; a
-  // contractor's manual line (no productId) has no catalog counterpart to
-  // key that off, so it goes through contractorUpsertManualItem by its own
-  // itemId instead. Both paths end up on the same CartLine shape either way,
-  // so every qty/rate edit below can share this one dispatcher.
+  // manually-typed line (no productId, Captain/contractor only) has no
+  // catalog counterpart to key that off, so it goes through
+  // doUpsertManualItem by its own itemId instead. Both paths end up on the
+  // same CartLine shape either way, so every qty/rate edit below can share
+  // this one dispatcher.
   function persistLine(line: CartLine) {
     if (line.productId) {
       doUpsertCartItem(quoteId, { ...line, productId: line.productId }).catch((e) => setError(e.message));
     } else if (line.itemId) {
-      contractorUpsertManualItem(quoteId, {
+      doUpsertManualItem(quoteId, {
         itemId: line.itemId,
         name: line.name,
         categoryLabel: line.categoryLabel,
@@ -475,11 +483,11 @@ export default function BuildClient({
     if (target.productId) {
       doRemoveCartItem(quoteId, target.productId).catch((e) => setError(e.message));
     } else if (target.itemId) {
-      contractorRemoveManualItem(quoteId, target.itemId).catch((e) => setError(e.message));
+      doRemoveManualItem(quoteId, target.itemId).catch((e) => setError(e.message));
     }
   }
 
-  // Adds or edits a contractor's own manually-typed line (see
+  // Adds or edits a Captain/contractor's own manually-typed line (see
   // ManualItemModal.tsx) - awaited (unlike the optimistic paths above) so a
   // save failure surfaces in the modal itself instead of the item silently
   // vanishing after an optimistic add. New items get the server-assigned
@@ -492,7 +500,7 @@ export default function BuildClient({
     unit: Unit;
     qty: number;
   }) {
-    const savedId = await contractorUpsertManualItem(quoteId, input);
+    const savedId = await doUpsertManualItem(quoteId, input);
     setCart((prev) => {
       const line: CartLine = { productId: null, itemId: savedId, typeLabel: "", subtypeLabel: "", ...input };
       if (input.itemId) {
@@ -986,7 +994,7 @@ export default function BuildClient({
               </div>
             )}
 
-            {editAsContractor && (
+            {canAddManualItem && (
               <button type="button" className="add-custom-item-btn" onClick={() => setManualItemModal("new")}>
                 + Add a custom item
               </button>
