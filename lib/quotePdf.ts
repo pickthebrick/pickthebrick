@@ -15,9 +15,28 @@ export type QuotePdfItem = {
   productId?: string | null;
 };
 
+// R2 serves uploaded images (product photos, contractor logos) without CORS
+// headers - fine for a plain <img>, but this function needs the actual pixel
+// bytes via fetch(), which a browser blocks cross-origin without one. Routing
+// through our own same-origin proxy (app/api/image-proxy/route.ts, which
+// fetches the real bytes server-side where CORS doesn't apply) sidesteps
+// that entirely. Only R2 URLs need this - picsum.photos placeholders and
+// same-origin paths like /logo.png already load fine as-is.
+function proxiedUrl(url: string): string {
+  if (url.startsWith("/")) return url;
+  try {
+    if (new URL(url).host.endsWith(".r2.dev")) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+  } catch {
+    // Not a valid absolute URL - fall through and let fetch() below reject it.
+  }
+  return url;
+}
+
 async function loadImageAsDataUrl(url: string): Promise<{ dataUrl: string; ratio: number } | null> {
   try {
-    const res = await fetch(url);
+    const res = await fetch(proxiedUrl(url));
     const blob = await res.blob();
     const bitmap = await createImageBitmap(blob);
     const ratio = bitmap.width / bitmap.height;
