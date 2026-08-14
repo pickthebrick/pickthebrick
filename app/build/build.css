@@ -1398,6 +1398,12 @@
   }
   .ptb-build header {
     padding: 10px 16px;
+    /* Still reserve room for the fixed account bar here - it only moves from
+       top-right to bottom-right at 700px (see .account-bar in globals.css),
+       so this wider range must keep protecting the header's own right-aligned
+       content (e.g. contractor mode's "Back to dashboard" link). Relaxed back
+       to 16px below, once the account bar itself has moved. */
+    padding-right: 100px;
     flex-wrap: wrap;
     row-gap: 8px;
   }
@@ -1470,6 +1476,14 @@
   }
   .ptb-build .product-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* .account-bar itself moves from top-right to bottom-right at this width
+   (see globals.css) - only now can the header give that reserved space back. */
+@media (max-width: 700px) {
+  .ptb-build header {
+    padding-right: 16px;
   }
 }
 
