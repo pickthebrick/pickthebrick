@@ -37,8 +37,13 @@ export default function ManualItemModal({
   onSave: (input: { itemId?: string; name: string; categoryLabel: string; rate: number; unit: Unit; qty: number }) => Promise<void>;
   onClose: () => void;
 }) {
+  // "Other" is a backend-only bucket for a custom line that doesn't fit any
+  // real catalog category - it's not a real Category row, so it can never
+  // show up in the client-facing browsing sidebar/filters, only as this
+  // item's own label wherever it's displayed (cart, PDF, admin).
+  const categoryOptions = [...categories, "Other"];
   const [name, setName] = useState(initial?.name ?? "");
-  const [categoryLabel, setCategoryLabel] = useState(initial?.categoryLabel ?? categories[0] ?? "");
+  const [categoryLabel, setCategoryLabel] = useState(initial?.categoryLabel ?? categoryOptions[0] ?? "");
   const [unit, setUnit] = useState<Unit>(initial?.unit ?? "count");
   const [rate, setRate] = useState(initial ? String(initial.rate) : "");
   const [qty, setQty] = useState(initial ? String(initial.qty) : "1");
@@ -99,13 +104,13 @@ export default function ManualItemModal({
               <div className="modal-section-label" style={{ margin: "0 0 6px" }}>
                 Item name
               </div>
-              <input
-                type="text"
+              <textarea
                 required
-                placeholder="e.g. Custom joinery unit"
+                rows={3}
+                placeholder="e.g. Custom joinery unit - built-in reception desk with laminate finish, cable cutouts, and soft-close drawers"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                style={inputStyle}
+                style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
               />
             </div>
             <div>
@@ -113,7 +118,7 @@ export default function ManualItemModal({
                 Category
               </div>
               <select value={categoryLabel} onChange={(e) => setCategoryLabel(e.target.value)} style={inputStyle}>
-                {categories.map((c) => (
+                {categoryOptions.map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>

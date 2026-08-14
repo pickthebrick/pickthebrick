@@ -202,6 +202,56 @@ export async function captainSetQuoteDetails(quoteId: string, location: string, 
   revalidatePath("/my-quotes");
 }
 
+// A line the Captain typed themselves rather than picked from the catalog -
+// same shape as contractorUpsertManualItem below, just scoped to a real
+// captain_confirmed client quote instead of a contractor's own sandbox one.
+// productId stays null, so it never has a picture (ProductThumb/
+// buildQuotePdf/QuotesClient's admin thumbnail all already handle that).
+export async function captainUpsertManualItem(quoteId: string, input: ManualItemInput) {
+  const session = await requireSession();
+  if (session.role !== Role.captain) throw new Error("Captain only");
+  await assertCaptainOwnsQuote(quoteId, session.id);
+
+  if (!input.name.trim()) throw new Error("Please give this item a name");
+
+  const data = {
+    name: input.name.trim(),
+    categoryLabel: input.categoryLabel,
+    typeLabel: "",
+    subtypeLabel: "",
+    rate: input.rate,
+    unit: input.unit,
+    qty: input.qty,
+    amount: input.rate * input.qty,
+  };
+
+  if (input.itemId) {
+    const existing = await prisma.quoteItem.findUnique({ where: { id: input.itemId } });
+    if (!existing || existing.quoteId !== quoteId || existing.productId) {
+      throw new Error("Item not found");
+    }
+    await prisma.quoteItem.update({ where: { id: input.itemId }, data });
+    await recalcTotals(quoteId);
+    revalidatePath("/my-quotes");
+    return input.itemId;
+  }
+
+  const created = await prisma.quoteItem.create({ data: { ...data, quoteId } });
+  await recalcTotals(quoteId);
+  revalidatePath("/my-quotes");
+  return created.id;
+}
+
+export async function captainRemoveManualItem(quoteId: string, itemId: string) {
+  const session = await requireSession();
+  if (session.role !== Role.captain) throw new Error("Captain only");
+  await assertCaptainOwnsQuote(quoteId, session.id);
+
+  await prisma.quoteItem.deleteMany({ where: { id: itemId, quoteId, productId: null } });
+  await recalcTotals(quoteId);
+  revalidatePath("/my-quotes");
+}
+
 // A contractor building a quote for their own client - never a real
 // PickTheBrick-brokered project, so no status restriction here (unlike
 // assertCaptainOwnsQuote's captain_confirmed gate): a contractor-owned quote
