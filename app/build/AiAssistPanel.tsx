@@ -180,7 +180,9 @@ export default function AiAssistPanel({
     try {
       recordAiAssistAcceptance(
         result.sessionId,
-        lines.map((l) => l.productId)
+        // AI Assist only ever suggests real catalog products, so every line
+        // here always has a productId.
+        lines.map((l) => l.productId!)
       ).catch(() => {});
       // Only closes once every item is confirmed saved - see
       // handleAiAssistAddLines in BuildClient.tsx for why this must be

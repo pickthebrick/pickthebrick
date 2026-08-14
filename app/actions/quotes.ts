@@ -252,6 +252,11 @@ export async function contractorUpsertCartItem(quoteId: string, line: CartLineIn
       amount: line.rate * line.qty,
     },
     update: {
+      // Also persists rate (unlike the captain/client version of this
+      // upsert) - a contractor can edit a catalog item's price for their own
+      // client (see the rate input in BuildClient.tsx's cart line), and a
+      // plain qty change here must not clobber that back to the catalog rate.
+      rate: line.rate,
       qty: line.qty,
       amount: line.rate * line.qty,
     },
@@ -306,6 +311,67 @@ export async function contractorSetClientContact(quoteId: string, name: string, 
       contactEmail: email.trim() || null,
     },
   });
+  revalidatePath("/contractor");
+}
+
+export type ManualItemInput = {
+  // Set when editing an existing manual line (its own QuoteItem id, since it
+  // has no productId to key off) - omitted when adding a new one.
+  itemId?: string;
+  name: string;
+  categoryLabel: string;
+  rate: number;
+  unit: Unit;
+  qty: number;
+};
+
+// A line the contractor typed themselves rather than picked from the
+// catalog - productId stays null, so it never has a picture (ProductThumb/
+// buildQuotePdf both already skip the thumbnail without one). typeLabel/
+// subtypeLabel don't apply here (there's no catalog type/subtype), so they're
+// just stored empty rather than adding nullable columns for a single lane.
+export async function contractorUpsertManualItem(quoteId: string, input: ManualItemInput) {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Contractor only");
+  await assertContractorOwnsQuote(quoteId, session.id);
+
+  if (!input.name.trim()) throw new Error("Please give this item a name");
+
+  const data = {
+    name: input.name.trim(),
+    categoryLabel: input.categoryLabel,
+    typeLabel: "",
+    subtypeLabel: "",
+    rate: input.rate,
+    unit: input.unit,
+    qty: input.qty,
+    amount: input.rate * input.qty,
+  };
+
+  if (input.itemId) {
+    const existing = await prisma.quoteItem.findUnique({ where: { id: input.itemId } });
+    if (!existing || existing.quoteId !== quoteId || existing.productId) {
+      throw new Error("Item not found");
+    }
+    await prisma.quoteItem.update({ where: { id: input.itemId }, data });
+    await recalcTotals(quoteId);
+    revalidatePath("/contractor");
+    return input.itemId;
+  }
+
+  const created = await prisma.quoteItem.create({ data: { ...data, quoteId } });
+  await recalcTotals(quoteId);
+  revalidatePath("/contractor");
+  return created.id;
+}
+
+export async function contractorRemoveManualItem(quoteId: string, itemId: string) {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Contractor only");
+  await assertContractorOwnsQuote(quoteId, session.id);
+
+  await prisma.quoteItem.deleteMany({ where: { id: itemId, quoteId, productId: null } });
+  await recalcTotals(quoteId);
   revalidatePath("/contractor");
 }
 
