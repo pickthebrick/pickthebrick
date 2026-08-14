@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { isAdminRole, ADMIN_ROLES } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { resolveActor, actorOwns, type Actor } from "@/lib/actor";
-import { Role, QuoteStatus, type Unit } from "@/app/generated/prisma/enums";
+import { Role, QuoteStatus, ContractorPlan, type Unit } from "@/app/generated/prisma/enums";
+import { getContractorQuoteLimit } from "@/lib/contractorPlan";
 import {
   sendQuoteSubmittedEmail,
   sendQuoteSubmittedAdminAlertEmail,
@@ -273,6 +274,23 @@ async function assertContractorOwnsQuote(quoteId: string, contractorId: string) 
 export async function createContractorQuote() {
   const session = await requireSession();
   if (session.role !== Role.contractor) throw new Error("Contractor only");
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.id },
+    select: { contractorPlan: true, contractorFreeQuotaOverride: true },
+  });
+  if (user?.contractorPlan !== ContractorPlan.paid) {
+    // Counts every quote this contractor has ever downloaded a PDF for
+    // (contractorCompletedAt), same figure the admin Contractor Quotes tab
+    // shows - deliberately NOT filtered by contractorHiddenAt, so "deleting"
+    // a quote from their own dashboard doesn't refund their quota.
+    const completedCount = await prisma.quote.count({
+      where: { contractorId: session.id, contractorCompletedAt: { not: null } },
+    });
+    if (completedCount >= getContractorQuoteLimit(user?.contractorFreeQuotaOverride)) {
+      throw new Error("You've used all your free quotes - upgrade to keep building quotes for your clients.");
+    }
+  }
 
   const created = await prisma.quote.create({ data: { contractorId: session.id, status: QuoteStatus.draft } });
   revalidatePath("/contractor");

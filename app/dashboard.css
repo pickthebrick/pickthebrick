@@ -1309,6 +1309,115 @@
   justify-content: space-between;
   margin-bottom: 4px;
 }
+/* ---------- contractor free-quote quota (see ContractorClient.tsx) ---------- */
+.ptb-dash .quota-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 260px;
+}
+.ptb-dash .quota-bar-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.ptb-dash .quota-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+.ptb-dash .quota-bar-fill.warn {
+  background: #b91c1c;
+}
+.ptb-dash .quota-bar-fill.full {
+  background: #b91c1c;
+}
+.ptb-dash .quota-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ptb-dash .quota-paywall {
+  background: #fbeceb;
+  border: 1.5px solid #b91c1c;
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.ptb-dash .quota-paywall-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #b91c1c;
+  margin-bottom: 6px;
+}
+.ptb-dash .quota-paywall-body {
+  font-size: 13px;
+  color: var(--fg);
+  margin: 0 0 12px;
+}
+.ptb-dash a.quota-upgrade-btn {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  border: none;
+  border-radius: var(--radius);
+  background: #b91c1c;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--fg);
+}
+/* ---------- admin: /admin/contractor-quotes plan column/action ---------- */
+.ptb-dash .quota-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.ptb-dash .quota-pill.free {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.ptb-dash .quota-pill.warn {
+  background: #fdf1e0;
+  color: #a05a00;
+}
+.ptb-dash .quota-pill.limit {
+  background: #fbeceb;
+  color: #b91c1c;
+}
+.ptb-dash .quota-pill.paid {
+  background: #e2ecdf;
+  color: #2f7d4f;
+}
+.ptb-dash .quota-admin-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-deep);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ptb-dash .quota-admin-link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ptb-dash .quota-admin-error {
+  color: #b91c1c;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
 .ptb-dash .progress-track {
   margin-bottom: 16px;
 }

@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Role } from "@/app/generated/prisma/enums";
 import { ROLE_HOME, isAdminRole } from "@/lib/roles";
+import { getContractorQuoteLimit } from "@/lib/contractorPlan";
 import AdminShell from "../AdminShell";
+import ContractorQuotesClient from "./ContractorQuotesClient";
 import "../../dashboard.css";
 
 export default async function AdminContractorQuotesPage() {
@@ -15,8 +17,8 @@ export default async function AdminContractorQuotesPage() {
   // (contractorCompletedAt), regardless of whether they later deleted it
   // from their own dashboard (deleteContractorQuote only sets
   // contractorHiddenAt - the row and this count are unaffected) - this is
-  // the backed-up "quotes created" figure the business will eventually
-  // price a per-quote service against.
+  // the same figure createContractorQuote checks against the free-quote
+  // limit (lib/contractorPlan.ts).
   const contractors = await prisma.user.findMany({
     where: { role: Role.contractor },
     select: {
@@ -24,6 +26,9 @@ export default async function AdminContractorQuotesPage() {
       fullName: true,
       company: true,
       email: true,
+      contractorPlan: true,
+      contractorPlanUpdatedAt: true,
+      contractorFreeQuotaOverride: true,
       quotesAsContractor: {
         where: { contractorCompletedAt: { not: null } },
         select: { contractorCompletedAt: true },
@@ -41,6 +46,9 @@ export default async function AdminContractorQuotesPage() {
       email: c.email,
       count: c.quotesAsContractor.length,
       lastQuoteAt: c.quotesAsContractor[0]?.contractorCompletedAt ?? null,
+      plan: c.contractorPlan,
+      planUpdatedAt: c.contractorPlanUpdatedAt,
+      quotaLimit: getContractorQuoteLimit(c.contractorFreeQuotaOverride),
     }))
     .sort((a, b) => b.count - a.count);
 
@@ -50,9 +58,9 @@ export default async function AdminContractorQuotesPage() {
     <AdminShell active="contractorQuotes" isSuperAdmin={session.role === Role.super_admin}>
       <h1>Contractor Quotes</h1>
       <p className="sub">
-        How many free client quotes each contractor has built and downloaded via their own dashboard. Kept as a
-        permanent record even if the contractor later deletes the quote from their side - the future basis for
-        billing this as a per-quote service.
+        How many free client quotes each contractor has built and downloaded via their own dashboard, and whether
+        they&apos;ve hit the free limit and need to be moved to a paid plan. Kept as a permanent record even if the
+        contractor later deletes the quote from their side.
       </p>
       {rows.length === 0 ? (
         <div className="empty">No contractor accounts yet.</div>
@@ -62,28 +70,7 @@ export default async function AdminContractorQuotesPage() {
             {totalQuotes} quote{totalQuotes !== 1 ? "s" : ""} downloaded across {rows.length} contractor
             {rows.length !== 1 ? "s" : ""}.
           </p>
-          <table>
-            <thead>
-              <tr>
-                <th>Contractor</th>
-                <th>Company</th>
-                <th>Email</th>
-                <th>Quotes downloaded</th>
-                <th>Last quote</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.fullName ?? "-"}</td>
-                  <td>{r.company ?? "-"}</td>
-                  <td>{r.email}</td>
-                  <td>{r.count}</td>
-                  <td>{r.lastQuoteAt ? new Date(r.lastQuoteAt).toLocaleDateString() : "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ContractorQuotesClient rows={rows} />
         </>
       )}
     </AdminShell>

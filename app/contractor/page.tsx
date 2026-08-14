@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { Role, TimelineItemStatus } from "@/app/generated/prisma/enums";
 import { ROLE_HOME } from "@/lib/roles";
 import { applyContractorReduction } from "@/lib/contractorPricing";
+import { getContractorQuoteLimit } from "@/lib/contractorPlan";
 import BrandMark from "@/app/components/BrandMark";
 import ContractorClient from "./ContractorClient";
 import "../dashboard.css";
@@ -13,7 +14,7 @@ export default async function ContractorPage() {
   if (!session) redirect("/login");
   if (session.role !== Role.contractor) redirect(ROLE_HOME[session.role]);
 
-  const [assignments, contractorApp, contractor, myQuotes] = await Promise.all([
+  const [assignments, contractorApp, contractor, myQuotes, completedQuoteCount] = await Promise.all([
     prisma.projectTimelineItem.findMany({
       where: { contractorId: session.id, status: TimelineItemStatus.assigned },
       select: {
@@ -65,7 +66,10 @@ export default async function ContractorPage() {
       where: { contractorId: session.id },
       select: { categories: { select: { categoryId: true } } },
     }),
-    prisma.user.findUnique({ where: { id: session.id }, select: { logoUrl: true, company: true } }),
+    prisma.user.findUnique({
+      where: { id: session.id },
+      select: { logoUrl: true, company: true, contractorPlan: true, contractorFreeQuotaOverride: true },
+    }),
     // A contractor's own quotes for their own clients - never a real
     // PickTheBrick-brokered project (see createContractorQuote in
     // app/actions/quotes.ts), so this is a separate list from `assignments`
@@ -93,6 +97,11 @@ export default async function ContractorPage() {
       },
       orderBy: { createdAt: "desc" },
     }),
+    // Counts every quote ever downloaded, not just the ones still visible in
+    // "My client quotes" above (that list excludes contractorHiddenAt) -
+    // deleting one from the dashboard doesn't refund the quota it already
+    // used (see createContractorQuote's matching check).
+    prisma.quote.count({ where: { contractorId: session.id, contractorCompletedAt: { not: null } } }),
   ]);
 
   // An unassigned timeline item only has a categoryId - its type isn't
@@ -173,6 +182,9 @@ export default async function ContractorPage() {
         myQuotes={myQuotesForClient}
         logoUrl={contractor?.logoUrl}
         companyName={contractor?.company}
+        contractorPlan={contractor?.contractorPlan ?? "free"}
+        quotaUsed={completedQuoteCount}
+        quotaLimit={getContractorQuoteLimit(contractor?.contractorFreeQuotaOverride)}
       />
     </div>
   );
