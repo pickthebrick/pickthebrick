@@ -17,6 +17,8 @@ import {
   contractorSetQuoteDetails,
   contractorSetClientContact,
   contractorMarkQuoteCompleted,
+  contractorUpsertManualItem,
+  contractorRemoveManualItem,
 } from "@/app/actions/quotes";
 import type { Catalog, CatalogProduct } from "@/lib/catalog";
 import type { CartLine } from "@/lib/quotes";
@@ -25,6 +27,7 @@ import { buildQuotePdf } from "@/lib/quotePdf";
 import { ProductThumb } from "./ProductThumb";
 import ProductModal from "./ProductModal";
 import QuoteDetailsModal from "./QuoteDetailsModal";
+import ManualItemModal from "./ManualItemModal";
 import TermsSection from "./TermsSection";
 import AiAssistPanel from "./AiAssistPanel";
 import AuthGate from "@/app/components/AuthGate";
@@ -75,6 +78,14 @@ function baseUnitLabel(unit: Unit) {
   if (unit === "count") return "Nos";
   if (unit === "lm") return "lm";
   return "sqm";
+}
+// A catalog line's stable identity is its productId; a contractor's manually
+// typed line has no productId, so its own QuoteItem id (itemId) stands in
+// instead - see CartLine in lib/quotes.ts. Used everywhere a cart line needs
+// a React key or a lookup key, since productId alone can no longer be
+// assumed unique (every manual line would otherwise collide at `null`).
+function lineKey(l: CartLine): string {
+  return l.productId ?? l.itemId!;
 }
 
 export default function BuildClient({
@@ -204,6 +215,11 @@ export default function BuildClient({
   const [awaitingPhoneVerify, setAwaitingPhoneVerify] = useState(false);
   const [modalProductId, setModalProductId] = useState<string | null>(null);
   const [showAiAssist, setShowAiAssist] = useState(false);
+  // Contractor-only: null when the "add custom item" modal is closed, a
+  // CartLine when reopened to edit an existing manual one (see
+  // ManualItemModal.tsx) - "not open" and "open for a new item" are the
+  // same false-ish default, so a sentinel object marks "open, blank".
+  const [manualItemModal, setManualItemModal] = useState<CartLine | "new" | null>(null);
 
   // Resumes the "I'm done" confirm step after a Google OAuth round-trip -
   // that's a full-page navigation away and back (see AuthGate.tsx's
@@ -235,7 +251,7 @@ export default function BuildClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const cartMap = useMemo(() => new Map(cart.map((l) => [l.productId, l])), [cart]);
+  const cartMap = useMemo(() => new Map(cart.map((l) => [lineKey(l), l])), [cart]);
   // Flat id -> product lookup so the cart/preview thumbnails (which only
   // store a snapshot, not a live catalog reference) can still show a real
   // uploaded image when one exists.
@@ -390,37 +406,101 @@ export default function BuildClient({
       qty,
     };
     setCart((prev) => [...prev, line]);
-    doUpsertCartItem(quoteId, line).catch((e) => setError(e.message));
+    doUpsertCartItem(quoteId, { ...line, productId: product.id }).catch((e) => setError(e.message));
   }
 
-  function changeLineQty(productId: string, deltaDisplay: number) {
+  // A catalog line persists through the usual upsert-by-productId actions; a
+  // contractor's manual line (no productId) has no catalog counterpart to
+  // key that off, so it goes through contractorUpsertManualItem by its own
+  // itemId instead. Both paths end up on the same CartLine shape either way,
+  // so every qty/rate edit below can share this one dispatcher.
+  function persistLine(line: CartLine) {
+    if (line.productId) {
+      doUpsertCartItem(quoteId, { ...line, productId: line.productId }).catch((e) => setError(e.message));
+    } else if (line.itemId) {
+      contractorUpsertManualItem(quoteId, {
+        itemId: line.itemId,
+        name: line.name,
+        categoryLabel: line.categoryLabel,
+        rate: line.rate,
+        unit: line.unit,
+        qty: line.qty,
+      }).catch((e) => setError(e.message));
+    }
+  }
+
+  function changeLineQty(target: CartLine, deltaDisplay: number) {
     setCart((prev) =>
       prev.map((l) => {
-        if (l.productId !== productId) return l;
+        if (lineKey(l) !== lineKey(target)) return l;
         const currentDisplay = toDisplayQty(l.qty, l.unit, displayUnit);
         const updated = { ...l, qty: fromDisplayQty(currentDisplay + deltaDisplay, l.unit, displayUnit) };
-        doUpsertCartItem(quoteId, updated).catch((e) => setError(e.message));
+        persistLine(updated);
         return updated;
       })
     );
   }
 
-  function setLineQty(productId: string, displayValue: string) {
+  function setLineQty(target: CartLine, displayValue: string) {
     const parsed = parseFloat(displayValue);
     if (Number.isNaN(parsed)) return;
     setCart((prev) =>
       prev.map((l) => {
-        if (l.productId !== productId) return l;
+        if (lineKey(l) !== lineKey(target)) return l;
         const updated = { ...l, qty: fromDisplayQty(parsed, l.unit, displayUnit) };
-        doUpsertCartItem(quoteId, updated).catch((e) => setError(e.message));
+        persistLine(updated);
         return updated;
       })
     );
   }
 
-  function removeLine(productId: string) {
-    setCart((prev) => prev.filter((l) => l.productId !== productId));
-    doRemoveCartItem(quoteId, productId).catch((e) => setError(e.message));
+  // Contractor-only - lets them override a catalog item's price, or a manual
+  // item's own price, for their own client (see the rate input in the cart
+  // line UI below, gated on editAsContractor).
+  function setLineRate(target: CartLine, rateValue: string) {
+    const parsed = parseFloat(rateValue);
+    if (!Number.isFinite(parsed) || parsed < 0) return;
+    setCart((prev) =>
+      prev.map((l) => {
+        if (lineKey(l) !== lineKey(target)) return l;
+        const updated = { ...l, rate: parsed };
+        persistLine(updated);
+        return updated;
+      })
+    );
+  }
+
+  function removeLine(target: CartLine) {
+    setCart((prev) => prev.filter((l) => lineKey(l) !== lineKey(target)));
+    if (target.productId) {
+      doRemoveCartItem(quoteId, target.productId).catch((e) => setError(e.message));
+    } else if (target.itemId) {
+      contractorRemoveManualItem(quoteId, target.itemId).catch((e) => setError(e.message));
+    }
+  }
+
+  // Adds or edits a contractor's own manually-typed line (see
+  // ManualItemModal.tsx) - awaited (unlike the optimistic paths above) so a
+  // save failure surfaces in the modal itself instead of the item silently
+  // vanishing after an optimistic add. New items get the server-assigned
+  // itemId back so future edits target the right row.
+  async function handleSaveManualItem(input: {
+    itemId?: string;
+    name: string;
+    categoryLabel: string;
+    rate: number;
+    unit: Unit;
+    qty: number;
+  }) {
+    const savedId = await contractorUpsertManualItem(quoteId, input);
+    setCart((prev) => {
+      const line: CartLine = { productId: null, itemId: savedId, typeLabel: "", subtypeLabel: "", ...input };
+      if (input.itemId) {
+        return prev.map((l) => (lineKey(l) === input.itemId ? line : l));
+      }
+      return [...prev, line];
+    });
+    setManualItemModal(null);
   }
 
   // Awaits every save before touching cart state or reporting success back to
@@ -433,14 +513,18 @@ export default function BuildClient({
   // (upsert is idempotent, so re-adding on retry is harmless) instead of an
   // all-or-nothing throw.
   async function handleAiAssistAddLines(lines: CartLine[]) {
-    const results = await Promise.allSettled(lines.map((line) => doUpsertCartItem(quoteId, line)));
+    // AI Assist only ever suggests real catalog products, never a manual
+    // line, so every line here always has a productId.
+    const results = await Promise.allSettled(
+      lines.map((line) => doUpsertCartItem(quoteId, { ...line, productId: line.productId! })),
+    );
     const succeeded = lines.filter((_, i) => results[i].status === "fulfilled");
     const failed = lines.length - succeeded.length;
 
     if (succeeded.length > 0) {
       setCart((prev) => {
-        const map = new Map(prev.map((l) => [l.productId, l]));
-        for (const line of succeeded) map.set(line.productId, line);
+        const map = new Map(prev.map((l) => [lineKey(l), l]));
+        for (const line of succeeded) map.set(lineKey(line), line);
         return Array.from(map.values());
       });
     }
@@ -533,7 +617,7 @@ export default function BuildClient({
         rate: l.rate,
         qty: l.qty,
         unitLabel: baseUnitLabel(l.unit),
-        imageUrl: allProductsById.get(l.productId)?.images[0]?.path,
+        imageUrl: l.productId ? allProductsById.get(l.productId)?.images[0]?.path : undefined,
         productId: l.productId,
       })),
       grandTotal: grand,
@@ -681,6 +765,15 @@ export default function BuildClient({
           initialClientName={clientContactName}
           initialClientPhone={clientContactPhone}
           initialClientEmail={clientContactEmail}
+        />
+      )}
+
+      {manualItemModal && (
+        <ManualItemModal
+          categories={Object.values(catalog.categoryMeta).map((c) => c.label)}
+          initial={manualItemModal === "new" ? null : manualItemModal}
+          onSave={handleSaveManualItem}
+          onClose={() => setManualItemModal(null)}
         />
       )}
 
@@ -839,33 +932,64 @@ export default function BuildClient({
             ) : (
               <div className="cart-items">
                 {cart.map((l) => (
-                  <div key={l.productId} className="line-item">
+                  <div key={lineKey(l)} className="line-item">
                     <div className="li-top">
-                      <div className="li-name">{l.name}</div>
-                      <div className="li-remove" onClick={() => removeLine(l.productId)}>
+                      <div className="li-name">
+                        {l.name}
+                        {!l.productId && <span className="li-custom-badge">Custom</span>}
+                      </div>
+                      <div className="li-remove" onClick={() => removeLine(l)}>
                         &times;
                       </div>
                     </div>
-                    <div className="li-meta">
-                      {l.categoryLabel} &middot; {l.typeLabel} / {l.subtypeLabel}
-                    </div>
+                    {l.productId ? (
+                      <div className="li-meta">
+                        {l.categoryLabel} &middot; {l.typeLabel} / {l.subtypeLabel}
+                      </div>
+                    ) : (
+                      <div className="li-meta">{l.categoryLabel}</div>
+                    )}
                     <div className="li-bottom">
                       <div className="li-qty">
-                        <button onClick={() => changeLineQty(l.productId, -1)}>&minus;</button>
+                        <button onClick={() => changeLineQty(l, -1)}>&minus;</button>
                         <input
                           value={toDisplayQty(l.qty, l.unit, displayUnit)}
-                          onChange={(e) => setLineQty(l.productId, e.target.value)}
+                          onChange={(e) => setLineQty(l, e.target.value)}
                         />
-                        <button onClick={() => changeLineQty(l.productId, 1)}>+</button>
+                        <button onClick={() => changeLineQty(l, 1)}>+</button>
                       </div>
-                      <div className="li-amt">
-                        AED {(l.rate * l.qty).toLocaleString()}
-                        <span className="install-badge">✓ Installed</span>
-                      </div>
+                      {editAsContractor ? (
+                        <div className="li-rate">
+                          <span>AED</span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={l.rate}
+                            onChange={(e) => setLineRate(l, e.target.value)}
+                          />
+                          <span className="li-rate-total">= {(l.rate * l.qty).toLocaleString()}</span>
+                        </div>
+                      ) : (
+                        <div className="li-amt">
+                          AED {(l.rate * l.qty).toLocaleString()}
+                          <span className="install-badge">✓ Installed</span>
+                        </div>
+                      )}
                     </div>
+                    {!l.productId && (
+                      <div className="li-edit-custom" onClick={() => setManualItemModal(l)}>
+                        Edit item
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
+            )}
+
+            {editAsContractor && (
+              <button type="button" className="add-custom-item-btn" onClick={() => setManualItemModal("new")}>
+                + Add a custom item
+              </button>
             )}
 
             <div className="ledger-totals">
@@ -961,14 +1085,24 @@ export default function BuildClient({
               </thead>
               <tbody>
                 {cart.map((l) => (
-                  <tr key={l.productId}>
+                  <tr key={lineKey(l)}>
                     <td>
                       <div className="item-cell">
                         <div className="item-thumb">
-                          <ProductThumb
-                            seed={l.productId}
-                            images={allProductsById.get(l.productId)?.images.map((i) => i.path)}
-                          />
+                          {l.productId ? (
+                            <ProductThumb
+                              seed={l.productId}
+                              images={allProductsById.get(l.productId)?.images.map((i) => i.path)}
+                            />
+                          ) : (
+                            // A contractor's own manually-typed item, never
+                            // tied to a catalog product - so, unlike every
+                            // other line, it deliberately has no picture at
+                            // all (not even a placeholder swatch).
+                            <div className="item-thumb-blank" aria-hidden="true">
+                              ✎
+                            </div>
+                          )}
                         </div>
                         <div>
                           <b>{l.name}</b>
@@ -978,7 +1112,7 @@ export default function BuildClient({
                       </div>
                     </td>
                     <td style={{ color: "var(--muted)" }}>
-                      {l.typeLabel} / {l.subtypeLabel}
+                      {l.productId ? `${l.typeLabel} / ${l.subtypeLabel}` : "Custom item"}
                     </td>
                     <td className="num">
                       {l.qty} {baseUnitLabel(l.unit)}
