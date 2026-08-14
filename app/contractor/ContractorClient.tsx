@@ -200,12 +200,20 @@ export default function ContractorClient({
   myQuotes,
   logoUrl,
   companyName,
+  contractorPlan,
+  quotaUsed,
+  quotaLimit,
 }: {
   assignments: Assignment[];
   openJobs: OpenJob[];
   myQuotes: MyQuote[];
   logoUrl?: string | null;
   companyName?: string | null;
+  // Free-vs-paid access to "My client quotes" - see createContractorQuote's
+  // matching check in app/actions/quotes.ts and lib/contractorPlan.ts.
+  contractorPlan: "free" | "paid";
+  quotaUsed: number;
+  quotaLimit: number;
 }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -215,6 +223,9 @@ export default function ContractorClient({
   const [inspectionDates, setInspectionDates] = useState<Record<string, string>>({});
   const [claimNotes, setClaimNotes] = useState<Record<string, string>>({});
   const [creatingQuote, setCreatingQuote] = useState(false);
+  const quotaAtLimit = contractorPlan !== "paid" && quotaUsed >= quotaLimit;
+  const quotaNearLimit = contractorPlan !== "paid" && !quotaAtLimit && quotaLimit - quotaUsed <= 2;
+  const quotaPct = Math.min(100, Math.round((quotaUsed / Math.max(1, quotaLimit)) * 100));
 
   async function handleNewQuote() {
     setCreatingQuote(true);
@@ -364,15 +375,47 @@ export default function ContractorClient({
             <div className="contractor-project-head" style={{ marginTop: 0 }}>
               <div>
                 <h1 style={{ marginBottom: 4 }}>My client quotes</h1>
-                <p className="sub" style={{ marginBottom: 0 }}>
+                <p className="sub" style={{ marginBottom: contractorPlan === "paid" ? 0 : 10 }}>
                   Price a fit-out for your own client using the full PickTheBrick catalog - free to use, and never
                   submitted as a PickTheBrick project.
                 </p>
+                {contractorPlan !== "paid" && (
+                  <div className="quota-indicator">
+                    <div className="quota-bar-track">
+                      <div
+                        className={"quota-bar-fill" + (quotaAtLimit ? " full" : quotaNearLimit ? " warn" : "")}
+                        style={{ width: quotaPct + "%" }}
+                      />
+                    </div>
+                    <span className="quota-label">
+                      {quotaUsed} / {quotaLimit} free quotes used
+                    </span>
+                  </div>
+                )}
               </div>
-              <button className="action" disabled={creatingQuote} onClick={handleNewQuote}>
-                {creatingQuote ? "Starting..." : "+ New quote for a client"}
-              </button>
+              {!quotaAtLimit && (
+                <button className="action" disabled={creatingQuote} onClick={handleNewQuote}>
+                  {creatingQuote ? "Starting..." : "+ New quote for a client"}
+                </button>
+              )}
             </div>
+            {quotaAtLimit && (
+              <div className="quota-paywall">
+                <div className="quota-paywall-title">You&apos;ve used all {quotaLimit} free quotes</div>
+                <p className="quota-paywall-body">
+                  Your existing quotes are still yours - edit and download them any time. Upgrade to keep building
+                  new ones for your clients.
+                </p>
+                <a
+                  href="https://wa.me/971523142272"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action quota-upgrade-btn"
+                >
+                  Talk to us about upgrading
+                </a>
+              </div>
+            )}
             {myQuotes.length === 0 ? (
               <div className="empty">No client quotes yet - start one above.</div>
             ) : (

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
-import { Role, ContractorApplicationStatus } from "@/app/generated/prisma/enums";
+import { Role, ContractorApplicationStatus, ContractorPlan } from "@/app/generated/prisma/enums";
 import {
   sendContractorApplicationReceivedEmail,
   sendContractorApplicationAdminAlertEmail,
@@ -237,4 +237,22 @@ export async function setContractorApplicationStatus(
     });
   }
   revalidateContractors();
+}
+
+// Manually flips a contractor between free (capped at
+// CONTRACTOR_FREE_QUOTE_LIMIT, see lib/contractorPlan.ts) and paid
+// (unlimited) access to the client-quote builder - there's no payment
+// gateway yet, so this is the whole "upgrade" for now: the business collects
+// payment however it already does (cash, for the moment) and flips this
+// switch from the admin Contractor Quotes tab once paid.
+export async function setContractorPlan(contractorId: string, plan: ContractorPlan) {
+  await requireAdmin();
+  const user = await prisma.user.findUnique({ where: { id: contractorId }, select: { role: true } });
+  if (!user || user.role !== Role.contractor) throw new Error("Not a contractor account");
+  await prisma.user.update({
+    where: { id: contractorId },
+    data: { contractorPlan: plan, contractorPlanUpdatedAt: new Date() },
+  });
+  revalidatePath("/admin/contractor-quotes");
+  revalidatePath("/contractor");
 }

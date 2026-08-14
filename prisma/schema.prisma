@@ -17,6 +17,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// A contractor's own access to the free client-quote builder (see
+// createContractorQuote in app/actions/quotes.ts) - free by default, capped
+// at CONTRACTOR_FREE_QUOTE_LIMIT (lib/contractorPlan.ts) completed quotes,
+// then paid once the business has arranged payment (cash for now - see
+// setContractorPlan in app/actions/contractors.ts). Not meaningful for any
+// other role.
+enum ContractorPlan {
+  free
+  paid
+}
+
 enum Role {
   client
   captain
@@ -119,6 +130,16 @@ model User {
   // (see BrandMark.tsx, app/build/BuildClient.tsx's brandLogoUrl prop).
   // Not meaningful for any other role today.
   logoUrl      String?
+  // Free vs paid access to the contractor quote builder - see ContractorPlan
+  // above. Only meaningful for role: contractor.
+  contractorPlan          ContractorPlan @default(free)
+  // When contractorPlan last changed (set by setContractorPlan) - shown as
+  // "Paid since ..." on the admin Contractor Quotes tab.
+  contractorPlanUpdatedAt DateTime?
+  // Per-contractor override of the shared free-quote limit (e.g. a pilot
+  // partner or VIP relationship gets more than everyone else) - null means
+  // "use the default" (see getContractorQuoteLimit in lib/contractorPlan.ts).
+  contractorFreeQuotaOverride Int?
   role         Role     @default(client)
   createdAt    DateTime @default(now())
 
