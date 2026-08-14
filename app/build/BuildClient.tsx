@@ -16,6 +16,7 @@ import {
   contractorRemoveCartItem,
   contractorSetQuoteDetails,
   contractorSetClientContact,
+  contractorMarkQuoteCompleted,
 } from "@/app/actions/quotes";
 import type { Catalog, CatalogProduct } from "@/lib/catalog";
 import type { CartLine } from "@/lib/quotes";
@@ -86,6 +87,7 @@ export default function BuildClient({
   editAsCaptain = false,
   editAsContractor = false,
   brandLogoUrl = null,
+  brandCompanyName = null,
   initialClientName,
   initialClientPhone,
   initialClientEmail,
@@ -112,6 +114,9 @@ export default function BuildClient({
   // downloaded PDF instead of PickTheBrick's when set - null for every path
   // except editAsContractor with a logo actually uploaded.
   brandLogoUrl?: string | null;
+  // The contractor's own company name (User.company), printed beside their
+  // logo on the downloaded PDF - see buildQuotePdf's matching param.
+  brandCompanyName?: string | null;
   // Contractor-only: the end client's own name/phone/email, manually entered
   // since that client never gets a PickTheBrick account (see
   // contractorSetClientContact in app/actions/quotes.ts). Undefined for
@@ -536,9 +541,11 @@ export default function BuildClient({
       officeSize,
       clientName: editAsContractor ? clientContactName || undefined : clientLabel,
       brandLogoUrl,
+      brandCompanyName,
       poweredByPickTheBrick: editAsContractor,
     });
     doc.save(editAsContractor ? "Quotation.pdf" : "PickTheBrick-Quotation.pdf");
+    if (editAsContractor) contractorMarkQuoteCompleted(quoteId);
   }
 
   // Fires once AuthGate reports a successful sign up/in - refreshes the

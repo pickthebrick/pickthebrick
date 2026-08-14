@@ -309,15 +309,33 @@ export async function contractorSetClientContact(quoteId: string, name: string, 
   revalidatePath("/contractor");
 }
 
+// Marks the "quote created" milestone the admin contractor-quotes tab counts
+// - fires the first time the contractor actually downloads a PDF for this
+// quote, not on every save, so idly-abandoned carts don't inflate the count.
+// Re-downloading later doesn't move the timestamp.
+export async function contractorMarkQuoteCompleted(quoteId: string) {
+  const session = await requireSession();
+  if (session.role !== Role.contractor) throw new Error("Contractor only");
+  const quote = await assertContractorOwnsQuote(quoteId, session.id);
+  if (quote.contractorCompletedAt) return;
+
+  await prisma.quote.update({ where: { id: quoteId }, data: { contractorCompletedAt: new Date() } });
+  revalidatePath("/contractor");
+}
+
 // A contractor-owned quote never enters the real project pipeline, so unlike
-// deleteQuote (client-facing, status-restricted) this can be deleted freely
-// at any time.
+// deleteQuote (client-facing, status-restricted) this can be "deleted" freely
+// at any time - but it's a soft delete (contractorHiddenAt), not a real one.
+// We keep every quote a contractor has ever built as a backup/audit record
+// (and the future basis for billing them per quote), so this only hides the
+// row from their own dashboard list (see the contractorHiddenAt: null filter
+// in app/contractor/page.tsx) rather than removing it.
 export async function deleteContractorQuote(quoteId: string) {
   const session = await requireSession();
   if (session.role !== Role.contractor) throw new Error("Contractor only");
   await assertContractorOwnsQuote(quoteId, session.id);
 
-  await prisma.quote.delete({ where: { id: quoteId } });
+  await prisma.quote.update({ where: { id: quoteId }, data: { contractorHiddenAt: new Date() } });
   revalidatePath("/contractor");
 }
 

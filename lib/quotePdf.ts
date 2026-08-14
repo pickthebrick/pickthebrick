@@ -47,6 +47,7 @@ export async function buildQuotePdf({
   referenceNumber,
   clientName,
   brandLogoUrl,
+  brandCompanyName,
   poweredByPickTheBrick,
 }: {
   items: QuotePdfItem[];
@@ -61,6 +62,10 @@ export async function buildQuotePdf({
   // when set - see editAsContractor in app/build/BuildClient.tsx. Falls back
   // to the normal PickTheBrick logo/wordmark when omitted or it fails to load.
   brandLogoUrl?: string | null;
+  // The contractor's own company name (User.company), printed beside their
+  // logo in the header - only meaningful alongside brandLogoUrl. Shown even
+  // if the logo image itself fails to load, so the PDF still reads as theirs.
+  brandCompanyName?: string | null;
   // Only meaningful alongside brandLogoUrl - adds a small "Powered by
   // PickTheBrick" line under the contractor's logo. Kept behind one flag in
   // one place (see the isolated block right after the logo below) so it's a
@@ -131,8 +136,9 @@ export async function buildQuotePdf({
   const LOGO_BOX_W = 82;
   const LOGO_BOX_H = 40;
   let logoH = LOGO_BOX_H;
+  let logoW = 0;
   if (logo) {
-    const logoW = Math.min(LOGO_BOX_W, LOGO_BOX_H * logo.ratio);
+    logoW = Math.min(LOGO_BOX_W, LOGO_BOX_H * logo.ratio);
     logoH = logoW / logo.ratio;
     const logoFormat = logo.dataUrl.startsWith("data:image/png") ? "PNG" : logo.dataUrl.startsWith("data:image/webp") ? "WEBP" : "JPEG";
     doc.addImage(logo.dataUrl, logoFormat, MARGIN, y - 20, logoW, logoH);
@@ -141,6 +147,15 @@ export async function buildQuotePdf({
     doc.setFontSize(18);
     doc.setTextColor(...INK);
     doc.text("PickTheBrick", MARGIN, y);
+  }
+  // Contractor's company name next to their logo - drawn even if the logo
+  // image itself failed to load (logoW stays 0, so this just sits at MARGIN
+  // instead), so the header still reads as theirs either way.
+  if (usingBrandLogo && brandCompanyName) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...INK);
+    doc.text(brandCompanyName, MARGIN + logoW + (logoW > 0 ? 10 : 0), y - 20 + LOGO_BOX_H / 2 + 4);
   }
   // "Powered by PickTheBrick" mark - isolated in this one block so it's a
   // one-line removal (drop the `if`) if the business drops this later. Only

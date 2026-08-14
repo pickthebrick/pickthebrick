@@ -354,6 +354,18 @@ model Quote {
   captain        User?       @relation("CaptainQuotes", fields: [captainId], references: [id])
   contractorId   String?
   contractor     User?       @relation("ContractorQuotes", fields: [contractorId], references: [id])
+  // Set the first time the contractor downloads this quote's PDF (see
+  // contractorMarkQuoteCompleted in app/actions/quotes.ts) - the "quote
+  // created" event the admin contractor-quotes tab counts. Only meaningful
+  // when contractorId is set; status stays `draft` forever for these quotes
+  // since they never enter the real PTB pipeline (see createContractorQuote).
+  contractorCompletedAt DateTime?
+  // Soft-delete for a contractor's own quote: set when they click Delete on
+  // their dashboard, which just hides it from that list (app/contractor/page.tsx
+  // filters on this) instead of removing the row - these are kept as a backup/
+  // audit record even after the contractor "deletes" one, since we may bill
+  // per quote later. deleteContractorQuote never hard-deletes anymore.
+  contractorHiddenAt    DateTime?
   materialsTotal Float       @default(0)
   installTotal   Float       @default(0)
   grandTotal     Float       @default(0)

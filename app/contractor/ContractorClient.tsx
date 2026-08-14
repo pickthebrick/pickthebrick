@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { QuoteStatus, Unit } from "@/app/generated/prisma/enums";
 import { reportProgress, requestSiteInspection, requestPaymentClaim } from "@/app/actions/progress";
 import { applyForOpenJob } from "@/app/actions/timeline";
-import { createContractorQuote, deleteContractorQuote } from "@/app/actions/quotes";
+import { createContractorQuote, deleteContractorQuote, contractorMarkQuoteCompleted } from "@/app/actions/quotes";
 import { applyContractorReduction, blendedReductionPercent } from "@/lib/contractorPricing";
 import PdfDownloadButton from "@/app/my-quotes/PdfDownloadButton";
 
@@ -199,11 +199,13 @@ export default function ContractorClient({
   openJobs,
   myQuotes,
   logoUrl,
+  companyName,
 }: {
   assignments: Assignment[];
   openJobs: OpenJob[];
   myQuotes: MyQuote[];
   logoUrl?: string | null;
+  companyName?: string | null;
 }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -396,7 +398,9 @@ export default function ContractorClient({
                         referenceNumber={null}
                         clientName={q.clientName}
                         brandLogoUrl={logoUrl}
+                        brandCompanyName={companyName}
                         poweredByPickTheBrick
+                        onDownloaded={() => contractorMarkQuoteCompleted(q.id)}
                       />
                       <DeleteButton label="Delete" onConfirm={() => handleDeleteMyQuote(q.id)} />
                     </div>
