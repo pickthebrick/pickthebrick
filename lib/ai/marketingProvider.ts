@@ -21,6 +21,7 @@ import { saveGeneratedContent } from "@/lib/marketingContent";
 import { assertBudgetAvailable, recordUsage, BudgetExceededError } from "@/lib/marketingBudget";
 import { getWebsiteAnalytics } from "@/lib/ga4";
 import { getGoogleAdsPerformance } from "@/lib/googleAds";
+import { getInstagramAccountInfo } from "@/lib/meta";
 import { executeAction, createAction } from "@/lib/ai/actionExecutor";
 import { ACTION_PERMISSIONS } from "@/lib/ai/actionPermissions";
 import { generateConceptImage } from "@/lib/ai/imageGen";
@@ -117,6 +118,10 @@ async function buildBusinessContext(): Promise<string> {
   const metaTop = META_CONTENT.slice(0, 5)
     .map((c) => `- "${c.name}" (${c.type}): reach ${c.reach}, engagement ${c.engagement}, ${c.leads} leads, ${c.revenue} revenue`)
     .join("\n");
+  const instagram = await getInstagramAccountInfo();
+  const instagramLine = instagram
+    ? `Connected: @${instagram.username}, ${instagram.followers.toLocaleString()} followers, ${instagram.mediaCount.toLocaleString()} posts (live from Meta Graph API). You can see this account's stats, but you can't publish to it yet - the System User token doesn't have the instagram_content_publish permission, so createPost/publishPost stay mocked even for this account. Say so plainly if asked to actually post.`
+    : "Not connected - the Facebook Page is linked (see below), but no Instagram account has been connected to it in Meta Business Suite yet (Settings -> Accounts -> Instagram accounts). Tell the founder this if Instagram comes up - it's a one-time manual step on their end, not something you can do.";
   const leads = LEADS.slice(0, 6).map((l) => `- ${l.name} via ${l.source}, est. ${l.budget}, status ${l.status}`).join("\n");
   const websiteAnalytics = await getWebsiteAnalytics();
   const pages = websiteAnalytics
@@ -143,6 +148,8 @@ ${googleTop}
 
 Top Meta/Instagram content:
 ${metaTop}
+
+Instagram account (@pickthebrick): ${instagramLine}
 
 Recent leads:
 ${leads}

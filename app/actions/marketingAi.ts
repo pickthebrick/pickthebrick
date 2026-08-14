@@ -19,7 +19,7 @@ import type { MarketingChannel, MarketingConstitutionFields } from "@/lib/market
 import { getUsageSummary, getUsageDetail, getBudget, setBudget, type BudgetConfig } from "@/lib/marketingBudget";
 import { getWebsiteAnalytics } from "@/lib/ga4";
 import { getGoogleAdsPerformance } from "@/lib/googleAds";
-import { getMetaPageInfo } from "@/lib/meta";
+import { getMetaPageInfo, getInstagramAccountInfo } from "@/lib/meta";
 import { executeAction, createAction } from "@/lib/ai/actionExecutor";
 import type { ContentConcept } from "@/lib/ai/marketingProvider";
 
@@ -186,6 +186,11 @@ export async function getGoogleAdsPerformanceAction() {
 export async function getMetaPageInfoAction() {
   await requireSuperAdmin();
   return getMetaPageInfo();
+}
+
+export async function getInstagramAccountInfoAction() {
+  await requireSuperAdmin();
+  return getInstagramAccountInfo();
 }
 
 // --- Growth Manager (Overview page) ---
