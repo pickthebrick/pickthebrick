@@ -10,6 +10,9 @@ import { priceFor, MAX_REVISIONS, type PackageKey } from "@/lib/designPricing";
 import { sendDesignerAssignedEmail, sendDesignerRemovedEmail } from "@/lib/email";
 import { sendTemplatedWhatsApp } from "@/lib/whatsapp";
 import { uploadToStorage, deleteFromStorage } from "@/lib/storage";
+import { generateLayout, buildRoomProgram, checkFeasibility, type Point, type LayoutAnnotations } from "@/lib/layoutGenerator";
+
+const LAYOUT_SETTINGS_ID = "layout-settings";
 
 const SITE_VISIT_FEE = 500;
 const LAYOUT_EXTENSIONS = new Set(["pdf", "dwg", "dxf", "jpg", "jpeg", "png"]);
@@ -235,6 +238,70 @@ export async function requestSiteVisit(id: string, preferredDate?: string) {
     },
   });
   revalidateDesignRequests();
+}
+
+// The third handover option alongside uploadDesignRequestLayout/requestSiteVisit
+// above (same assertOwnSubmittedRequest gate) - runs the rule-based layout
+// generator (lib/layoutGenerator/) against the client's drawn boundary and
+// their Spaces-step room program. Always persists a DesignRequestLayout row,
+// success or failure, so past attempts stay visible - never throws for an
+// ordinary "can't generate this" outcome, only for auth/ownership problems.
+export async function generateLayoutAction(id: string, boundary: Point[], annotations?: LayoutAnnotations) {
+  const actor = await resolveActor();
+  const request = await assertOwnSubmittedRequest(id, actor);
+
+  const roomProgram = await buildRoomProgram(id);
+  if (!roomProgram.ok) {
+    return { ok: false as const, reason: roomProgram.reason, message: roomProgram.detail, feasibility: null };
+  }
+
+  const [adjacencyRules, settings] = await Promise.all([
+    prisma.layoutAdjacencyRule.findMany(),
+    prisma.layoutSettings.findUnique({ where: { id: LAYOUT_SETTINGS_ID } }),
+  ]);
+  if (!settings) {
+    return {
+      ok: false as const,
+      reason: "not_configured" as const,
+      message: "Layout rules haven't been set up yet - ask an admin to configure circulation settings first.",
+      feasibility: null,
+    };
+  }
+
+  const feasibility = checkFeasibility(request.sqft, roomProgram.totalMinArea, settings.estimatedCorridorOverheadPct);
+  const outcome = generateLayout({ boundary, rooms: roomProgram.rooms, adjacencyRules, settings });
+
+  await prisma.designRequestLayout.create({
+    data: {
+      designRequestId: id,
+      boundaryPolygonJson: JSON.stringify(boundary),
+      annotationsJson: annotations ? JSON.stringify(annotations) : null,
+      roomProgramJson: JSON.stringify(roomProgram.rooms),
+      resultJson: outcome.ok ? JSON.stringify(outcome.result) : null,
+      errorMessage: outcome.ok ? null : outcome.message,
+      algorithmVersion: settings.currentAlgorithmVersion,
+    },
+  });
+  revalidateDesignRequests();
+
+  if (!outcome.ok) {
+    return { ok: false as const, reason: outcome.reason, message: outcome.message, feasibility };
+  }
+  return { ok: true as const, result: outcome.result, feasibility };
+}
+
+// The generator board now opens in its own tab (see app/design/handover/draw/),
+// so the Handover tab that spawned it can't get a direct callback when a
+// layout is generated there - it polls this on window focus instead.
+export async function hasGeneratedLayoutAction(id: string) {
+  const actor = await resolveActor();
+  const request = await prisma.designRequest.findUnique({ where: { id }, select: { clientId: true, anonymousSessionId: true } });
+  if (!request || !actorOwns(actor, request)) throw new Error("Design request is not one you can view");
+  const layout = await prisma.designRequestLayout.findFirst({
+    where: { designRequestId: id, resultJson: { not: null } },
+    select: { id: true },
+  });
+  return Boolean(layout);
 }
 
 export async function recordDesignPaymentMethod(

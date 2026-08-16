@@ -65,11 +65,18 @@ export default function DesignPageClient({
   categories,
   featureItems,
   isAnonymous,
+  continueRequest,
 }: {
   banner: AiDesignerBannerData;
   categories: { key: string; label: string }[];
   featureItems: PackageFeatureItemData[];
   isAnonymous: boolean;
+  // Most recent draft/submitted DesignRequest for this actor, if any - the
+  // banner deep-links into it instead of starting over. A submitted request
+  // has already passed Spaces, so it goes straight to the layout generator
+  // on Handover; a draft resumes at Spaces, same as MyQuotesClient's
+  // "Continue this design" link.
+  continueRequest: { id: string; status: "draft" | "submitted" | "in_progress" | "delivered" } | null;
 }) {
   const router = useRouter();
   const [displayUnit, setDisplayUnit] = useState<"sqft" | "sqm">("sqft");
@@ -78,11 +85,27 @@ export default function DesignPageClient({
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [openSample, setOpenSample] = useState<{ url: string; label: string } | null>(null);
+  const [bannerNote, setBannerNote] = useState<string | null>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selected) summaryRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [selected]);
+
+  function handleBannerClick() {
+    if (!banner.enabled) return;
+    if (continueRequest) {
+      router.push(
+        continueRequest.status === "submitted"
+          ? `/design/handover?id=${continueRequest.id}`
+          : `/design/spaces?id=${continueRequest.id}`
+      );
+      return;
+    }
+    setBannerNote(
+      "Pick a package and size below to get started - once you've told us your rooms, you'll be able to draw your office and generate a starting layout."
+    );
+  }
 
   const sizeValue = parseFloat(sizeInput);
   const sqft = displayUnit === "sqft" ? sizeValue : sizeValue * SQM_TO_SQFT;
@@ -231,19 +254,20 @@ export default function DesignPageClient({
             );
           })}
 
-          {/* Not a real package - a joke banner, no PackageKey/pricing behind it.
-              Clicking it never selects anything, just pokes fun at the idea.
+          {/* Entry point into the AI layout generator (see /design/handover's
+              third option) - deep-links into an in-progress request if the
+              actor has one, otherwise nudges them to start the flow below,
+              since a room program from the Spaces step is required first.
               Copy is editable from the admin Marketing tab (AiDesignerBanner). */}
           {banner.enabled && (
             <div
               className="package-card ai-design-banner"
               role="button"
               tabIndex={0}
-              aria-disabled="true"
               style={{ background: banner.backgroundColor }}
-              onClick={() => alert(banner.popupMessage)}
+              onClick={handleBannerClick}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") alert(banner.popupMessage);
+                if (e.key === "Enter" || e.key === " ") handleBannerClick();
               }}
             >
               <span className="ai-design-graffiti">{banner.headline}</span>
@@ -251,6 +275,8 @@ export default function DesignPageClient({
             </div>
           )}
         </div>
+
+        {bannerNote && <p className="sqft-hint" style={{ textAlign: "center" }}>{bannerNote}</p>}
 
         {selectedPackage && selectedPrice !== null && (
           <>

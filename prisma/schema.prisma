@@ -532,6 +532,7 @@ model DesignRequest {
   files            DesignRequestFile[]
   spaceEntries     DesignRequestSpace[]
   revisionComments DesignRequestRevisionComment[]
+  layouts          DesignRequestLayout[]
 }
 
 // A running log of client<->designer communication about a delivered
@@ -585,6 +586,98 @@ model DesignRequestSpaceAnswer {
   value                String
 
   @@unique([designRequestSpaceId, questionKey])
+}
+
+// Per-room-type geometry constraints for the auto layout generator (see
+// lib/layoutGenerator/) - one row per lib/spaces.ts SPACES[].key, soft-
+// referenced the same way SpaceLayerImage.spaceKey/SpaceCustomQuestion.spaceKey
+// already reference that hardcoded array. Admin-editable at /admin/ai-designer
+// (super-admin only, same sensitivity tier as Category.contractorReductionPercent)
+// - genuinely empty until the founder supplies real sizing standards.
+model LayoutRoomType {
+  id         String   @id @default(cuid())
+  spaceKey   String   @unique
+  minWidth   Float
+  minLength  Float
+  targetArea Float
+  // Fill color for this room type in the generated layout preview.
+  color      String   @default("#cccccc")
+  sortOrder  Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
+enum LayoutAdjacencyRelation {
+  required
+  preferred
+  avoid
+}
+
+// Admin-configured pairwise relationship between two room types (by spaceKey),
+// feeding the layout generator's split-scoring heuristic. Stored directionally
+// but meant symmetrically - the generator normalizes lookups both ways.
+model LayoutAdjacencyRule {
+  id        String                  @id @default(cuid())
+  roomTypeA String
+  roomTypeB String
+  relation  LayoutAdjacencyRelation
+  weight    Int                     @default(1)
+  createdAt DateTime                @default(now())
+
+  @@unique([roomTypeA, roomTypeB])
+}
+
+// Singleton row (fixed id) for the layout generator's circulation rules -
+// one active corridor/door policy at a time, not a list.
+model LayoutSettings {
+  id                            String   @id @default("layout-settings")
+  corridorWidth                 Float
+  doorWidth                     Float
+  minRoomClearance              Float    @default(0)
+  estimatedCorridorOverheadPct  Float    @default(0)
+  // Bumped whenever a rule change should NOT reinterpret already-generated
+  // layouts - see DesignRequestLayout.algorithmVersion.
+  currentAlgorithmVersion       Int      @default(1)
+  updatedAt                     DateTime @updatedAt
+}
+
+// Singleton row (fixed id) - reference knowledge for whoever configures
+// LayoutRoomType/LayoutAdjacencyRule/LayoutSettings, editable from the AI
+// Designer dashboard's Knowledge Base section. Unlike MarketingConstitution
+// this isn't fed into an LLM prompt today - the layout generator itself is
+// a deterministic algorithm (lib/layoutGenerator/), not an AI call - it's
+// documentation so the standards behind the numbers survive beyond whoever
+// typed them in, and a natural place to plug in if a future version adds
+// an AI-assisted step.
+model LayoutConstitution {
+  id                  String   @id @default("layout-constitution")
+  designPhilosophy    String
+  circulationStandards String
+  roomSizingNotes     String
+  terminology         String
+  updatedAt           DateTime @updatedAt
+}
+
+// One row per layout-generation attempt for a DesignRequest - kept as
+// history (not overwritten) so a client can compare attempts. Failed
+// attempts (e.g. a boundary too irregular for the algorithm - see
+// lib/layoutGenerator/) are kept too, with resultJson null and errorMessage
+// set, rather than silently dropped.
+model DesignRequestLayout {
+  id                  String        @id @default(cuid())
+  designRequestId     String
+  designRequest       DesignRequest @relation(fields: [designRequestId], references: [id], onDelete: Cascade)
+  boundaryPolygonJson String
+  // Doors/windows the client marked on the drawing board (see
+  // LayoutAnnotations in lib/layoutGenerator/types.ts) - informational only,
+  // shown to the human designer; the algorithm still auto-places its own
+  // doors and never reads this back in.
+  annotationsJson     String?
+  roomProgramJson     String
+  resultJson          String?
+  errorMessage        String?
+  // Snapshot of LayoutSettings.currentAlgorithmVersion at generation time.
+  algorithmVersion    Int
+  generatedAt         DateTime      @default(now())
 }
 
 // One per client/anonymous session - the swipe-quiz result from the Style
