@@ -7,6 +7,12 @@ import { uploadDesignRequestLayout, requestSiteVisit, hasGeneratedLayoutAction }
 import "../../marketing.css";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+// AI Designer (drawing board) is still being worked on - hide its entry
+// point on this page for now. The route/feature itself is untouched
+// (still reachable directly, and a request that already has a generated
+// layout still counts toward "Continue to payment" below) - flip this
+// back to true when ready to surface it to clients again.
+const SHOW_LAYOUT_GENERATOR_ENTRY = false;
 
 type LayoutFile = { id: string; label: string; filePath: string };
 
@@ -120,25 +126,29 @@ export default function HandoverClient({
           </p>
         </div>
 
-        <div className="sqft-input-card" style={{ maxWidth: 480 }}>
-          <h3 style={{ marginTop: 0 }}>Generate a starting layout</h3>
-          <p className="sqft-hint" style={{ marginTop: 0 }}>
-            No layout on hand yet? Draw your office boundary and we&apos;ll lay out the rooms you picked earlier
-            automatically - a starting point, not a final design.
-          </p>
-          {layoutGenerated && <p className="sqft-hint">A layout has been generated.</p>}
-          <Link
-            href={`/design/handover/draw?id=${designRequestId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="design-start-btn"
-            style={{ display: "block", textAlign: "center", textDecoration: "none" }}
-          >
-            {layoutGenerated ? "Open drawing board again →" : "Open drawing board →"}
-          </Link>
-        </div>
+        {SHOW_LAYOUT_GENERATOR_ENTRY && (
+          <>
+            <div className="sqft-input-card" style={{ maxWidth: 480 }}>
+              <h3 style={{ marginTop: 0 }}>Generate a starting layout</h3>
+              <p className="sqft-hint" style={{ marginTop: 0 }}>
+                No layout on hand yet? Draw your office boundary and we&apos;ll lay out the rooms you picked earlier
+                automatically - a starting point, not a final design.
+              </p>
+              {layoutGenerated && <p className="sqft-hint">A layout has been generated.</p>}
+              <Link
+                href={`/design/handover/draw?id=${designRequestId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="design-start-btn"
+                style={{ display: "block", textAlign: "center", textDecoration: "none" }}
+              >
+                {layoutGenerated ? "Open drawing board again →" : "Open drawing board →"}
+              </Link>
+            </div>
 
-        <div className="handover-divider">or</div>
+            <div className="handover-divider">or</div>
+          </>
+        )}
 
         <div className="sqft-input-card" style={{ maxWidth: 480 }}>
           <h3 style={{ marginTop: 0 }}>Upload a layout</h3>
