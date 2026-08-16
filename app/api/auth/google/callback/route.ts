@@ -8,6 +8,7 @@ import { Role } from "@/app/generated/prisma/enums";
 
 const STATE_COOKIE = "ptb_google_state";
 const NEXT_COOKIE = "ptb_google_next";
+const ROLE_COOKIE = "ptb_google_role";
 
 // Finishes the flow started by app/api/auth/google/route.ts: verifies the
 // CSRF state cookie, exchanges the code for the person's Google profile,
@@ -18,8 +19,10 @@ export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(STATE_COOKIE)?.value;
   const next = cookieStore.get(NEXT_COOKIE)?.value;
+  const roleCookie = cookieStore.get(ROLE_COOKIE)?.value;
   cookieStore.delete(STATE_COOKIE);
   cookieStore.delete(NEXT_COOKIE);
+  cookieStore.delete(ROLE_COOKIE);
 
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get("code");
@@ -49,12 +52,17 @@ export async function GET(request: NextRequest) {
           data: { googleId: profile.googleId },
         });
       } else {
+        // Mirrors signUp()'s role mapping in app/actions/auth.ts - without
+        // this, every Google signup lands as a plain client regardless of
+        // which "Continue with Google" button (client vs. "Become a
+        // contractor") sent them here.
+        const role = roleCookie === "contractor" ? Role.contractor : roleCookie === "designer" ? Role.designer : Role.client;
         user = await prisma.user.create({
           data: {
             email: profile.email,
             googleId: profile.googleId,
             fullName: profile.name,
-            role: Role.client,
+            role,
           },
         });
         isNewAccount = true;

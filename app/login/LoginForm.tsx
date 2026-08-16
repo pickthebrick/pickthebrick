@@ -37,7 +37,13 @@ export default function LoginForm() {
   const [showEmailForm, setShowEmailForm] = useState(!!partnerRole);
   const googleError = searchParams.get("error") === "google_auth_failed";
   const nextParam = searchParams.get("next");
-  const googleHref = `/api/auth/google${nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? `?next=${encodeURIComponent(nextParam)}` : ""}`;
+  const googleQuery = new URLSearchParams();
+  if (nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")) googleQuery.set("next", nextParam);
+  // Without this, "Become a contractor/designer" -> Google sign-in silently
+  // created every new account as a plain client (see
+  // app/api/auth/google/route.ts, which reads this same ?role= param).
+  if (partnerRole) googleQuery.set("role", partnerRole);
+  const googleHref = `/api/auth/google${googleQuery.size ? `?${googleQuery.toString()}` : ""}`;
 
   function redirectAfterAuth() {
     const next = searchParams.get("next");

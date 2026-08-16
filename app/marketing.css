@@ -13,9 +13,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 32px;
-  /* Reserves room for the fixed account bar (see app/components/AccountBar.tsx)
-     so it never overlaps this header's own nav links. */
-  padding-right: 100px;
+  /* Reserves room for whichever fixed top-right pill is showing - AccountBar
+     (app/components/AccountBar.tsx, ~76-90px, icon-only) when signed in, or
+     the wider labelled SignInBar (app/components/SignInBar.tsx, ~93px plus
+     its own 14px offset from the viewport edge = ~107px) on the anonymous
+     Build/Design flows. Sized for the wider of the two with margin to
+     spare, so neither ever overlaps this header's own nav links. */
+  padding-right: 140px;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
