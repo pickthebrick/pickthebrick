@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { startDesignRequest } from "@/app/actions/design";
@@ -78,6 +78,11 @@ export default function DesignPageClient({
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [openSample, setOpenSample] = useState<{ url: string; label: string } | null>(null);
+  const summaryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selected) summaryRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [selected]);
 
   const sizeValue = parseFloat(sizeInput);
   const sqft = displayUnit === "sqft" ? sizeValue : sizeValue * SQM_TO_SQFT;
@@ -258,7 +263,7 @@ export default function DesignPageClient({
                 </button>
               </div>
             )}
-            <div className="design-summary">
+            <div className="design-summary" ref={summaryRef}>
               <div>
                 <div className="design-summary-label">
                   {selectedPackage.name} package &middot; {Math.round(sqft).toLocaleString()} sqft
