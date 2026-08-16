@@ -292,10 +292,6 @@ export default function BoundaryDrawer({
   const [resetKey, setResetKey] = useState(0);
   const [transform, setTransform] = useState<ViewTransform>({ tx: 0, ty: 0, scale: UNIT_CONFIG.ft.pixelsPerUnit });
   const [viewportWidth, setViewportWidth] = useState(0);
-  // Set right after a trace import is confirmed, to fit the whole image on
-  // screen - overrides the unit's default pixelsPerUnit until the next
-  // reset/unit change.
-  const [fitZoom, setFitZoom] = useState<number | null>(null);
   const diagramRef = useRef<DiagramComponent>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasCellRef = useRef<HTMLDivElement>(null);
@@ -313,7 +309,6 @@ export default function BoundaryDrawer({
   const [calibZoom, setCalibZoom] = useState(1);
 
   const config = UNIT_CONFIG[unit];
-  const zoom = fitZoom ?? config.pixelsPerUnit;
   const gridIntervals = gridlineIntervals(config.minor, config.major / config.minor);
 
   useEffect(() => {
@@ -453,7 +448,6 @@ export default function BoundaryDrawer({
     setPointCount(0);
     setTool("wall");
     toolRef.current = "wall";
-    setFitZoom(null);
     setResetKey((k) => k + 1);
   }
 
@@ -818,11 +812,18 @@ export default function BoundaryDrawer({
     // Placed with its top-left at the diagram origin above, and the view is
     // still at its default (untouched) pan, which also has the origin at
     // the canvas's top-left - so fitting the zoom alone (no separate pan)
-    // is enough to bring the whole image into view.
+    // is enough to bring the whole image into view. Applied imperatively via
+    // diagram.zoom() (same API the wheel handler below uses), NOT through
+    // the scrollSettings prop - that prop gets re-passed on every render, so
+    // a React-state-held zoom level would fight any zoom the user does
+    // afterward the instant anything else re-renders the component (which a
+    // scroll/zoom itself does, via scrollChange -> refreshTransform), making
+    // scroll-to-zoom look broken right after an import.
     const availableWidth = (viewportWidth || CANVAS_HEIGHT) * FIT_MARGIN;
     const availableHeight = CANVAS_HEIGHT * FIT_MARGIN;
     const fitScale = Math.min(availableWidth / widthInDiagramUnits, availableHeight / heightInDiagramUnits);
-    if (Number.isFinite(fitScale) && fitScale > 0) setFitZoom(fitScale);
+    const currentScale = (diagram.scroller.transform as unknown as ViewTransform).scale;
+    if (Number.isFinite(fitScale) && fitScale > 0 && currentScale > 0) diagram.zoom(fitScale / currentScale);
 
     setPendingImport(null);
     setCalibPoints([]);
@@ -994,7 +995,7 @@ export default function BoundaryDrawer({
             // The native ruler is off (see ticksForAxis above for why) - the
             // hand-rolled strips around this canvas replace it.
             rulerSettings={{ showRulers: false }}
-            scrollSettings={{ currentZoom: zoom }}
+            scrollSettings={{ currentZoom: config.pixelsPerUnit }}
             created={refreshTransform}
             scrollChange={refreshTransform}
             selectionChange={handleSelectionChange}
