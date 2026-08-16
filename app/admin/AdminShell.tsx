@@ -13,6 +13,7 @@ export type AdminSection =
   | "applications"
   | "contractorPricing"
   | "contractorQuotes"
+  | "aiDesigner"
   | "projects"
   | "database"
   | "notifications"
@@ -21,7 +22,7 @@ export type AdminSection =
   | "applicants"
   | "brain";
 
-const NAV_ITEMS: { key: AdminSection; label: string; href: string; superAdminOnly?: boolean }[] = [
+const NAV_ITEMS: { key: AdminSection; label: string; href: string; superAdminOnly?: boolean; newTab?: boolean }[] = [
   { key: "approvals", label: "Approvals", href: "/admin" },
   { key: "brain", label: "The Brain 🧠", href: "/admin/brain", superAdminOnly: true },
   { key: "quotes", label: "New Quotes", href: "/admin/quotes" },
@@ -31,6 +32,10 @@ const NAV_ITEMS: { key: AdminSection; label: string; href: string; superAdminOnl
   { key: "applications", label: "Applications", href: "/admin/applications" },
   { key: "contractorPricing", label: "Contractor Pricing", href: "/admin/contractor-pricing", superAdminOnly: true },
   { key: "contractorQuotes", label: "Contractor Quotes", href: "/admin/contractor-quotes" },
+  // Opens in a new tab, not a normal in-shell navigation - this is a
+  // deep configuration surface (room sizing, adjacency, knowledge base)
+  // the founder spends real time in, not a quick glance-and-back page.
+  { key: "aiDesigner", label: "AI Designer", href: "/admin/ai-designer", superAdminOnly: true, newTab: true },
   { key: "projects", label: "Projects", href: "/admin/projects" },
   { key: "database", label: "Database", href: "/admin/database" },
   { key: "notifications", label: "Notifications", href: "/admin/notifications" },
@@ -82,7 +87,13 @@ export default async function AdminShell({
         <aside className="admin-sidebar">
           <nav>
             {navItems.map((item) => (
-              <Link key={item.key} href={item.href} className={active === item.key ? "active" : ""}>
+              <Link
+                key={item.key}
+                href={item.href}
+                className={active === item.key ? "active" : ""}
+                target={item.newTab ? "_blank" : undefined}
+                rel={item.newTab ? "noopener noreferrer" : undefined}
+              >
                 {item.label}
                 {item.key === "designer" && overdueDesignCount > 0 && (
                   <span className="nav-flag" title={`${overdueDesignCount} design request(s) overdue`}>

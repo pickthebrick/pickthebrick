@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { uploadDesignRequestLayout, requestSiteVisit } from "@/app/actions/design";
+import { uploadDesignRequestLayout, requestSiteVisit, hasGeneratedLayoutAction } from "@/app/actions/design";
 import "../../marketing.css";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -33,6 +33,27 @@ export default function HandoverClient({
   const [visitError, setVisitError] = useState<string | null>(null);
   const [visitRequested, setVisitRequested] = useState(siteVisitRequested);
   const [visitDate, setVisitDate] = useState(siteVisitPreferredDate ?? "");
+  const [layoutGenerated, setLayoutGenerated] = useState(false);
+
+  // The drawing board opens in its own tab (app/design/handover/draw/) so it
+  // can't call back here directly - check whether a layout was generated
+  // there whenever the user comes back to this tab.
+  useEffect(() => {
+    let cancelled = false;
+    function checkLayout() {
+      hasGeneratedLayoutAction(designRequestId)
+        .then((generated) => {
+          if (!cancelled && generated) setLayoutGenerated(true);
+        })
+        .catch(() => {});
+    }
+    checkLayout();
+    window.addEventListener("focus", checkLayout);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", checkLayout);
+    };
+  }, [designRequestId]);
 
   async function handleUpload() {
     setError(null);
@@ -98,6 +119,26 @@ export default function HandoverClient({
             continue to payment.
           </p>
         </div>
+
+        <div className="sqft-input-card" style={{ maxWidth: 480 }}>
+          <h3 style={{ marginTop: 0 }}>Generate a starting layout</h3>
+          <p className="sqft-hint" style={{ marginTop: 0 }}>
+            No layout on hand yet? Draw your office boundary and we&apos;ll lay out the rooms you picked earlier
+            automatically - a starting point, not a final design.
+          </p>
+          {layoutGenerated && <p className="sqft-hint">A layout has been generated.</p>}
+          <Link
+            href={`/design/handover/draw?id=${designRequestId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="design-start-btn"
+            style={{ display: "block", textAlign: "center", textDecoration: "none" }}
+          >
+            {layoutGenerated ? "Open drawing board again →" : "Open drawing board →"}
+          </Link>
+        </div>
+
+        <div className="handover-divider">or</div>
 
         <div className="sqft-input-card" style={{ maxWidth: 480 }}>
           <h3 style={{ marginTop: 0 }}>Upload a layout</h3>
@@ -195,7 +236,7 @@ export default function HandoverClient({
           <button
             className="design-start-btn"
             style={{ width: "100%" }}
-            disabled={files.length === 0 && !visitRequested}
+            disabled={files.length === 0 && !visitRequested && !layoutGenerated}
             onClick={() => router.push(`/design/checkout?id=${designRequestId}`)}
           >
             Continue to payment →
