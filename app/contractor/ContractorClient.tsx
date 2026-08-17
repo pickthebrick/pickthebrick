@@ -442,7 +442,6 @@ export default function ContractorClient({
                         clientName={q.clientName}
                         brandLogoUrl={logoUrl}
                         brandCompanyName={companyName}
-                        poweredByPickTheBrick
                         onDownloaded={() => contractorMarkQuoteCompleted(q.id)}
                       />
                       <DeleteButton label="Delete" onConfirm={() => handleDeleteMyQuote(q.id)} />

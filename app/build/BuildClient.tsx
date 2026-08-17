@@ -634,7 +634,6 @@ export default function BuildClient({
       clientName: editAsContractor ? clientContactName || undefined : clientLabel,
       brandLogoUrl,
       brandCompanyName,
-      poweredByPickTheBrick: editAsContractor,
     });
     doc.save(editAsContractor ? "Quotation.pdf" : "PickTheBrick-Quotation.pdf");
     if (editAsContractor) contractorMarkQuoteCompleted(quoteId);

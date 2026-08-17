@@ -19,7 +19,6 @@ export default function PdfDownloadButton({
   clientName,
   brandLogoUrl,
   brandCompanyName,
-  poweredByPickTheBrick,
   onDownloaded,
 }: {
   items: {
@@ -39,7 +38,6 @@ export default function PdfDownloadButton({
   // Contractor-only - see buildQuotePdf's matching params in lib/quotePdf.ts.
   brandLogoUrl?: string | null;
   brandCompanyName?: string | null;
-  poweredByPickTheBrick?: boolean;
   // Contractor-only - fires after a successful download so the caller can
   // mark the quote completed (see contractorMarkQuoteCompleted in
   // app/actions/quotes.ts). Not used by the plain client my-quotes list.
@@ -67,7 +65,6 @@ export default function PdfDownloadButton({
         clientName,
         brandLogoUrl,
         brandCompanyName,
-        poweredByPickTheBrick,
       });
       doc.save(
         brandLogoUrl

@@ -45,3 +45,18 @@ export async function saveUnverifiedPhoneAction(phone: string): Promise<void> {
     data: { phone: normalized, whatsappNumber: normalized, whatsappSkippedAt: new Date() },
   });
 }
+
+// The actual "Verify later" action - skips without requiring any phone
+// number to be entered/validated first. This is what makes the skip button
+// unconditionally usable: saveUnverifiedPhoneAction above still requires a
+// value that passes isValidPhone, which is exactly the trap a user with no
+// phone handy (or a number in a format the regex rejects) was stuck behind.
+export async function skipPhoneVerificationAction(): Promise<void> {
+  const session = await getSession();
+  if (!session) throw new Error("Not signed in");
+
+  await prisma.user.update({
+    where: { id: session.id },
+    data: { whatsappSkippedAt: new Date() },
+  });
+}

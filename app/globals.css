@@ -252,6 +252,13 @@ body {
 }
 .auth-gate-form .form-error {
   margin: 0;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: #fbe9e7;
+  color: #b91c1c;
+  border: 1px solid #e8b4ae;
+  border-radius: var(--radius);
 }
 .auth-gate-form input {
   width: 100%;
@@ -290,6 +297,24 @@ body {
   color: #fff;
   cursor: pointer;
   white-space: nowrap;
+}
+.auth-gate-skip {
+  width: 100%;
+  padding: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: none;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.auth-gate-skip:hover {
+  color: var(--fg);
+}
+.auth-gate-skip:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 .lightbox-close {
   position: absolute;

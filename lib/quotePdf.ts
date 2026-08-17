@@ -67,7 +67,6 @@ export async function buildQuotePdf({
   clientName,
   brandLogoUrl,
   brandCompanyName,
-  poweredByPickTheBrick,
 }: {
   items: QuotePdfItem[];
   grandTotal: number;
@@ -85,11 +84,6 @@ export async function buildQuotePdf({
   // logo in the header - only meaningful alongside brandLogoUrl. Shown even
   // if the logo image itself fails to load, so the PDF still reads as theirs.
   brandCompanyName?: string | null;
-  // Only meaningful alongside brandLogoUrl - adds a small "Powered by
-  // PickTheBrick" line under the contractor's logo. Kept behind one flag in
-  // one place (see the isolated block right after the logo below) so it's a
-  // one-line removal if the business drops this later.
-  poweredByPickTheBrick?: boolean;
 }) {
   const { jsPDF } = await import("jspdf");
   const { TERMS_AND_CONDITIONS } = await import("@/lib/terms");
@@ -167,24 +161,16 @@ export async function buildQuotePdf({
     doc.setTextColor(...INK);
     doc.text("PickTheBrick", MARGIN, y);
   }
-  // Contractor's company name next to their logo - drawn even if the logo
+  // Contractor's company name next to their logo, in the contractor's own
+  // brand voice (no PickTheBrick mark anywhere on their PDF) - sized to read
+  // as the header's actual wordmark, not a caption. Drawn even if the logo
   // image itself failed to load (logoW stays 0, so this just sits at MARGIN
   // instead), so the header still reads as theirs either way.
   if (usingBrandLogo && brandCompanyName) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+    doc.setFontSize(19);
     doc.setTextColor(...INK);
-    doc.text(brandCompanyName, MARGIN + logoW + (logoW > 0 ? 10 : 0), y - 20 + LOGO_BOX_H / 2 + 4);
-  }
-  // "Powered by PickTheBrick" mark - isolated in this one block so it's a
-  // one-line removal (drop the `if`) if the business drops this later. Only
-  // shown once a real contractor logo actually rendered above - never on a
-  // plain PickTheBrick-branded quote.
-  if (poweredByPickTheBrick && usingBrandLogo && logo) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...MUTED);
-    doc.text("Powered by PickTheBrick", MARGIN, y - 20 + logoH + 10);
+    doc.text(brandCompanyName, MARGIN + logoW + (logoW > 0 ? 12 : 0), y - 20 + LOGO_BOX_H / 2 + 6);
   }
 
   doc.setFont("helvetica", "normal");

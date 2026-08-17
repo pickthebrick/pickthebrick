@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signUp, signIn } from "@/app/actions/auth";
-import PhoneVerifyStep from "@/app/components/PhoneVerifyStep";
 
 export default function LoginForm() {
   const searchParams = useSearchParams();
@@ -24,12 +23,6 @@ export default function LoginForm() {
   const [company, setCompany] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // A brand-new account isn't done signing up until its WhatsApp number is
-  // verified - shown right after signUp() succeeds, before redirecting
-  // anywhere. Signing into an existing account skips this (existing accounts
-  // without a verified number still get asked once at first quote/design
-  // submission - see BuildClient.tsx/FeaturesWizard.tsx).
-  const [awaitingPhoneVerify, setAwaitingPhoneVerify] = useState(false);
   // Google is the headline option; the email/password form collapses behind
   // this toggle so the default view asks for nothing but one click. Opens
   // pre-expanded for a partner-role signup, since Google can't carry the
@@ -45,14 +38,18 @@ export default function LoginForm() {
   if (partnerRole) googleQuery.set("role", partnerRole);
   const googleHref = `/api/auth/google${googleQuery.size ? `?${googleQuery.toString()}` : ""}`;
 
-  function redirectAfterAuth() {
+  // Falls back to /my-quotes (not "/") when there's no explicit next -
+  // that's where a resumable draft design/quote now shows up (see
+  // draftDesignRequests in MyQuotesClient.tsx), and it already bounces
+  // non-client roles to their own dashboard, so it's a safe default
+  // regardless of who just signed in.
+  function destAfterAuth() {
     const next = searchParams.get("next");
-    // Falls back to /my-quotes (not "/") when there's no explicit next -
-    // that's where a resumable draft design/quote now shows up (see
-    // draftDesignRequests in MyQuotesClient.tsx), and it already bounces
-    // non-client roles to their own dashboard, so it's a safe default
-    // regardless of who just signed in.
-    window.location.href = next && next.startsWith("/") && !next.startsWith("//") ? next : "/my-quotes";
+    return next && next.startsWith("/") && !next.startsWith("//") ? next : "/my-quotes";
+  }
+
+  function redirectAfterAuth() {
+    window.location.href = destAfterAuth();
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -76,7 +73,20 @@ export default function LoginForm() {
           setError(result.error);
           return;
         }
-        setAwaitingPhoneVerify(true);
+        // Hand off to /verify-phone (same page a brand-new Google signup
+        // lands on) instead of showing PhoneVerifyStep inline here. signUp()
+        // just set the session cookie, and proxy.ts's isAuthRoute check
+        // redirects ANY request to a /login* URL away the moment a valid
+        // session exists - including this component's own follow-up phone
+        // step, which kept submitting server actions back to this same
+        // /login?role=... URL. That silently intercepted every submission
+        // before it reached saveUnverifiedPhoneAction/skipPhoneVerification-
+        // Action (never throwing client-side, never persisting anything -
+        // whatsappSkippedAt stayed null even after clicking "Verify later"),
+        // which is what a contractor "stuck at the phone number" actually
+        // was. /verify-phone isn't under /login, so it isn't caught by that
+        // redirect - see VerifyPhoneClient.tsx, which already works today.
+        window.location.href = `/verify-phone?next=${encodeURIComponent(destAfterAuth())}`;
         return;
       }
       // Signing in through the public form - see signIn()'s
@@ -103,10 +113,6 @@ export default function LoginForm() {
       </header>
       <div className="flex flex-1 items-center justify-center px-4 py-16">
         <div className="w-full max-w-sm border border-[var(--line)] bg-[var(--surface)] p-8" style={{ borderRadius: "var(--radius)" }}>
-        {awaitingPhoneVerify ? (
-          <PhoneVerifyStep onSuccess={redirectAfterAuth} onSkip={redirectAfterAuth} />
-        ) : (
-        <>
         <p className="mt-1 mb-6 text-sm text-[var(--muted)]">
           {mode === "signin"
             ? "Sign in to build your fitout quote."
@@ -227,8 +233,6 @@ export default function LoginForm() {
         >
           {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
         </button>
-        )}
-        </>
         )}
         </div>
       </div>

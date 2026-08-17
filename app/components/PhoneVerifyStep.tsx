@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { saveUnverifiedPhoneAction } from "@/app/actions/phoneVerification";
+import { saveUnverifiedPhoneAction, skipPhoneVerificationAction } from "@/app/actions/phoneVerification";
 
 // The once-ever phone-number capture step, shown right after signup
 // (LoginForm.tsx/AuthGate.tsx/VerifyPhoneClient.tsx) and again before a
@@ -21,6 +21,12 @@ import { saveUnverifiedPhoneAction } from "@/app/actions/phoneVerification";
 // requestPhoneCodeAction/confirmPhoneCodeAction and lib/phoneVerification.ts
 // are untouched, so the OTP step can come back by re-adding the "code" step
 // here once WhatsApp delivery is real.
+//
+// "Verify later" (below) must always be present and must never require a
+// valid phone number first - a prior version of this screen only had
+// Cancel (shown at just one of five call sites) and a required, regex-
+// validated phone field, which left signup dead-ended for anyone without a
+// phone handy or whose number didn't match the strict format.
 export default function PhoneVerifyStep({
   onSuccess,
   onCancel,
@@ -55,6 +61,19 @@ export default function PhoneVerifyStep({
     }
   }
 
+  async function handleSkip() {
+    setBusy(true);
+    setError(null);
+    try {
+      await skipPhoneVerificationAction();
+      (onSkip ?? onSuccess)();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not skip right now - try again");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="auth-gate-overlay" onClick={onCancel ? (e) => e.target === e.currentTarget && onCancel() : undefined}>
       <div className="auth-gate">
@@ -80,6 +99,9 @@ export default function PhoneVerifyStep({
               {busy ? "Saving..." : "Continue"}
             </button>
           </div>
+          <button type="button" className="auth-gate-skip" disabled={busy} onClick={handleSkip}>
+            Verify later
+          </button>
         </form>
       </div>
     </div>
