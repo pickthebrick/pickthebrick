@@ -1,12 +1,18 @@
 import "server-only";
-import crypto from "node:crypto";
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
-import { sendWhatsAppOtp } from "@/lib/whatsapp";
+import twilio from "twilio";
 
-const CODE_TTL_MS = 10 * 60 * 1000;
-const RESEND_COOLDOWN_MS = 60 * 1000;
-const MAX_ATTEMPTS = 5;
+// Twilio Verify holds all OTP state itself (the pending code, its expiry,
+// attempt counts, resend cooldowns) - this file just calls the Verify
+// Service, it doesn't generate or store codes anymore (see the removed
+// PhoneVerification table this replaced).
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+const TWILIO_VERIFY_SERVICE_SID = process.env.TWILIO_VERIFY_SERVICE_SID;
+
+function verifyService() {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_VERIFY_SERVICE_SID) return null;
+  return twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN).verify.v2.services(TWILIO_VERIFY_SERVICE_SID);
+}
 
 export function normalizePhone(phone: string) {
   return phone.replace(/[^\d+]/g, "");
@@ -16,56 +22,64 @@ export function isValidPhone(phone: string) {
   return /^\+?\d{7,15}$/.test(phone);
 }
 
-// Sends a fresh 6-digit WhatsApp OTP for `phone`, replacing any still-pending
-// code for the same number. Delivery depends on the Meta WhatsApp Cloud API
-// being configured (WHATSAPP_ACCESS_TOKEN/WHATSAPP_PHONE_NUMBER_ID) and an
-// approved "Authentication" template - see lib/whatsapp.ts's own fallback.
-// Until then this still works end-to-end for development: the code lands in
-// the server console instead of an actual WhatsApp message.
-export async function requestPhoneCode(phone: string) {
-  const normalized = normalizePhone(phone);
-  if (!/^\+?\d{7,15}$/.test(normalized)) throw new Error("Enter a valid phone number");
-
-  const recent = await prisma.phoneVerification.findFirst({
-    where: { phone: normalized, createdAt: { gt: new Date(Date.now() - RESEND_COOLDOWN_MS) } },
-    orderBy: { createdAt: "desc" },
-  });
-  if (recent) throw new Error("Please wait a moment before requesting another code");
-
-  const code = crypto.randomInt(100000, 1000000).toString();
-  const codeHash = await bcrypt.hash(code, 10);
-  await prisma.phoneVerification.create({
-    data: { phone: normalized, codeHash, expiresAt: new Date(Date.now() + CODE_TTL_MS) },
-  });
-
-  await sendWhatsAppOtp(normalized, code);
+// Twilio Verify requires E.164 (a leading "+") - a client typing a local
+// Dubai number as "05X XXX XXXX" or "5X XXX XXXX" without a country code is
+// the common case, so default a bare-digits number to +971 rather than
+// rejecting it. A number that already starts with "+" is trusted as-is.
+function toE164(normalized: string): string {
+  if (normalized.startsWith("+")) return normalized;
+  const local = normalized.replace(/^0+/, "");
+  return `+971${local}`;
 }
 
-// Verifies `code` against the latest pending OTP for `phone`. Returns true
-// once, consuming the row (deleted on success) - callers persist whatever
-// they need (User.whatsappNumber/whatsappVerifiedAt, etc.) themselves.
+// Sends a fresh OTP for `phone` via WhatsApp, falling back to plain SMS if
+// the WhatsApp send fails (e.g. the number has no WhatsApp account) - this
+// is what "WhatsApp + SMS" means end to end, with no channel picker for the
+// client to deal with. Falls back to a console-log stub when Twilio isn't
+// configured, matching lib/email.ts/lib/whatsapp.ts's own dev fallback -
+// the code just isn't real, but the rest of the flow still exercises fine.
+export async function requestPhoneCode(phone: string): Promise<void> {
+  const normalized = normalizePhone(phone);
+  if (!isValidPhone(normalized)) throw new Error("Enter a valid phone number");
+  const to = toE164(normalized);
+
+  const service = verifyService();
+  if (!service) {
+    console.log(`[phone-verify] Twilio not configured - would send an OTP to ${to} now.`);
+    return;
+  }
+
+  try {
+    await service.verifications.create({ to, channel: "whatsapp" });
+  } catch (err) {
+    console.warn(`[phone-verify] WhatsApp send failed for ${to}, falling back to SMS:`, err);
+    await service.verifications.create({ to, channel: "sms" });
+  }
+}
+
+// Checks `code` against the pending Verify attempt for `phone`. Returns
+// false (not thrown) for a wrong code so the caller can show "incorrect
+// code, try again" inline - only genuinely exceptional cases (no pending
+// verification at all, expired) throw.
 export async function confirmPhoneCode(phone: string, code: string): Promise<boolean> {
   const normalized = normalizePhone(phone);
-  const record = await prisma.phoneVerification.findFirst({
-    where: { phone: normalized },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!record) throw new Error("No pending code for this number - request a new one");
-  if (record.expiresAt < new Date()) {
-    await prisma.phoneVerification.delete({ where: { id: record.id } });
-    throw new Error("That code expired - request a new one");
-  }
-  if (record.attempts >= MAX_ATTEMPTS) {
-    await prisma.phoneVerification.delete({ where: { id: record.id } });
-    throw new Error("Too many incorrect attempts - request a new code");
+  const to = toE164(normalized);
+
+  const service = verifyService();
+  if (!service) {
+    console.log(`[phone-verify] Twilio not configured - accepting any code for ${to} in dev.`);
+    return true;
   }
 
-  const valid = await bcrypt.compare(code.trim(), record.codeHash);
-  if (!valid) {
-    await prisma.phoneVerification.update({ where: { id: record.id }, data: { attempts: { increment: 1 } } });
-    return false;
+  try {
+    const check = await service.verificationChecks.create({ to, code: code.trim() });
+    return check.status === "approved";
+  } catch (err) {
+    // Twilio throws (rather than returning a "pending" status) once the
+    // underlying verification is gone - expired, already used, or too many
+    // wrong attempts already made against it.
+    const twilioErr = err as { code?: number };
+    if (twilioErr.code === 20404) throw new Error("That code expired or was already used - request a new one");
+    throw new Error("Could not verify that code - try again");
   }
-
-  await prisma.phoneVerification.delete({ where: { id: record.id } });
-  return true;
 }

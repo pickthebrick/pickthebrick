@@ -4,7 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { requestPhoneCode, confirmPhoneCode, normalizePhone, isValidPhone } from "@/lib/phoneVerification";
 
+// Requires a session even though the OTP itself isn't tied to it yet
+// (confirmPhoneCodeAction is what actually persists it) - Twilio bills per
+// verification attempt, so this shouldn't be callable by a logged-out
+// script hammering arbitrary numbers.
 export async function requestPhoneCodeAction(phone: string) {
+  const session = await getSession();
+  if (!session) throw new Error("Not signed in");
   await requestPhoneCode(phone);
 }
 
