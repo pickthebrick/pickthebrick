@@ -1,11 +1,45 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { QuoteStatus } from "@/app/generated/prisma/enums";
 import { ProductThumb } from "@/app/build/ProductThumb";
 import { contactLabel } from "@/lib/contactLabel";
+import { adminDeleteQuote } from "@/app/actions/quotes";
 import AdminPanel from "../AdminPanel";
 import AssignCaptainCell from "./AssignCaptainCell";
+
+function DeleteQuoteButton({ onConfirm }: { onConfirm: () => Promise<void> }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  if (!confirming) {
+    return (
+      <button className="signout" style={{ fontSize: 11 }} onClick={() => setConfirming(true)}>
+        Delete
+      </button>
+    );
+  }
+  return (
+    <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+      <span style={{ fontSize: 11, color: "var(--muted)" }}>Sure?</span>
+      <button className="signout" style={{ fontSize: 11 }} disabled={busy} onClick={() => setConfirming(false)}>
+        No
+      </button>
+      <button
+        className="signout"
+        style={{ fontSize: 11 }}
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          await onConfirm();
+        }}
+      >
+        {busy ? "..." : "Yes, delete"}
+      </button>
+    </span>
+  );
+}
 
 const STATUS_LABEL: Record<QuoteStatus, string> = {
   draft: "Draft",
@@ -46,10 +80,29 @@ type Quote = {
   timelineItems: { contractor: { fullName: string | null; email: string } | null }[];
 };
 
-export default function QuotesClient({ quotes, captains }: { quotes: Quote[]; captains: Captain[] }) {
+export default function QuotesClient({
+  quotes,
+  captains,
+  isSuperAdmin,
+}: {
+  quotes: Quote[];
+  captains: Captain[];
+  isSuperAdmin: boolean;
+}) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleDelete(id: string) {
+    try {
+      await adminDeleteQuote(id);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete quote");
+    }
+  }
 
   const filtered = useMemo(
     () =>
@@ -83,6 +136,7 @@ export default function QuotesClient({ quotes, captains }: { quotes: Quote[]; ca
           ))}
         </select>
       </div>
+      {error && <div className="error">{error}</div>}
 
       {filtered.length === 0 ? (
         <div className="empty">No quotes match these filters.</div>
@@ -98,6 +152,7 @@ export default function QuotesClient({ quotes, captains }: { quotes: Quote[]; ca
               <th>Status</th>
               <th style={{ textAlign: "right" }}>Total</th>
               <th></th>
+              {isSuperAdmin && <th></th>}
             </tr>
           </thead>
           <tbody>
@@ -133,10 +188,15 @@ export default function QuotesClient({ quotes, captains }: { quotes: Quote[]; ca
                       {expandedId === q.id ? "Hide items" : "View items"}
                     </button>
                   </td>
+                  {isSuperAdmin && (
+                    <td>
+                      <DeleteQuoteButton onConfirm={() => handleDelete(q.id)} />
+                    </td>
+                  )}
                 </tr>
                 {expandedId === q.id && (
                   <tr>
-                    <td colSpan={8} style={{ background: "var(--bg)" }}>
+                    <td colSpan={isSuperAdmin ? 9 : 8} style={{ background: "var(--bg)" }}>
                       <table className="preview-table">
                         <thead>
                           <tr>

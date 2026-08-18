@@ -50,7 +50,7 @@ export default async function AdminQuotesPage() {
       {quotes.length === 0 ? (
         <div className="empty">No quotes have been submitted yet.</div>
       ) : (
-        <QuotesClient quotes={quotes} captains={captains} />
+        <QuotesClient quotes={quotes} captains={captains} isSuperAdmin={session.role === Role.super_admin} />
       )}
     </AdminShell>
   );
