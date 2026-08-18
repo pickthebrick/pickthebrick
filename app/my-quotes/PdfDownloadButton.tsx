@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { buildQuotePdf } from "@/lib/quotePdf";
+import { type PaymentPlanType, computePaymentPlan } from "@/lib/paymentPlan";
 import type { Unit } from "@/app/generated/prisma/enums";
 
 function baseUnitLabel(unit: Unit) {
@@ -19,6 +20,8 @@ export default function PdfDownloadButton({
   clientName,
   brandLogoUrl,
   brandCompanyName,
+  paymentPlanType,
+  progressPercent,
   onDownloaded,
 }: {
   items: {
@@ -38,6 +41,16 @@ export default function PdfDownloadButton({
   // Contractor-only - see buildQuotePdf's matching params in lib/quotePdf.ts.
   brandLogoUrl?: string | null;
   brandCompanyName?: string | null;
+  // The client's confirmed plan (see confirmPaymentPlan in
+  // app/actions/quotes.ts) - null for a quote with no plan chosen, or a
+  // contractor/captain download which never sets one. Recomputed into a full
+  // schedule at download time (via lib/paymentPlan.ts) rather than passed
+  // pre-computed, so it always reflects live progress.
+  paymentPlanType?: PaymentPlanType | null;
+  // Current project progress (0-100) - drives the early-completion "balance
+  // due now" collapse inside computePaymentPlan. Defaults to 0 (no project
+  // yet / not tracked here) for callers that don't pass it.
+  progressPercent?: number;
   // Contractor-only - fires after a successful download so the caller can
   // mark the quote completed (see contractorMarkQuoteCompleted in
   // app/actions/quotes.ts). Not used by the plain client my-quotes list.
@@ -65,6 +78,7 @@ export default function PdfDownloadButton({
         clientName,
         brandLogoUrl,
         brandCompanyName,
+        paymentPlan: paymentPlanType ? computePaymentPlan(grandTotal, paymentPlanType, progressPercent ?? 0) : null,
       });
       doc.save(
         brandLogoUrl

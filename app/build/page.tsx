@@ -125,7 +125,7 @@ export default async function BuildPage({
     fetchCatalog(),
     fetchCartLines(quoteId),
     prisma.banner.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.quote.findUnique({ where: { id: quoteId }, select: { location: true, officeSize: true } }),
+    prisma.quote.findUnique({ where: { id: quoteId }, select: { location: true, officeSize: true, paymentPlanType: true } }),
     session
       ? prisma.user.findUnique({
           where: { id: session.id },
@@ -151,6 +151,7 @@ export default async function BuildPage({
       hasVerifiedWhatsapp={!!session?.whatsappVerifiedAt}
       hasSkippedWhatsapp={!!session?.whatsappSkippedAt}
       initialPhone={client?.whatsappNumber ?? client?.phone ?? undefined}
+      initialPaymentPlanType={quote?.paymentPlanType ?? null}
     />
   );
 }

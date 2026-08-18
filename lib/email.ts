@@ -179,6 +179,15 @@ export async function sendPaymentClaimRequestedEmail(to: string, quoteId: string
   await sendTemplatedEmail("payment_claim_requested", to, { quoteId, amount: money(amount) });
 }
 
+// A client's confirmed payment plan (weekly/monthly installments) has its
+// remaining balance collapsed to "due now" the moment project progress hits
+// 100% early - see the check in app/actions/progress.ts. This is the
+// client-payment-collection side, distinct from sendPaymentClaimRequestedEmail
+// above (that's a contractor claiming payment from PickTheBrick).
+export async function sendPaymentPlanFullyDueEmail(to: string, quoteId: string, amount: number) {
+  await sendTemplatedEmail("payment_plan_fully_due", to, { quoteId, amount: money(amount) });
+}
+
 export async function sendPaymentClaimResolvedEmail(to: string, quoteId: string, status: string) {
   await sendTemplatedEmail("payment_claim_resolved", to, { quoteId, status });
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { QuoteStatus, DesignRequestStatus, Unit } from "@/app/generated/prisma/enums";
+import type { PaymentPlanType } from "@/lib/paymentPlan";
 import { deleteQuote, duplicateQuote } from "@/app/actions/quotes";
 import { deleteDesignRequest, addDesignRequestRevisionComment } from "@/app/actions/design";
 import { PACKAGE_LABELS, groupSpaceEntries } from "@/lib/spaces";
@@ -64,6 +65,7 @@ type Quote = {
   location: string | null;
   officeSize: string | null;
   grandTotal: number;
+  paymentPlanType: PaymentPlanType | null;
   captain: Captain | null;
   items: QuoteItem[];
   timelineItems: ProjectContractorProgress[];
@@ -358,6 +360,8 @@ export default function MyQuotesClient({
                         officeSize={q.officeSize}
                         referenceNumber={q.referenceNumber}
                         clientName={clientLabel}
+                        paymentPlanType={q.paymentPlanType}
+                        progressPercent={overallProgress(q.timelineItems)}
                       />
                       <button
                         type="button"

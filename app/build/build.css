@@ -1463,6 +1463,145 @@
   box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--fg);
 }
 
+/* ---------- payment plan card (Review Quote step) ---------- */
+.ptb-build .payment-plan-card {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.ptb-build .payment-plan-card-label {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.ptb-build .payment-plan-card-total {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--fg);
+  margin-bottom: 16px;
+}
+.ptb-build .payment-plan-card-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft, #fff4e5);
+  color: var(--accent-deep);
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+}
+.ptb-build .payment-plan-card-btn.confirmed {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--fg);
+}
+.ptb-build .payment-plan-card-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ptb-build .payment-plan-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.ptb-build .payment-plan-card-action:disabled {
+  border-color: var(--line);
+  background: var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.ptb-build .payment-plan-card-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- payment plan modal ---------- */
+.ptb-build .payment-plan-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ptb-build .payment-plan-option {
+  padding: 14px;
+  border: 1.5px solid var(--fg);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+}
+.ptb-build .payment-plan-option.selected {
+  background: var(--accent-soft, #fff4e5);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--fg);
+}
+.ptb-build .payment-plan-option.disabled {
+  cursor: not-allowed;
+  background: var(--line);
+  border-color: var(--line);
+  color: var(--muted);
+}
+.ptb-build .payment-plan-option-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.ptb-build .payment-plan-option-pct {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.ptb-build .payment-plan-option p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 0;
+}
+.ptb-build .payment-plan-option.disabled p {
+  color: var(--muted);
+}
+.ptb-build .payment-plan-preview {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.ptb-build .payment-plan-preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13.5px;
+  padding: 4px 0;
+}
+.ptb-build .payment-plan-preview-row.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+.ptb-build .payment-plan-clause {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 14px 0 0;
+}
+
 /* ---------- mobile ---------- */
 /* Placed last so these overrides win the cascade against every unconditional
    rule above, regardless of viewport width. */

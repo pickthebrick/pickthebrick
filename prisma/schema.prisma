@@ -89,6 +89,11 @@ enum PaymentClaimStatus {
   paid
 }
 
+enum PaymentPlanType {
+  weekly
+  monthly
+}
+
 enum TimelineItemStatus {
   unassigned
   assigned
@@ -380,6 +385,20 @@ model Quote {
   confirmedAt    DateTime?
   approvedAt     DateTime?
   paidAt         DateTime?
+  // The client's confirmed choice on the Review Quote step (see
+  // confirmPaymentPlan in app/actions/quotes.ts) - gates the Download/Share
+  // buttons there. Deliberately just the choice + when, not the computed
+  // tranche breakdown: lib/paymentPlan.ts recomputes the actual schedule
+  // from grandTotal + current project progress every time it's needed (PDF
+  // generation, notifications), so it can never drift from the source
+  // calculation.
+  paymentPlanType        PaymentPlanType?
+  paymentPlanConfirmedAt DateTime?
+  // Set the first time quote-level progress reaches 100% while a plan is
+  // still mid-schedule (see the early-completion check in
+  // app/actions/progress.ts) - guards the "remaining balance due now"
+  // notification from firing again on every later progress update.
+  paymentPlanFullyDueNotifiedAt DateTime?
 
   items         QuoteItem[]
   statusHistory QuoteStatusHistory[]

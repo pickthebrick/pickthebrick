@@ -315,6 +315,15 @@ const NOTIFICATION_TEMPLATES: { key: string; label: string; emailSubject: string
     whatsappBody: "A payment claim of {{amount}} has been submitted for project {{quoteId}}.",
   },
   {
+    key: "payment_plan_fully_due",
+    label: "Client's remaining balance due now - early completion (to captain/admin)",
+    emailSubject: "Project finished early - remaining balance now due",
+    emailBody:
+      "Project {{quoteId}} reached 100% progress ahead of its payment plan's schedule. The remaining balance of {{amount}} is now due in full.",
+    whatsappBody:
+      "Project {{quoteId}} reached 100% progress ahead of schedule. Remaining balance of {{amount}} is now due in full.",
+  },
+  {
     key: "payment_claim_resolved",
     label: "Payment claim resolved (to contractor)",
     emailSubject: "Update on your payment claim",

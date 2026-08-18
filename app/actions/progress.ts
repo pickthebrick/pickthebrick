@@ -12,10 +12,12 @@ import {
   sendSiteInspectionRespondedEmail,
   sendPaymentClaimRequestedEmail,
   sendPaymentClaimResolvedEmail,
+  sendPaymentPlanFullyDueEmail,
   money,
 } from "@/lib/email";
 import { sendTemplatedWhatsApp } from "@/lib/whatsapp";
 import { applyContractorReduction, blendedReductionPercent } from "@/lib/contractorPricing";
+import { computePaymentPlan } from "@/lib/paymentPlan";
 
 async function requireSession() {
   const session = await getSession();
@@ -35,6 +37,38 @@ function eligiblePercent(rows: { deliveryApproved: number; siteApproved: number 
   if (rows.length === 0) return 0;
   const total = rows.reduce((s, r) => s + (r.deliveryApproved * 0.4 + r.siteApproved * 0.6), 0);
   return Math.round(total / rows.length);
+}
+
+// A client's confirmed payment plan (see confirmPaymentPlan in
+// app/actions/quotes.ts) collapses its remaining installments to "due now"
+// the moment quote-level progress reaches 100% ahead of schedule (the plan
+// shortens with the project rather than stretching payments out) - this is
+// the enforcement side of that: notify the captain + admins once, the same
+// way requestPaymentClaim below notifies them of a contractor's claim.
+// paymentPlanFullyDueNotifiedAt guards against re-sending on every later
+// progress update once a project is already fully complete.
+async function checkPaymentPlanEarlyCompletion(quoteId: string) {
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId }, include: { captain: true } });
+  if (!quote || !quote.paymentPlanType || !quote.paymentPlanConfirmedAt || quote.paymentPlanFullyDueNotifiedAt) return;
+
+  const assignments = await prisma.projectTimelineItem.findMany({
+    where: { quoteId, status: TimelineItemStatus.assigned },
+    select: { deliveryApproved: true, siteApproved: true },
+  });
+  if (eligiblePercent(assignments) < 100) return;
+
+  const schedule = computePaymentPlan(quote.grandTotal, quote.paymentPlanType, 100);
+  const admins = await prisma.user.findMany({ where: { role: Role.admin } });
+  const recipients = [quote.captain, ...admins].filter((u): u is NonNullable<typeof u> => !!u);
+  for (const recipient of recipients) {
+    await sendPaymentPlanFullyDueEmail(recipient.email, quoteId, schedule.remainingAmount);
+    await sendTemplatedWhatsApp("payment_plan_fully_due", recipient.whatsappNumber, {
+      quoteId,
+      amount: money(schedule.remainingAmount),
+    });
+  }
+
+  await prisma.quote.update({ where: { id: quoteId }, data: { paymentPlanFullyDueNotifiedAt: new Date() } });
 }
 
 async function requireOwnAssignment(timelineItemId: string, contractorId: string) {
@@ -102,6 +136,7 @@ export async function approveProgress(
 
   await sendProgressApprovedEmail(assignment.contractor.email, assignment.quoteId);
   await sendTemplatedWhatsApp("progress_approved", assignment.contractor.whatsappNumber, { quoteId: assignment.quoteId });
+  await checkPaymentPlanEarlyCompletion(assignment.quoteId);
   revalidatePath("/contractor");
   revalidatePath("/captain");
   revalidatePath("/admin/projects");
@@ -129,6 +164,7 @@ export async function setContractorProgress(
 
   await sendProgressApprovedEmail(assignment.contractor.email, assignment.quoteId);
   await sendTemplatedWhatsApp("progress_approved", assignment.contractor.whatsappNumber, { quoteId: assignment.quoteId });
+  await checkPaymentPlanEarlyCompletion(assignment.quoteId);
   revalidatePath("/contractor");
   revalidatePath("/captain");
   revalidatePath("/admin/projects");

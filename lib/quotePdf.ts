@@ -3,6 +3,8 @@
 // already-submitted quote (app/my-quotes/PdfDownloadButton.tsx). Browser-only
 // (fetch/FileReader/canvas) - never import this from a server component.
 
+import type { PaymentPlanSchedule } from "@/lib/paymentPlan";
+
 export type QuotePdfItem = {
   name: string;
   categoryLabel: string;
@@ -67,6 +69,7 @@ export async function buildQuotePdf({
   clientName,
   brandLogoUrl,
   brandCompanyName,
+  paymentPlan,
 }: {
   items: QuotePdfItem[];
   grandTotal: number;
@@ -84,6 +87,12 @@ export async function buildQuotePdf({
   // logo in the header - only meaningful alongside brandLogoUrl. Shown even
   // if the logo image itself fails to load, so the PDF still reads as theirs.
   brandCompanyName?: string | null;
+  // Pre-computed via lib/paymentPlan.ts's computePaymentPlan() - the caller
+  // decides grandTotal + progress% (0 for a still-in-cart draft, live quote
+  // progress once a project exists), this just renders whatever it's given.
+  // null/omitted for every quote without a confirmed plan (contractor/captain
+  // downloads never set one).
+  paymentPlan?: PaymentPlanSchedule | null;
 }) {
   const { jsPDF } = await import("jspdf");
   const { TERMS_AND_CONDITIONS } = await import("@/lib/terms");
@@ -292,6 +301,61 @@ export async function buildQuotePdf({
   doc.text("VAT (5%)", RIGHT - 200, y);
   doc.text("AED " + Math.round(grandTotal * VAT_RATE).toLocaleString(), RIGHT, y, { align: "right" });
   y += 26;
+
+  if (paymentPlan) {
+    doc.setDrawColor(...LINE);
+    doc.setLineWidth(0.75);
+    doc.line(MARGIN, y, RIGHT, y);
+    y += 20;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...INK);
+    doc.text(`Payment plan - ${paymentPlan.type === "weekly" ? "Weekly" : "Monthly"}`, MARGIN, y);
+    y += 18;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...MUTED);
+    doc.text(`Due now (${Math.round(paymentPlan.advancePct * 100)}% advance)`, MARGIN, y);
+    doc.setTextColor(...INK);
+    doc.text("AED " + paymentPlan.advanceAmount.toLocaleString(), RIGHT, y, { align: "right" });
+    y += 16;
+
+    if (paymentPlan.balanceDueNow) {
+      doc.setTextColor(...MUTED);
+      doc.text("Remaining balance - project complete, due in full now", MARGIN, y);
+      doc.setTextColor(...INK);
+      doc.text("AED " + paymentPlan.remainingAmount.toLocaleString(), RIGHT, y, { align: "right" });
+      y += 16;
+    } else {
+      const freq = paymentPlan.type === "weekly" ? "weekly" : "monthly";
+      doc.setTextColor(...MUTED);
+      doc.text(
+        `Then ${paymentPlan.installmentCount} ${freq} payment${paymentPlan.installmentCount === 1 ? "" : "s"} of`,
+        MARGIN,
+        y,
+      );
+      doc.setTextColor(...INK);
+      doc.text("AED " + (paymentPlan.installments[0]?.amount ?? 0).toLocaleString(), RIGHT, y, { align: "right" });
+      y += 16;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...MUTED);
+      doc.text(`Estimated project duration: ${paymentPlan.weeks} week${paymentPlan.weeks === 1 ? "" : "s"}`, MARGIN, y);
+      y += 16;
+    }
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    const clauseLines = doc.splitTextToSize(
+      "If the project finishes ahead of schedule, any remaining balance becomes due in full at completion.",
+      pageWidth - MARGIN * 2,
+    );
+    doc.text(clauseLines, MARGIN, y);
+    y += clauseLines.length * 11 + 10;
+  }
 
   doc.setFont("helvetica", "italic");
   doc.setFontSize(8.5);

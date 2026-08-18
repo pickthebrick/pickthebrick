@@ -5,8 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { isAdminRole, ADMIN_ROLES } from "@/lib/roles";
 import { getSession } from "@/lib/auth";
 import { resolveActor, actorOwns, type Actor } from "@/lib/actor";
-import { Role, QuoteStatus, ContractorPlan, type Unit } from "@/app/generated/prisma/enums";
+import { Role, QuoteStatus, ContractorPlan, PaymentPlanType, type Unit } from "@/app/generated/prisma/enums";
 import { getContractorQuoteLimit } from "@/lib/contractorPlan";
+import { isWeeklyEligible } from "@/lib/paymentPlan";
 import {
   sendQuoteSubmittedEmail,
   sendQuoteSubmittedAdminAlertEmail,
@@ -23,6 +24,12 @@ import { sendTemplatedWhatsApp } from "@/lib/whatsapp";
 async function requireSession() {
   const session = await getSession();
   if (!session) throw new Error("Not signed in");
+  return session;
+}
+
+async function requireSuperAdmin() {
+  const session = await getSession();
+  if (!session || session.role !== Role.super_admin) throw new Error("Super admin only");
   return session;
 }
 
@@ -69,6 +76,28 @@ export async function setQuoteDetails(quoteId: string, location: string, officeS
     where: { id: quoteId },
     data: { location: location.trim(), officeSize: officeSize.trim() },
   });
+}
+
+// Mandatory before a client can download/share their quote (see the
+// "Choose payment plan" gate in BuildClient.tsx) - Weekly stays rejected
+// here even if the client's cart total drops below the threshold after a
+// plan was already chosen client-side (e.g. removing an item), since this
+// is the actual source of truth, not the UI gate alone.
+export async function confirmPaymentPlan(quoteId: string, type: "weekly" | "monthly") {
+  const actor = await resolveActor();
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  if (!quote || !actorOwns(actor, quote) || quote.status !== QuoteStatus.draft) {
+    throw new Error("Quote is not an editable draft you own");
+  }
+  if (type === "weekly" && !isWeeklyEligible(quote.grandTotal)) {
+    throw new Error("The Weekly plan is only available for projects AED 50,000 and above");
+  }
+
+  await prisma.quote.update({
+    where: { id: quoteId },
+    data: { paymentPlanType: type as PaymentPlanType, paymentPlanConfirmedAt: new Date() },
+  });
+  revalidatePath("/build");
 }
 
 export type CartLineInput = {
@@ -548,6 +577,16 @@ export async function deleteQuote(quoteId: string) {
 
   await prisma.quote.delete({ where: { id: quoteId } });
   revalidatePath("/my-quotes");
+}
+
+// Lets a super admin remove any quote regardless of status - unlike the
+// client-facing deleteQuote above, there's no draft/submitted cutoff, since
+// this is for clearing out test/dummy submissions from the New Quotes admin
+// page rather than something a client could trigger by accident.
+export async function adminDeleteQuote(quoteId: string) {
+  await requireSuperAdmin();
+  await prisma.quote.delete({ where: { id: quoteId } });
+  revalidatePath("/admin/quotes");
 }
 
 // DD/MM/YY/NN - counts quotes already submitted today to pick the sequence number.
