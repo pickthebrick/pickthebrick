@@ -126,7 +126,7 @@ export async function removeCaseStudyImage(id: string) {
 export async function updateCaseStudyButton(id: string, buttonLabel: string, buttonUrl: string) {
   await requireAdmin();
   const label = buttonLabel.trim() || "View project";
-  const url = buttonUrl.trim() || "/build";
+  const url = buttonUrl.trim();
   await prisma.caseStudyCard.upsert({
     where: { id },
     create: { id, buttonLabel: label, buttonUrl: url },

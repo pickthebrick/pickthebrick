@@ -15,8 +15,9 @@ const raleway = Raleway({
 });
 
 export const metadata: Metadata = {
-  title: "PickTheBrick",
-  description: "Office fitout aggregator - Dubai, UAE",
+  title: "PickTheBrick — Instant Office Fit-Out Quotes in Dubai | Design & Build",
+  description:
+    "Get an instant, all-inclusive price for your Dubai office fit-out. Ten trades under one platform, vetted contractors, one dedicated Project Manager - from first click to move-in.",
 };
 
 export default async function RootLayout({

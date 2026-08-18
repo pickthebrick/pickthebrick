@@ -333,7 +333,7 @@ export default function HomeClient({
                           ))}
                         </div>
                         <div className="home-case-rating">★★★★★ Google review</div>
-                        {card && (
+                        {card?.buttonUrl && (
                           <Link href={card.buttonUrl} className="home-case-btn">
                             {card.buttonLabel}
                           </Link>
@@ -428,7 +428,7 @@ export default function HomeClient({
             <h2>Your office, priced today. Built next.</h2>
             <p>Ten trades, one platform, one dedicated Project Manager - from first click to move-in.</p>
             <Link href="/build" className="home-hero-cta-primary">
-              Start Designing →
+              Build My Quote →
             </Link>
           </ParallaxCtaBand>
 

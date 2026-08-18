@@ -21,7 +21,7 @@ export default async function Home() {
   ]);
   const caseStudyById = new Map(caseStudyRows.map((c) => [c.id, c]));
   const caseStudyCards = CASE_STUDY_IDS.map(
-    (id) => caseStudyById.get(id) ?? { id, imageUrl: null, buttonLabel: "View project", buttonUrl: "/build" }
+    (id) => caseStudyById.get(id) ?? { id, imageUrl: null, buttonLabel: "View project", buttonUrl: "" }
   );
 
   return (

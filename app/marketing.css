@@ -435,8 +435,9 @@
 }
 .ptb-marketing .pkgfeat-tooltip {
   position: absolute;
-  left: 0;
-  bottom: calc(100% + 8px);
+  left: calc(100% + 8px);
+  top: 50%;
+  bottom: auto;
   z-index: 5;
   width: max-content;
   max-width: 220px;
@@ -450,7 +451,7 @@
   box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--accent-deep);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(4px);
+  transform: translateY(-50%) translateX(4px);
   transition: opacity 0.12s ease, transform 0.12s ease;
   pointer-events: none;
 }
@@ -458,7 +459,7 @@
 .ptb-marketing .pkgfeat-label:focus .pkgfeat-tooltip {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: translateY(-50%) translateX(0);
 }
 
 /* Only rendered client-side when PackageFeatureItem.sampleImageUrl is set -
