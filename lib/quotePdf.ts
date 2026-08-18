@@ -3,7 +3,7 @@
 // already-submitted quote (app/my-quotes/PdfDownloadButton.tsx). Browser-only
 // (fetch/FileReader/canvas) - never import this from a server component.
 
-import type { PaymentPlanSchedule } from "@/lib/paymentPlan";
+import { type PaymentPlanSchedule, PAYMENT_TERMS_DISCLAIMER } from "@/lib/paymentPlan";
 
 export type QuotePdfItem = {
   name: string;
@@ -354,7 +354,11 @@ export async function buildQuotePdf({
       pageWidth - MARGIN * 2,
     );
     doc.text(clauseLines, MARGIN, y);
-    y += clauseLines.length * 11 + 10;
+    y += clauseLines.length * 11 + 4;
+
+    const disclaimerLines = doc.splitTextToSize(PAYMENT_TERMS_DISCLAIMER, pageWidth - MARGIN * 2);
+    doc.text(disclaimerLines, MARGIN, y);
+    y += disclaimerLines.length * 11 + 10;
   }
 
   doc.setFont("helvetica", "italic");

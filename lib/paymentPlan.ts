@@ -91,3 +91,6 @@ export function computePaymentPlan(grandTotal: number, type: PaymentPlanType, pr
 
 export const EARLY_COMPLETION_CLAUSE =
   "If your project finishes ahead of schedule, any remaining balance becomes due in full at completion - the plan shortens with the project, it doesn't stretch it out.";
+
+export const PAYMENT_TERMS_DISCLAIMER =
+  "These payment terms are indicative and will be finalized once confirmed with your PickTheBrick Captain.";

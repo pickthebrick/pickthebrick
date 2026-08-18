@@ -6,6 +6,7 @@ import {
   computePaymentPlan,
   isWeeklyEligible,
   EARLY_COMPLETION_CLAUSE,
+  PAYMENT_TERMS_DISCLAIMER,
 } from "@/lib/paymentPlan";
 
 // Gated behind the "Choose payment plan" button (not shown inline) so the
@@ -107,6 +108,7 @@ export default function PaymentPlanModal({
           </div>
 
           <p className="payment-plan-clause">{EARLY_COMPLETION_CLAUSE}</p>
+          <p className="payment-plan-clause">{PAYMENT_TERMS_DISCLAIMER}</p>
 
           {error && <p style={{ color: "#b91c1c", fontSize: 13 }}>{error}</p>}
 
