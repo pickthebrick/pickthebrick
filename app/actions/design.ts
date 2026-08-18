@@ -84,27 +84,96 @@ export async function startDesignRequest(packageKey: string, sqft: number) {
   return created.id;
 }
 
-// Replaces the whole space list for a draft request. Simple wipe-and-recreate:
-// each spaceKey gets `quantity` DesignRequestSpace rows (one per instance),
-// which cascades away any answers already saved for the previous list. That's
-// an accepted MVP trade-off - the wizard flows forward, not back-and-forth.
+// Reconciles the space list for a draft request against the new
+// key/quantity list, reusing existing rows (and everything cascaded off
+// them - answers, notes) wherever a spaceKey still has a slot for them,
+// rather than wiping and recreating every instance on every call. A client
+// going back to the Spaces step from Features - even just to bump one
+// space's count - used to lose every answer already entered across the
+// whole request; this only touches the instances that actually changed.
 export async function setDesignRequestSpaces(id: string, entries: { spaceKey: string; quantity: number }[]) {
   const actor = await resolveActor();
   await assertOwnDraftRequest(id, actor);
 
-  await prisma.designRequestSpace.deleteMany({ where: { designRequestId: id } });
+  const existing = await prisma.designRequestSpace.findMany({
+    where: { designRequestId: id },
+    orderBy: { sortOrder: "asc" },
+  });
+  const pools = new Map<string, typeof existing>();
+  for (const row of existing) {
+    const list = pools.get(row.spaceKey) ?? [];
+    list.push(row);
+    pools.set(row.spaceKey, list);
+  }
 
   let sortOrder = 0;
-  const rows: { designRequestId: string; spaceKey: string; sortOrder: number }[] = [];
+  const keepIds = new Set<string>();
+  const reorders: { id: string; sortOrder: number }[] = [];
+  const creates: { designRequestId: string; spaceKey: string; sortOrder: number }[] = [];
+
   for (const entry of entries) {
     const quantity = Math.max(0, Math.min(6, Math.round(entry.quantity)));
+    const pool = pools.get(entry.spaceKey) ?? [];
     for (let i = 0; i < quantity; i++) {
-      rows.push({ designRequestId: id, spaceKey: entry.spaceKey, sortOrder: sortOrder++ });
+      const reused = pool[i];
+      if (reused) {
+        keepIds.add(reused.id);
+        if (reused.sortOrder !== sortOrder) reorders.push({ id: reused.id, sortOrder });
+      } else {
+        creates.push({ designRequestId: id, spaceKey: entry.spaceKey, sortOrder });
+      }
+      sortOrder++;
     }
   }
-  if (rows.length > 0) {
-    await prisma.designRequestSpace.createMany({ data: rows });
+
+  // Whatever's left in the pools past each spaceKey's new quantity (or a
+  // spaceKey dropped entirely) is a real removal, not a reorder - delete it
+  // and let its answers cascade away same as before.
+  const toDelete = existing.filter((row) => !keepIds.has(row.id)).map((row) => row.id);
+
+  await prisma.$transaction([
+    ...(toDelete.length > 0 ? [prisma.designRequestSpace.deleteMany({ where: { id: { in: toDelete } } })] : []),
+    ...reorders.map((r) => prisma.designRequestSpace.update({ where: { id: r.id }, data: { sortOrder: r.sortOrder } })),
+    ...(creates.length > 0 ? [prisma.designRequestSpace.createMany({ data: creates })] : []),
+  ]);
+}
+
+// Lets the client add another instance of the space they're currently
+// looking at, from inside the Features wizard itself, without walking all
+// the way back to the Spaces step (and back through however many spaces
+// they'd already gotten past) just to bump one count. Inserted right after
+// the last existing instance of this spaceKey, not at the very end of the
+// whole list, so it lands where the client would expect it next.
+export async function addDesignRequestSpace(designRequestId: string, spaceKey: string) {
+  const actor = await resolveActor();
+  await assertOwnDraftRequest(designRequestId, actor);
+
+  const existing = await prisma.designRequestSpace.findMany({
+    where: { designRequestId },
+    orderBy: { sortOrder: "asc" },
+    select: { id: true, spaceKey: true, sortOrder: true },
+  });
+  if (existing.filter((e) => e.spaceKey === spaceKey).length >= 6) {
+    throw new Error("You can add up to 6 of the same space");
   }
+
+  let insertSortOrder = existing.length;
+  for (let i = existing.length - 1; i >= 0; i--) {
+    if (existing[i].spaceKey === spaceKey) {
+      insertSortOrder = existing[i].sortOrder + 1;
+      break;
+    }
+  }
+
+  const [, created] = await prisma.$transaction([
+    prisma.designRequestSpace.updateMany({
+      where: { designRequestId, sortOrder: { gte: insertSortOrder } },
+      data: { sortOrder: { increment: 1 } },
+    }),
+    prisma.designRequestSpace.create({ data: { designRequestId, spaceKey, sortOrder: insertSortOrder } }),
+  ]);
+
+  return created.id;
 }
 
 export async function saveDesignRequestSpaceAnswers(

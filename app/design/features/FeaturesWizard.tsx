@@ -8,7 +8,13 @@ import SpaceIcon from "../SpaceIcon";
 import { mergedSpaceQuestions, type CustomQuestionRow } from "@/lib/spaceQuestions";
 import { resolveLayerImages } from "@/lib/spaceLayers";
 import { SPECIAL_REQUIREMENT_SUGGESTIONS } from "@/lib/specialRequirementSuggestions";
-import { saveDesignRequestSpaceAnswers, deleteDesignRequestSpace, submitDesignRequest } from "@/app/actions/design";
+import { SPACE_LABELS, labelSpaceInstances } from "@/lib/spaces";
+import {
+  saveDesignRequestSpaceAnswers,
+  deleteDesignRequestSpace,
+  addDesignRequestSpace,
+  submitDesignRequest,
+} from "@/app/actions/design";
 import AuthGate from "@/app/components/AuthGate";
 import PhoneVerifyStep from "@/app/components/PhoneVerifyStep";
 import "../../marketing.css";
@@ -304,6 +310,35 @@ export default function FeaturesWizard({
     }
   }
 
+  async function handleAddAnother() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await save();
+      const newId = await addDesignRequestSpace(designRequestId, current.spaceKey);
+      let insertAt = -1;
+      spaceList.forEach((inst, i) => {
+        if (inst.spaceKey === current.spaceKey) insertAt = i;
+      });
+      insertAt += 1;
+      const withNew = [
+        ...spaceList.slice(0, insertAt),
+        { id: newId, spaceKey: current.spaceKey, label: "", notes: "", answers: {} },
+        ...spaceList.slice(insertAt),
+      ];
+      setSpaceList(labelSpaceInstances(withNew));
+      setDrafts((prev) => ({ ...prev, [newId]: {} }));
+      setNotesDrafts((prev) => ({ ...prev, [newId]: "" }));
+      setIndex(insertAt);
+      setBusy(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add another space");
+      setBusy(false);
+    }
+  }
+
+  const sameKeyCount = spaceList.filter((inst) => inst.spaceKey === current.spaceKey).length;
   const isLast = index === spaceList.length - 1;
 
   return (
@@ -362,9 +397,20 @@ export default function FeaturesWizard({
           <div className="features-questions">
             <div className="features-questions-head">
               <h2>{current.label}</h2>
-              <button type="button" className="features-remove-btn" disabled={busy} onClick={handleDelete}>
-                Remove this space
-              </button>
+              <div className="features-head-actions">
+                <button type="button" className="features-remove-btn" disabled={busy} onClick={handleDelete}>
+                  Remove this space
+                </button>
+                <button
+                  type="button"
+                  className="features-add-btn"
+                  disabled={busy || sameKeyCount >= 6}
+                  title={sameKeyCount >= 6 ? "You can add up to 6 of the same space" : undefined}
+                  onClick={handleAddAnother}
+                >
+                  + Add one more {SPACE_LABELS[current.spaceKey] ?? current.label}
+                </button>
+              </div>
             </div>
             <p className="features-questions-hint">Tap to tell us what this space needs.</p>
 

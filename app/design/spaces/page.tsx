@@ -12,7 +12,7 @@ export default async function DesignSpacesPage({ searchParams }: { searchParams:
 
   const request = await prisma.designRequest.findUnique({
     where: { id },
-    include: { spaceEntries: { select: { spaceKey: true } } },
+    include: { spaceEntries: { orderBy: { sortOrder: "asc" }, select: { spaceKey: true } } },
   });
   if (!request || !actorOwns(actor, request)) redirect("/design");
   if (request.status !== DesignRequestStatus.draft) redirect(`/design/features?id=${id}`);

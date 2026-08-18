@@ -1504,7 +1504,7 @@
 }
 .ptb-marketing .features-questions-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
@@ -1512,20 +1512,34 @@
   font-size: 18px;
   margin-bottom: 4px;
 }
-.ptb-marketing .features-remove-btn {
+.ptb-marketing .features-head-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.ptb-marketing .features-remove-btn,
+.ptb-marketing .features-add-btn {
   border: none;
   background: none;
-  color: #b91c1c;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   padding: 4px 0;
   white-space: nowrap;
 }
-.ptb-marketing .features-remove-btn:hover:not(:disabled) {
+.ptb-marketing .features-remove-btn {
+  color: #b91c1c;
+}
+.ptb-marketing .features-add-btn {
+  color: var(--accent-deep);
+}
+.ptb-marketing .features-remove-btn:hover:not(:disabled),
+.ptb-marketing .features-add-btn:hover:not(:disabled) {
   text-decoration: underline;
 }
-.ptb-marketing .features-remove-btn:disabled {
+.ptb-marketing .features-remove-btn:disabled,
+.ptb-marketing .features-add-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
