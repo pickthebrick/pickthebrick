@@ -1501,37 +1501,6 @@
   color: #fff;
   box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--fg);
 }
-.ptb-build .payment-plan-card-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.ptb-build .payment-plan-card-action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  border: 1.5px solid var(--fg);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--fg);
-  font-weight: 700;
-  font-size: 12.5px;
-  cursor: pointer;
-}
-.ptb-build .payment-plan-card-action:disabled {
-  border-color: var(--line);
-  background: var(--line);
-  color: var(--muted);
-  cursor: not-allowed;
-}
-.ptb-build .payment-plan-card-hint {
-  margin: 10px 0 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
 /* ---------- payment plan modal ---------- */
 .ptb-build .payment-plan-options {
   display: grid;

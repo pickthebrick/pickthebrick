@@ -208,7 +208,7 @@ export default function BuildClient({
   const [displayUnit, setDisplayUnit] = useState<"sqm" | "sqft">("sqm");
   const [qtyDraft, setQtyDraft] = useState<Record<string, number>>({});
 
-  const [view, setView] = useState<"build" | "preview" | "success">("build");
+  const [view, setView] = useState<"build" | "preview">("build");
   const [confirmingComplete, setConfirmingComplete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   // Set while an anonymous visitor is mid-way through the AuthGate shown by
@@ -233,6 +233,9 @@ export default function BuildClient({
   // locallyVerifiedWhatsapp above. Gates the Share/Download buttons below.
   const [paymentPlanType, setPaymentPlanType] = useState<PaymentPlanType | null>(initialPaymentPlanType);
   const [showPaymentPlanModal, setShowPaymentPlanModal] = useState(false);
+  // Download/Share need both a confirmed plan AND a first click on "I'm
+  // done" before they unlock - see handleDoneClick.
+  const [hasClickedImDone, setHasClickedImDone] = useState(false);
   const [modalProductId, setModalProductId] = useState<string | null>(null);
   const [showAiAssist, setShowAiAssist] = useState(false);
   // Contractor-only: null when the "add custom item" modal is closed, a
@@ -559,11 +562,17 @@ export default function BuildClient({
   async function doSubmitQuote() {
     setSubmitting(true);
     try {
-      await submitQuote(quoteId);
-      setView("success");
+      const { referenceNumber } = await submitQuote(quoteId);
+      // Hard navigation (not a view-state swap) on purpose: this used to be
+      // an in-place setView("success") within this same long-lived,
+      // heavily-stateful component tree, which is where an intermittent
+      // production-only React hydration crash (#418) was showing up as a
+      // black-screen flash right after submit. A full document load to a
+      // small, separate confirmation page sidesteps that entirely - there's
+      // no big stateful tree left to mismatch against.
+      window.location.href = `/build/submitted?ref=${encodeURIComponent(referenceNumber)}`;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not submit quote");
-    } finally {
       setSubmitting(false);
       setConfirmingComplete(false);
     }
@@ -603,6 +612,11 @@ export default function BuildClient({
   // "submit" queued as the action to resume once they're signed in.
   function handleDoneClick() {
     setConfirmingComplete(true);
+    // Sticky on purpose - Download/Share unlock the moment "I'm done" is
+    // first clicked and stay unlocked even if the client then hits Cancel on
+    // the confirm dialog, rather than re-locking on every toggle of
+    // confirmingComplete.
+    setHasClickedImDone(true);
     if (isAnonymous) {
       setPendingAction("submit");
       setShowAuthGate(true);
@@ -1215,88 +1229,49 @@ export default function BuildClient({
               <>
                 <TermsSection agreed={agreedToTerms} onAgreedChange={setAgreedToTerms} />
 
+                {/* Self-contained quote-total + payment plan gate. Choosing a
+                    plan is gated behind its own button (not shown inline) so
+                    the client isn't handed another on-page choice mid-review -
+                    see PaymentPlanModal. */}
+                <div className="payment-plan-card">
+                  <div className="payment-plan-card-label">Your quote total</div>
+                  <div className="payment-plan-card-total">AED {grand.toLocaleString()}</div>
+                  <button
+                    type="button"
+                    className={`payment-plan-card-btn${paymentPlanType ? " confirmed" : ""}`}
+                    onClick={() => setShowPaymentPlanModal(true)}
+                  >
+                    {paymentPlanType ? `${paymentPlanType === "weekly" ? "Weekly" : "Monthly"} payment plan · Change` : "Choose payment plan"}
+                  </button>
+                </div>
+
+                {showPaymentPlanModal && (
+                  <PaymentPlanModal
+                    grandTotal={grand}
+                    initialType={paymentPlanType}
+                    onClose={() => setShowPaymentPlanModal(false)}
+                    onConfirm={async (type) => {
+                      await confirmPaymentPlan(quoteId, type);
+                      setPaymentPlanType(type);
+                      setShowPaymentPlanModal(false);
+                    }}
+                  />
+                )}
+
                 {!confirmingComplete ? (
-                  <>
-                    {/* Self-contained checkout summary: total + payment plan
-                        gate + download/share, matching the isAnonymous gate
-                        Download/Share already had. Choosing a plan is gated
-                        behind its own button (not shown inline) so the
-                        client isn't handed another on-page choice mid-review -
-                        see PaymentPlanModal. */}
-                    <div className="payment-plan-card">
-                      <div className="payment-plan-card-label">Your quote total</div>
-                      <div className="payment-plan-card-total">AED {grand.toLocaleString()}</div>
-                      <button
-                        type="button"
-                        className={`payment-plan-card-btn${paymentPlanType ? " confirmed" : ""}`}
-                        onClick={() => setShowPaymentPlanModal(true)}
-                      >
-                        {paymentPlanType ? `${paymentPlanType === "weekly" ? "Weekly" : "Monthly"} payment plan · Change` : "Choose payment plan"}
-                      </button>
-                      <div className="payment-plan-card-row">
-                        <button
-                          type="button"
-                          className="payment-plan-card-action"
-                          disabled={isAnonymous || !paymentPlanType}
-                          title={
-                            isAnonymous
-                              ? "Sign in to download your quote"
-                              : !paymentPlanType
-                                ? "Choose a payment plan first"
-                                : undefined
-                          }
-                          onClick={downloadPdf}
-                        >
-                          ⬇ Download quotation
-                        </button>
-                        <button
-                          type="button"
-                          className="payment-plan-card-action"
-                          disabled={isAnonymous || !paymentPlanType}
-                          title={
-                            isAnonymous
-                              ? "Sign in to share your quote"
-                              : !paymentPlanType
-                                ? "Choose a payment plan first"
-                                : undefined
-                          }
-                          onClick={shareViaWhatsApp}
-                        >
-                          ⤴ Share quote
-                        </button>
-                      </div>
-                      {!paymentPlanType && (
-                        <p className="payment-plan-card-hint">Choose a payment plan to unlock download and share.</p>
-                      )}
-                    </div>
-
-                    {showPaymentPlanModal && (
-                      <PaymentPlanModal
-                        grandTotal={grand}
-                        initialType={paymentPlanType}
-                        onClose={() => setShowPaymentPlanModal(false)}
-                        onConfirm={async (type) => {
-                          await confirmPaymentPlan(quoteId, type);
-                          setPaymentPlanType(type);
-                          setShowPaymentPlanModal(false);
-                        }}
-                      />
-                    )}
-
-                    <div className="action-row done-grid">
-                      <button className="action-btn secondary" onClick={() => setView("build")}>
-                        Edit quote
-                      </button>
-                      <button
-                        className="action-btn primary"
-                        disabled={!agreedToTerms}
-                        title={!agreedToTerms ? "Please agree to the Terms & Conditions first" : undefined}
-                        onClick={handleDoneClick}
-                      >
-                        I&apos;m done
-                      </button>
-                    </div>
-                  </>
+                  <div className="action-row done-grid">
+                    <button className="action-btn secondary" onClick={() => setView("build")}>
+                      Edit quote
+                    </button>
+                    <button
+                      className="action-btn primary"
+                      disabled={!agreedToTerms}
+                      title={!agreedToTerms ? "Please agree to the Terms & Conditions first" : undefined}
+                      onClick={handleDoneClick}
+                    >
+                      I&apos;m done
+                    </button>
+                  </div>
                 ) : (
                   <div className="action-row">
                     <div className="confirm-callout" style={{ flexBasis: "100%" }}>
@@ -1333,35 +1308,50 @@ export default function BuildClient({
                     )}
                   </div>
                 )}
+
+                {/* Stays locked until both a payment plan is chosen and "I'm
+                    done" has been clicked at least once - see
+                    hasClickedImDone. Kept as its own row below Edit
+                    quote/I'm done rather than inside the payment plan card
+                    above, matching the intended layout. */}
+                <div className="action-row done-grid" style={{ marginTop: 10 }}>
+                  <button
+                    type="button"
+                    className="action-btn secondary"
+                    disabled={isAnonymous || !paymentPlanType || !hasClickedImDone}
+                    title={
+                      isAnonymous
+                        ? "Sign in to download your quote"
+                        : !paymentPlanType
+                          ? "Choose a payment plan first"
+                          : !hasClickedImDone
+                            ? "Click \"I'm done\" first"
+                            : undefined
+                    }
+                    onClick={downloadPdf}
+                  >
+                    ⬇ Download quotation
+                  </button>
+                  <button
+                    type="button"
+                    className="action-btn secondary"
+                    disabled={isAnonymous || !paymentPlanType || !hasClickedImDone}
+                    title={
+                      isAnonymous
+                        ? "Sign in to share your quote"
+                        : !paymentPlanType
+                          ? "Choose a payment plan first"
+                          : !hasClickedImDone
+                            ? "Click \"I'm done\" first"
+                            : undefined
+                    }
+                    onClick={shareViaWhatsApp}
+                  >
+                    ⤴ Share quote
+                  </button>
+                </div>
               </>
             )}
-          </div>
-        </div>
-      )}
-
-      {view === "success" && (
-        <div className="preview-wrap">
-          <div className="preview-card success-state">
-            <div className="icon">&#10003;</div>
-            <h2>Quote saved</h2>
-            <p>
-              Your PickTheBrick quote is locked in and a copy is on its way to your email. A Captain from our team
-              will be in touch shortly to help turn this into a real fitout.
-            </p>
-            <div className="action-row" style={{ marginTop: 24 }}>
-              {!isAnonymous && (
-                <a className="action-btn primary" href="/my-quotes" style={{ textDecoration: "none" }}>
-                  View my quotes
-                </a>
-              )}
-              <Link
-                className={isAnonymous ? "action-btn primary" : "action-btn secondary"}
-                href="/"
-                style={{ textDecoration: "none" }}
-              >
-                Go to home page
-              </Link>
-            </div>
           </div>
         </div>
       )}

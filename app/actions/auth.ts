@@ -3,7 +3,17 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword, createSession, destroySession } from "@/lib/auth";
 import { getAnonSessionId, clearAnonSessionId } from "@/lib/anonSession";
-import { Role } from "@/app/generated/prisma/enums";
+import { Role, QuoteStatus } from "@/app/generated/prisma/enums";
+
+// Not exported - deliberately NOT reusing app/actions/quotes.ts's own
+// recalcTotals, since exporting a helper from a "use server" file turns it
+// into a directly callable server action with none of that file's
+// ownership checks. Same two-line calc, kept private to this file instead.
+async function recalcQuoteTotals(quoteId: string) {
+  const items = await prisma.quoteItem.findMany({ where: { quoteId } });
+  const materialsTotal = items.reduce((s, i) => s + i.rate * i.qty, 0);
+  await prisma.quote.update({ where: { id: quoteId }, data: { materialsTotal, installTotal: 0, grandTotal: materialsTotal } });
+}
 
 export type AuthResult = { success: true } | { error: string };
 
@@ -20,10 +30,57 @@ export type AuthResult = { success: true } | { error: string };
 export async function reparentAnonymousSession(clientId: string) {
   const anonId = await getAnonSessionId();
   if (!anonId) return;
+
+  // A blind updateMany here used to blow past a client account that already
+  // had its own draft quote (e.g. seeded before this browser ever signed
+  // in, or built on another device) - reassigning the anonymous draft on
+  // top of it left the client with two simultaneous draft quotes, and
+  // getOrCreateDraftQuote()'s unordered findFirst could then hand back
+  // either one on a later /build load: the one the client's cart UI was
+  // just showing, or a different (possibly empty) one - an inconsistency
+  // that surfaced as "the quote is submitted but the page is lost" /
+  // "Cannot submit an empty quote" reports. Only one draft is ever meant to
+  // exist per client, so merge into the existing one instead of overwriting.
+  const anonDraft = await prisma.quote.findFirst({
+    where: { anonymousSessionId: anonId, status: QuoteStatus.draft },
+    include: { items: true },
+  });
+  if (anonDraft) {
+    const clientDraft = await prisma.quote.findFirst({ where: { clientId, status: QuoteStatus.draft } });
+    if (clientDraft) {
+      const existingProductIds = new Set(
+        (await prisma.quoteItem.findMany({ where: { quoteId: clientDraft.id }, select: { productId: true } })).map(
+          (i) => i.productId,
+        ),
+      );
+      for (const item of anonDraft.items) {
+        // The client's own line wins on a collision - it's the one they
+        // were already looking at when they signed in.
+        if (existingProductIds.has(item.productId)) continue;
+        await prisma.quoteItem.update({ where: { id: item.id }, data: { quoteId: clientDraft.id } });
+      }
+      if (!clientDraft.location && !clientDraft.officeSize) {
+        await prisma.quote.update({
+          where: { id: clientDraft.id },
+          data: { location: anonDraft.location, officeSize: anonDraft.officeSize },
+        });
+      }
+      await recalcQuoteTotals(clientDraft.id);
+      await prisma.quote.delete({ where: { id: anonDraft.id } });
+    } else {
+      await prisma.quote.update({ where: { id: anonDraft.id }, data: { clientId, anonymousSessionId: null } });
+    }
+  }
+
+  // Non-draft quotes can't actually be anonymous today (submitQuote
+  // requires a signed-in actor - see app/actions/quotes.ts), but reassign
+  // defensively in case that ever changes; there's no "existing" draft
+  // concept to collide with once a quote is past draft status.
   await prisma.quote.updateMany({
-    where: { anonymousSessionId: anonId },
+    where: { anonymousSessionId: anonId, status: { not: QuoteStatus.draft } },
     data: { clientId, anonymousSessionId: null },
   });
+
   await prisma.designRequest.updateMany({
     where: { anonymousSessionId: anonId },
     data: { clientId, anonymousSessionId: null },

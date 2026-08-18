@@ -57,7 +57,16 @@ async function recordHistory(quoteId: string, fromStatus: string | null, toStatu
 export async function getOrCreateDraftQuote() {
   const actor = await resolveActor();
 
-  const existing = await prisma.quote.findFirst({ where: { ...actor, status: QuoteStatus.draft } });
+  // orderBy is defensive, not just tie-breaking: reparentAnonymousSession
+  // (app/actions/auth.ts) is what actually prevents a client from ever
+  // having more than one draft, but an unordered findFirst against a
+  // pre-existing duplicate (e.g. from before that fix) could otherwise hand
+  // back an arbitrary one - most recently created is closest to "what the
+  // client was just looking at".
+  const existing = await prisma.quote.findFirst({
+    where: { ...actor, status: QuoteStatus.draft },
+    orderBy: { createdAt: "desc" },
+  });
   if (existing) return existing.id;
 
   const created = await prisma.quote.create({ data: { ...actor, status: QuoteStatus.draft } });
@@ -642,6 +651,7 @@ export async function submitQuote(quoteId: string) {
   revalidatePath("/captain");
   revalidatePath("/my-quotes");
   revalidatePath("/admin/quotes");
+  return { referenceNumber };
 }
 
 // Admin assigns a captain to a project - captains no longer self-claim, and
