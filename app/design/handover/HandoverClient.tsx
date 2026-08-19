@@ -7,6 +7,12 @@ import { uploadDesignRequestLayout, requestSiteVisit, hasGeneratedLayoutAction }
 import "../../marketing.css";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 // AI Designer (drawing board) is still being worked on - hide its entry
 // point on this page for now. The route/feature itself is untouched
 // (still reachable directly, and a request that already has a generated
@@ -30,6 +36,7 @@ export default function HandoverClient({
   const router = useRouter();
   const [mode, setMode] = useState<"file" | "link">("file");
   const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [link, setLink] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +98,24 @@ export default function HandoverClient({
       setError(e instanceof Error ? e.message : "Could not upload file");
     } finally {
       setBusy(false);
+    }
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(true);
+  }
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+  }
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const dropped = e.dataTransfer.files?.[0];
+    if (dropped) {
+      setError(null);
+      setFile(dropped);
     }
   }
 
@@ -180,11 +205,50 @@ export default function HandoverClient({
 
           {mode === "file" ? (
             <div className="handover-upload-row">
-              <input
-                type="file"
-                accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              />
+              <label
+                className={`handover-dropzone${dragOver ? " drag-over" : ""}${file ? " has-file" : ""}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <input
+                  type="file"
+                  className="handover-dropzone-input"
+                  accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                />
+                {file ? (
+                  <div className="handover-dropzone-file">
+                    <span className="handover-dropzone-file-icon">📄</span>
+                    <div className="handover-dropzone-file-info">
+                      <span className="handover-dropzone-file-name">{file.name}</span>
+                      <span className="handover-dropzone-file-size">{formatFileSize(file.size)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="handover-dropzone-clear"
+                      aria-label="Remove selected file"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFile(null);
+                      }}
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="handover-dropzone-icon" aria-hidden="true">
+                      ⬆
+                    </span>
+                    <p className="handover-dropzone-text">
+                      Drag and drop your file here, or <span className="handover-dropzone-browse">browse</span>
+                    </p>
+                    <p className="handover-dropzone-hint">PDF, AutoCAD (DWG/DXF), JPG, or PNG · up to 10MB</p>
+                  </>
+                )}
+              </label>
               <button className="design-start-btn" disabled={!file || busy} onClick={handleUpload}>
                 {busy ? "Uploading…" : "Upload"}
               </button>
@@ -202,7 +266,6 @@ export default function HandoverClient({
               </button>
             </div>
           )}
-          <p className="sqft-hint">Max file size 10MB.</p>
           {error && <p className="sqft-hint">{error}</p>}
         </div>
 

@@ -758,8 +758,97 @@
   gap: 10px;
   margin-bottom: 14px;
 }
-.ptb-marketing .handover-upload-row input[type="file"] {
-  font-size: 12.5px;
+.ptb-marketing .handover-dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 28px 16px;
+  border: 2px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-soft, #f7f5f0);
+  cursor: pointer;
+  text-align: center;
+}
+.ptb-marketing .handover-dropzone:hover,
+.ptb-marketing .handover-dropzone.drag-over {
+  border-color: var(--accent);
+}
+.ptb-marketing .handover-dropzone.has-file {
+  padding: 12px 14px;
+  cursor: default;
+}
+.ptb-marketing .handover-dropzone-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.ptb-marketing .handover-dropzone-icon {
+  font-size: 22px;
+  color: var(--accent);
+}
+.ptb-marketing .handover-dropzone-text {
+  font-size: 13px;
+  margin: 2px 0 0;
+}
+.ptb-marketing .handover-dropzone-browse {
+  color: var(--accent-deep);
+  font-weight: 700;
+  text-decoration: underline;
+}
+.ptb-marketing .handover-dropzone-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0;
+}
+.ptb-marketing .handover-dropzone-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.ptb-marketing .handover-dropzone-file-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.ptb-marketing .handover-dropzone-file-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+.ptb-marketing .handover-dropzone-file-name {
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ptb-marketing .handover-dropzone-file-size {
+  font-size: 11px;
+  color: var(--muted);
+}
+.ptb-marketing .handover-dropzone-clear {
+  border: none;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.ptb-marketing .handover-dropzone-clear:hover {
+  color: #b91c1c;
 }
 .ptb-marketing .handover-divider {
   text-align: center;
