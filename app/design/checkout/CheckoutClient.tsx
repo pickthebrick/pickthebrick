@@ -7,10 +7,14 @@ import "../../marketing.css";
 
 type Method = "card" | "apple_pay" | "google_pay" | "cash" | "pay_later";
 
-const METHODS: { key: Exclude<Method, "pay_later">; label: string; icon: string }[] = [
-  { key: "card", label: "Credit / Debit Card", icon: "💳" },
-  { key: "apple_pay", label: "Apple Pay", icon: "" },
-  { key: "google_pay", label: "Google Pay", icon: "G" },
+// Card/Apple Pay/Google Pay aren't wired to a real processor yet - shown but
+// disabled with a "Coming soon" badge rather than removed, so the option is
+// visible (sets expectations) without being selectable. Cash and Pay later
+// need no processor and stay fully active.
+const METHODS: { key: Exclude<Method, "pay_later">; label: string; icon: string; comingSoon?: boolean }[] = [
+  { key: "card", label: "Credit / Debit Card", icon: "💳", comingSoon: true },
+  { key: "apple_pay", label: "Apple Pay", icon: "", comingSoon: true },
+  { key: "google_pay", label: "Google Pay", icon: "G", comingSoon: true },
   { key: "cash", label: "Cash", icon: "💵" },
 ];
 
@@ -110,9 +114,11 @@ export default function CheckoutClient({
                     key={m.key}
                     type="button"
                     className="checkout-method-btn"
-                    disabled={busy !== null}
+                    disabled={busy !== null || m.comingSoon}
+                    title={m.comingSoon ? "Coming soon" : undefined}
                     onClick={() => choose(m.key)}
                   >
+                    {m.comingSoon && <span className="checkout-method-badge">Coming soon</span>}
                     {m.icon} {m.label}
                   </button>
                 ))}
